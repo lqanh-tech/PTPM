@@ -49,10 +49,26 @@ if (!isset($_POST['shipping_address']) || empty($_POST['shipping_address'])) {
 // Lấy địa chỉ giao hàng
 $shippingAddress = trim($_POST['shipping_address']);
 
+// Lấy phương thức vận chuyển
+$shippingMethodCode = $_POST['selected_shipping_method'] ?? $_SESSION['shipping_method'] ?? 'standard';
+$shippingMethodFee = floatval($_POST['selected_shipping_fee'] ?? $_SESSION['shipping_fee'] ?? 0);
+
+// DEBUG LOGGING - Kiểm tra nguồn gốc shipping fee
+error_log("=== SHIPPING FEE DEBUG ===");
+error_log("POST selected_shipping_fee: " . ($_POST['selected_shipping_fee'] ?? 'NOT SET'));
+error_log("POST shipping_fee: " . ($_POST['shipping_fee'] ?? 'NOT SET'));
+error_log("SESSION shipping_fee: " . ($_SESSION['shipping_fee'] ?? 'NOT SET'));
+error_log("Final shippingMethodFee: " . $shippingMethodFee);
+error_log("Shipping method code: " . $shippingMethodCode);
+error_log("========================");
+
 // Lấy thông tin đơn hàng từ session
 $orderDetails = $_SESSION['order_details'];
 $totalAmount = $_SESSION['total_amount'];
 $orderCode = $_SESSION['order_code'];
+
+// Lưu phương thức vận chuyển vào session
+$_SESSION['shipping_method'] = $shippingMethodCode;
 
 // Khởi tạo các đối tượng
 $db = Database::getInstance();
@@ -118,7 +134,12 @@ if (!$hasShippingAddressColumn) {
 $notificationColumns = [
     'pending_read' => "SHOW COLUMNS FROM don_hang LIKE 'pending_read'",
     'approved_read' => "SHOW COLUMNS FROM don_hang LIKE 'approved_read'",
-    'cancelled_read' => "SHOW COLUMNS FROM don_hang LIKE 'cancelled_read'"
+    'cancelled_read' => "SHOW COLUMNS FROM don_hang LIKE 'cancelled_read'",
+    'thue' => "SHOW COLUMNS FROM don_hang LIKE 'thue'",
+    'phi_van_chuyen' => "SHOW COLUMNS FROM don_hang LIKE 'phi_van_chuyen'",
+    'shipping_method' => "SHOW COLUMNS FROM don_hang LIKE 'shipping_method'",
+    'shipping_method_name' => "SHOW COLUMNS FROM don_hang LIKE 'shipping_method_name'",
+    'estimated_delivery' => "SHOW COLUMNS FROM don_hang LIKE 'estimated_delivery'"
 ];
 
 $missingColumns = [];
@@ -130,16 +151,24 @@ foreach ($notificationColumns as $column => $sql) {
     }
 }
 
-// Nếu thiếu các cột thông báo, thêm vào
+// Nếu thiếu các cột, thêm vào
 if (!empty($missingColumns)) {
     try {
         foreach ($missingColumns as $column) {
-            $addColumnSql = "ALTER TABLE don_hang ADD COLUMN $column TINYINT(1) NOT NULL DEFAULT 0";
+            if ($column == 'thue' || $column == 'phi_van_chuyen') {
+                $addColumnSql = "ALTER TABLE don_hang ADD COLUMN $column DECIMAL(15,2) DEFAULT 0";
+            } elseif ($column == 'shipping_method' || $column == 'shipping_method_name') {
+                $addColumnSql = "ALTER TABLE don_hang ADD COLUMN $column VARCHAR(100) DEFAULT NULL";
+            } elseif ($column == 'estimated_delivery') {
+                $addColumnSql = "ALTER TABLE don_hang ADD COLUMN $column VARCHAR(100) DEFAULT NULL";
+            } else {
+                $addColumnSql = "ALTER TABLE don_hang ADD COLUMN $column TINYINT(1) NOT NULL DEFAULT 0";
+            }
             $conn->exec($addColumnSql);
             error_log("Đã thêm cột $column vào bảng don_hang");
         }
     } catch (PDOException $e) {
-        error_log("Lỗi khi thêm các cột thông báo: " . $e->getMessage());
+        error_log("Lỗi khi thêm các cột mới: " . $e->getMessage());
     }
 }
 
@@ -182,27 +211,90 @@ try {
         $paymentStatus = 'pending'; // Mặc định chờ thanh toán
     }
 
-    // Thêm đơn hàng vào bảng don_hang với trạng thái thông báo
-    if ($hasNotificationColumns) {
-        $insertOrderSql = "INSERT INTO don_hang (ma_don_hang_text, ma_nguoi_dung, dia_chi_giao_hang, tong_tien, trang_thai, phuong_thuc_thanh_toan, trang_thai_thanh_toan, pending_read, ngay_tao, ngay_cap_nhat)
-                          VALUES (?, ?, ?, ?, 'pending', ?, ?, 0, NOW(), NOW())";
-    } else {
-        $insertOrderSql = "INSERT INTO don_hang (ma_don_hang_text, ma_nguoi_dung, dia_chi_giao_hang, tong_tien, trang_thai, phuong_thuc_thanh_toan, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat)
-                          VALUES (?, ?, ?, ?, 'pending', ?, ?, NOW(), NOW())";
+    // Lấy thông tin từ session
+    // QUAN TRỌNG: $_SESSION['subtotal'] = tiền hàng chưa thuế
+    // $_SESSION['total_amount'] = subtotal + VAT (đã tính sẵn trong checkout.php)
+    $subtotal = $_SESSION['subtotal'] ?? 0; // Tiền hàng chưa thuế
+    $vatAmount = $_SESSION['vat_amount'] ?? 0;
+    $shippingFee = $shippingMethodFee > 0 ? $shippingMethodFee : ($_SESSION['shipping_fee'] ?? 0);
+    
+    // Lấy thông tin coupon từ session hoặc POST
+    $couponCode = $_POST['coupon_code'] ?? $_SESSION['applied_coupon'] ?? null;
+    $couponDiscount = floatval($_POST['coupon_discount'] ?? $_SESSION['coupon_discount'] ?? 0);
+    
+    // Nếu có coupon, validate lại trước khi áp dụng
+    if ($couponCode && $couponDiscount > 0) {
+        require_once '../mod/CouponCls.php';
+        $couponManager = new Coupon();
+        // Validate với subtotal (tiền hàng chưa thuế)
+        $couponResult = $couponManager->validateCoupon($couponCode, $subtotal, $userId);
+        
+        if (!$couponResult['valid']) {
+            // Coupon không hợp lệ, reset
+            $couponCode = null;
+            $couponDiscount = 0;
+            error_log("Coupon validation failed: " . $couponResult['message']);
+        } else {
+            // Cập nhật lại discount amount từ validation
+            $couponDiscount = $couponResult['discount'];
+        }
+    }
+    
+    // TÍNH TỔNG TIỀN ĐÚNG CÁCH:
+    // Tổng = Tiền hàng + VAT + Phí ship - Coupon
+    $totalAmount = $subtotal + $vatAmount + $shippingFee - $couponDiscount;
+    
+    // Debug log
+    error_log("=== TOTAL CALCULATION ===");
+    error_log("Subtotal (tiền hàng): $subtotal");
+    error_log("VAT: $vatAmount");
+    error_log("Shipping Fee: $shippingFee");
+    error_log("Coupon Discount: $couponDiscount");
+    error_log("TOTAL: $totalAmount");
+    error_log("========================");
+    
+    // Lấy tên phương thức vận chuyển
+    require_once '../mod/ShippingMethodCls.php';
+    $shippingMethodObj = new ShippingMethod();
+    $shippingMethodInfo = $shippingMethodObj->getMethodByCode($shippingMethodCode);
+    $shippingMethodName = $shippingMethodInfo['name'] ?? 'Giao hàng tiêu chuẩn';
+    $estimatedDelivery = '';
+    if ($shippingMethodInfo) {
+        $minDays = $shippingMethodInfo['estimated_days_min'];
+        $maxDays = $shippingMethodInfo['estimated_days_max'];
+        if ($minDays == $maxDays) {
+            $estimatedDelivery = $minDays == 0 ? 'Nhận ngay' : date('d/m/Y', strtotime("+{$minDays} weekdays"));
+        } else {
+            $estimatedDelivery = date('d/m/Y', strtotime("+{$minDays} weekdays")) . ' - ' . date('d/m/Y', strtotime("+{$maxDays} weekdays"));
+        }
     }
 
+    // Thêm đơn hàng vào bảng don_hang với đầy đủ thông tin (bao gồm coupon)
+    $insertOrderSql = "INSERT INTO don_hang (ma_don_hang_text, ma_nguoi_dung, dia_chi_giao_hang, tong_tien, thue, phi_van_chuyen, shipping_method, shipping_method_name, estimated_delivery, coupon_code, coupon_discount, trang_thai, phuong_thuc_thanh_toan, trang_thai_thanh_toan, pending_read, ngay_tao, ngay_cap_nhat)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, 0, NOW(), NOW())";
+
     $insertOrderStmt = $conn->prepare($insertOrderSql);
-    if ($hasNotificationColumns) {
-        $insertOrderStmt->execute([$orderCode, $userId, $shippingAddress, $totalAmount, $paymentMethod, $paymentStatus]);
-    } else {
-        $insertOrderStmt->execute([$orderCode, $userId, $shippingAddress, $totalAmount, $paymentMethod, $paymentStatus]);
-    }
+    $insertOrderStmt->execute([$orderCode, $userId, $shippingAddress, $totalAmount, $vatAmount, $shippingFee, $shippingMethodCode, $shippingMethodName, $estimatedDelivery, $couponCode, $couponDiscount, $paymentMethod, $paymentStatus]);
 
     // Lấy ID của đơn hàng vừa thêm
     $orderId = $conn->lastInsertId();
 
     if (class_exists('Logger')) {
         Logger::info("Order created successfully", ['order_id' => $orderId]);
+    }
+    
+    // Ghi nhận sử dụng coupon (nếu có)
+    if ($couponCode && $couponDiscount > 0) {
+        require_once '../mod/CouponCls.php';
+        $couponManager = new Coupon();
+        $couponManager->applyCoupon($couponCode, $orderId, $userId, $couponDiscount);
+        
+        // Xóa coupon khỏi session sau khi đã sử dụng
+        unset($_SESSION['applied_coupon']);
+        unset($_SESSION['coupon_discount']);
+        unset($_SESSION['coupon_data']);
+        
+        error_log("Coupon applied to order: $couponCode, discount: $couponDiscount");
     }
 
     // Thêm các sản phẩm vào bảng order_items
@@ -260,6 +352,11 @@ try {
 
     // Commit transaction
     $conn->commit();
+    
+    // LƯU Ý: Không xóa toàn bộ giỏ hàng ở đây
+    // Các sản phẩm đã thanh toán đã được xóa từng cái trong vòng lặp trên (removeFromCart)
+    // Các sản phẩm còn lại trong giỏ hàng sẽ được giữ nguyên
+    error_log("Order completed successfully. Only purchased items were removed from cart for user: $userId");
 
     // Xóa thông tin đơn hàng khỏi session
     unset($_SESSION['order_details']);
@@ -269,6 +366,7 @@ try {
     // Gửi thông báo cho khách hàng dựa trên phương thức thanh toán
     if ($userId) {
         require_once '../mod/CustomerNotificationManager.php';
+        
         $notificationManager = new CustomerNotificationManager();
 
         // Debug log
@@ -295,6 +393,34 @@ try {
             $message = "Đơn hàng #{$orderCode} đã được tạo thành công với phương thức thanh toán: $paymentMethod";
             $result = $notificationManager->createNotification($userId, $title, $message, 'order_created', $orderId);
             error_log("General notification created: " . ($result ? 'success' : 'failed'));
+        }
+        
+        // Gửi email thông báo đặt hàng thành công
+        // Sử dụng hệ thống email mới với CustomerNotificationManager
+        try {
+            error_log("=== SENDING ORDER SUCCESS EMAIL ===");
+            error_log("Order ID: $orderId, User: $userId, Payment: $paymentMethod");
+            
+            // Gửi email thông báo đặt hàng thành công
+            // notifyOrderSuccess() sẽ tự động:
+            // - Lấy email MỚI NHẤT từ database
+            // - Validate email
+            // - Gửi email với template đẹp
+            // - Tạo notification trong database
+            $emailResult = $notificationManager->notifyOrderSuccess($orderId, $userId);
+            
+            if ($emailResult) {
+                error_log("✅ Order success email sent successfully for order #$orderId");
+            } else {
+                error_log("⚠️ Failed to send order success email for order #$orderId (user may not have email)");
+            }
+            
+            error_log("=== EMAIL SENDING COMPLETED ===");
+            
+        } catch (Exception $e) {
+            error_log("❌ Error sending order success email: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
+            // Không throw exception để không ảnh hưởng đến flow chính
         }
     } else {
         error_log("No user ID found for notification creation");

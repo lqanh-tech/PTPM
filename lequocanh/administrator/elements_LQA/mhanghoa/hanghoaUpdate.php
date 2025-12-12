@@ -208,6 +208,44 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
             </select>
         </div>
 
+        <div class="form-group">
+            <label>Trạng thái sản phẩm: <span class="text-danger">*</span></label>
+            <select name="trang_thai" class="form-control editable-input" required>
+                <option value="1" <?php echo (isset($getHangHoaUpdate->trang_thai) && $getHangHoaUpdate->trang_thai == 1) ? 'selected' : (empty($getHangHoaUpdate->trang_thai) ? 'selected' : ''); ?>>
+                    ✅ Đang bán (có sẵn)
+                </option>
+                <option value="2" <?php echo (isset($getHangHoaUpdate->trang_thai) && $getHangHoaUpdate->trang_thai == 2) ? 'selected' : ''; ?>>
+                    ⛔ Ngừng bán (không kinh doanh)
+                </option>
+                <option value="3" <?php echo (isset($getHangHoaUpdate->trang_thai) && $getHangHoaUpdate->trang_thai == 3) ? 'selected' : ''; ?>>
+                    📦 Hết hàng (tạm hết)
+                </option>
+            </select>
+            <p class="hint">
+                <small>
+                    <strong>Đang bán (1):</strong> Sản phẩm hiển thị bình thường và khách hàng có thể mua (nếu có hàng)<br>
+                    <strong>Ngừng bán (2):</strong> Sản phẩm được ẩn khỏi danh sách, không cho phép mua<br>
+                    <strong>Hết hàng (3):</strong> Sản phẩm hiển thị nhưng có nhãn "Hết hàng", không thể mua
+                </small>
+            </p>
+        </div>
+
+        <?php
+        // Hiển thị thông tin tồn kho nếu có
+        if (isset($getHangHoaUpdate->idhanghoa)) {
+            $tonKho = $hangHoaObj->getTonKho($getHangHoaUpdate->idhanghoa);
+        ?>
+            <div class="form-group">
+                <label>Tồn kho hiện tại:</label>
+                <div class="alert <?php echo $tonKho > 0 ? 'alert-success' : 'alert-warning'; ?>">
+                    <strong><?php echo $tonKho; ?></strong> sản phẩm
+                    <?php if ($tonKho == 0): ?>
+                        <br><small>⚠️ Sản phẩm đang hết hàng. Hãy nhập thêm hàng hoặc đặt trạng thái "Hết hàng".</small>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php } ?>
+
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">Cập nhật</button>
         </div>
@@ -418,8 +456,8 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
             .then(data => {
                 console.log("Response:", data);
                 if (data.success) {
-                    // Redirect to the list page
-                    window.top.location.href = "/administrator/index.php?req=hanghoaview";
+                    // Redirect to the list page - sử dụng URL tương đối
+                    window.location.href = "../../index.php?req=hanghoaview";
                 } else {
                     // Show error
                     alert("Lỗi: " + data.message);

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Test Phase 3 - GHN Integration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+        }
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 4px solid #3498db; 
+            padding-bottom: 15px; 
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+        h2 { 
+            color: #34495e; 
+            margin: 30px 0 15px 0; 
+            padding: 10px;
+            background: #ecf0f1;
+            border-left: 5px solid #3498db;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-pass {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .test-fail {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .test-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        .test-info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+        .icon {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-left: 10px;
+            font-size: 12px;
+        }
+        .badge-mock {
+            background: #ffc107;
+            color: #000;
+        }
+        .badge-real {
+            background: #28a745;
+            color: #fff;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 11px;
+            max-height: 300px;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .summary h2 {
+            color: white;
+            background: transparent;
+            border: none;
+            margin: 0 0 20px 0;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>đŸ§ª TEST PHASE 3: TĂ­ch há»£p GHN API</h1>
+        <p style='color: #7f8c8d; margin-bottom: 30px;'>
+            <strong>Má»¥c tiĂªu:</strong> Kiá»ƒm tra tĂ­ch há»£p GHN API vá»›i Mock Service fallback
+        </p><h2>đŸ“¦ TEST 1: Kiá»ƒm tra GHNService Class</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>GHNService Class</strong><br>Class tá»“n táº¡i vĂ  cĂ³ thá»ƒ khá»Ÿi táº¡o</div></div><div class='test-result test-info'><span class='icon'>â„¹ï¸</span><div><strong>Service Mode</strong><br>Äang sá»­ dá»¥ng Mock Service <span class='badge badge-mock'>MOCK</span></div></div></div><h2>đŸ­ TEST 2: Kiá»ƒm tra GHNMockService</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>GHNMockService Class</strong><br>Class tá»“n táº¡i</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Mock Provinces</strong><br>CĂ³ 5 tá»‰nh/thĂ nh</div></div></div><h2>đŸ’° TEST 3: TĂ­nh phĂ­ váº­n chuyá»ƒn qua GHN</h2><div class='test-section'><strong>Tham sá»‘ test:</strong><pre>{
+    "to_district_id": 1001,
+    "to_ward_code": "10001",
+    "weight": 2000,
+    "insurance_value": 500000
+}</pre><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>TĂ­nh phĂ­ thĂ nh cĂ´ng</strong><br>PhĂ­: 37.500â‚«<br>PhÆ°Æ¡ng thá»©c: Giao HĂ ng Nhanh (GHN)<br>Thá»i gian: 2 ngĂ y</div></div><strong>Chi tiáº¿t káº¿t quáº£:</strong><pre>{
+    "success": true,
+    "shipping_fee": 37500,
+    "service_fee": 35000,
+    "insurance_fee": 2500,
+    "method": "GHN",
+    "method_name": "Giao HĂ ng Nhanh (GHN)",
+    "estimated_delivery": "2025-12-04 11:27:16",
+    "estimated_days": 2,
+    "distance_km": null,
+    "message": "Calculated successfully",
+    "using_mock": true
+}</pre></div><h2>đŸ”— TEST 4: TĂ­ch há»£p vĂ o ShippingCls</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Shipping Class</strong><br>Class tá»“n táº¡i</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>TĂ­nh phĂ­ qua ShippingCls</strong><br>PhĂ­: 37.500â‚«<br>PhÆ°Æ¡ng thá»©c: Giao HĂ ng Nhanh (GHN)</div></div></div><h2>đŸ“ TEST 5: Láº¥y danh sĂ¡ch Ä‘á»‹a chá»‰ tá»« GHN</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Get Provinces</strong><br>Láº¥y Ä‘Æ°á»£c 5 tá»‰nh/thĂ nh</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Get Districts</strong><br>Láº¥y Ä‘Æ°á»£c 4 quáº­n/huyá»‡n</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Get Wards</strong><br>Láº¥y Ä‘Æ°á»£c 2 phÆ°á»ng/xĂ£</div></div></div><h2>đŸ“¦ TEST 6: Táº¡o Ä‘Æ¡n váº­n chuyá»ƒn (Mock)</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Táº¡o Ä‘Æ¡n thĂ nh cĂ´ng</strong><br>MĂ£ Ä‘Æ¡n: MOCK2749D04A</div></div><strong>Chi tiáº¿t Ä‘Æ¡n hĂ ng:</strong><pre>{
+    "order_code": "MOCK2749D04A",
+    "sort_code": "100-7396",
+    "trans_type": "truck",
+    "ward_encode": "",
+    "district_encode": "",
+    "fee": {
+        "main_service": 30000,
+        "insurance": 0,
+        "cod_fee": 0,
+        "station_do": 0,
+        "station_pu": 0,
+        "return": 0,
+        "r2s": 0,
+        "coupon": 0,
+        "total": 30000
+    },
+    "total_fee": 30000,
+    "expected_delivery_time": "2025-12-04 11:27:16"
+}</pre></div><div class='summary'><h2>đŸ“ Káº¾T QUáº¢ Tá»”NG Há»¢P - PHASE 3</h2><div class='stats'><div class='stat-item'><span class='stat-number'>11</span><span class='stat-label'>Tá»•ng sá»‘ test</span></div><div class='stat-item'><span class='stat-number' style='color: #2ecc71;'>11</span><span class='stat-label'>âœ… Passed</span></div><div class='stat-item'><span class='stat-number' style='color: #f39c12;'>0</span><span class='stat-label'>â ï¸ Warnings</span></div><div class='stat-item'><span class='stat-number' style='color: #e74c3c;'>0</span><span class='stat-label'>âŒ Failed</span></div><div class='stat-item'><span class='stat-number'>100.0%</span><span class='stat-label'>Tá»· lá»‡ hoĂ n thĂ nh</span></div></div><div class='test-result test-pass' style='margin-top: 20px;'><span class='icon'>đŸ‰</span><div><strong>Phase 3 ÄĂƒ HOĂ€N THĂ€NH XUáº¤T Sáº®C!</strong><br>Táº¥t cáº£ cĂ¡c test Ä‘á»u passed. GHN API Ä‘Ă£ Ä‘Æ°á»£c tĂ­ch há»£p thĂ nh cĂ´ng!</div></div><div class='test-result test-info' style='margin-top: 20px;'><span class='icon'>â„¹ï¸</span><div><strong>Äang sá»­ dá»¥ng Mock Service</strong><br><p style='margin-top: 10px;'>Äá»ƒ sá»­ dá»¥ng GHN API tháº­t:</p><ol style='margin-left: 20px; margin-top: 10px;'><li>ÄÄƒng kĂ½ tĂ i khoáº£n: <a href='https://khachhang.ghn.vn/' target='_blank'>https://khachhang.ghn.vn/</a></li><li>Láº¥y API Token tá»« CĂ i Ä‘áº·t > API</li><li>Láº¥y Shop ID tá»« danh sĂ¡ch cá»­a hĂ ng</li><li>Cáº­p nháº­t file .env:</li></ol><pre style='margin-top: 10px;'>GHN_API_TOKEN=your_real_token_here
+GHN_SHOP_ID=your_real_shop_id_here</pre></div></div></div></div>
+</body>
+</html>

@@ -31,13 +31,21 @@ $(document).ready(function () {
       !diachi ||
       !dienthoai
     ) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      if (typeof Toast !== 'undefined') {
+        Toast.error("Vui lòng điền đầy đủ thông tin!");
+      } else {
+        alert("Vui lòng điền đầy đủ thông tin!");
+      }
       return false;
     }
 
     // Kiểm tra số điện thoại
     if (!/^[0-9]{10}$/.test(dienthoai)) {
-      alert("Số điện thoại phải có 10 chữ số!");
+      if (typeof Toast !== 'undefined') {
+        Toast.error("Số điện thoại phải có 10 chữ số!");
+      } else {
+        alert("Số điện thoại phải có 10 chữ số!");
+      }
       return false;
     }
 

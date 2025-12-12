@@ -3,7 +3,7 @@
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
-$isAdmin = isset($_SESSION['ADMIN']);
+$isAdmin = isset($_SESSION['ADMIN']) || $phanQuyen->isAdmin($username);
 $isNhanVien = $phanQuyen->isNhanVien($username);
 ?>
 <div class="left-menu">
@@ -40,19 +40,25 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
                 'nhacungcapview' => ['icon' => 'fas fa-truck', 'text' => 'Nhà cung cấp', 'admin_only' => false, 'hide_from_employee' => false],
                 'mphieunhap' => ['icon' => 'fas fa-file-invoice', 'text' => 'Phiếu nhập kho', 'admin_only' => false, 'hide_from_employee' => false],
                 'mtonkho' => ['icon' => 'fas fa-warehouse', 'text' => 'Tồn kho', 'admin_only' => false, 'hide_from_employee' => false],
-                'lichsumuahang' => ['icon' => 'fas fa-history', 'text' => 'Lịch sử mua hàng', 'admin_only' => false, 'hide_from_employee' => false],
                 'baocaoview' => ['icon' => 'fas fa-chart-line', 'text' => 'Báo cáo tổng hợp', 'admin_only' => false, 'hide_from_employee' => false],
                 'doanhThuView' => ['icon' => 'fas fa-money-bill-wave', 'text' => 'Báo cáo doanh thu', 'admin_only' => false, 'hide_from_employee' => false],
                 'sanPhamBanChayView' => ['icon' => 'fas fa-fire', 'text' => 'Sản phẩm bán chạy', 'admin_only' => false, 'hide_from_employee' => false],
                 'loiNhuanView' => ['icon' => 'fas fa-chart-pie', 'text' => 'Báo cáo lợi nhuận', 'admin_only' => false, 'hide_from_employee' => false],
                 'nhatKyHoatDongTichHop' => ['icon' => 'fas fa-chart-bar', 'text' => 'Thống kê hoạt động nhân viên', 'admin_only' => false, 'hide_from_employee' => true],
+                'sanphamnoibat' => ['icon' => 'fas fa-star', 'text' => 'Sản phẩm nổi bật', 'admin_only' => false, 'hide_from_employee' => false],
+                'marketing_content' => ['icon' => 'fas fa-bullhorn', 'text' => 'Nội dung Marketing', 'admin_only' => false, 'hide_from_employee' => false],
+                'review_management' => ['icon' => 'fas fa-comments', 'text' => 'Quản lý bình luận', 'admin_only' => false, 'hide_from_employee' => false],
+                'support_tickets' => ['icon' => 'fas fa-headset', 'text' => 'Hỗ trợ khách hàng', 'admin_only' => false, 'hide_from_employee' => false],
+                'coupon' => ['icon' => 'fas fa-ticket-alt', 'text' => 'Mã giảm giá (Coupon)', 'admin_only' => true, 'hide_from_employee' => true],
+                'shipping_config' => ['icon' => 'fas fa-shipping-fast', 'text' => 'Cấu hình vận chuyển', 'admin_only' => true, 'hide_from_employee' => true, 'dev' => true],
+                'shipping_dashboard' => ['icon' => 'fas fa-truck-loading', 'text' => 'Dashboard vận chuyển', 'admin_only' => true, 'hide_from_employee' => true, 'dev' => true],
             ];
 
             foreach ($menu_items as $req => $item) {
                 $shouldShow = false;
 
-                // Nếu là admin thật (không phải manager), hiển thị tất cả menu
-                if ($isAdmin && $username === 'admin') {
+                // Nếu là admin (bất kỳ tài khoản admin nào), hiển thị tất cả menu
+                if ($isAdmin) {
                     $shouldShow = true;
                 }
                 // GIẢI PHÁP TẠM THỜI: Hardcode quyền cho các manager/staff
@@ -115,7 +121,8 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
                 // Chỉ hiển thị menu nếu có quyền
                 if ($shouldShow) {
                     $active_class = ($current_page === $req) ? 'active' : '';
-                    echo "<li><a href='index.php?req=$req' class='$active_class'><i class='{$item['icon']}'></i> {$item['text']}</a></li>";
+                    $devBadge = isset($item['dev']) && $item['dev'] ? ' <span style="font-size:9px;background:#ff9800;color:#fff;padding:1px 4px;border-radius:3px;margin-left:3px;">DEV</span>' : '';
+                    echo "<li><a href='index.php?req=$req' class='$active_class'><i class='{$item['icon']}'></i> {$item['text']}{$devBadge}</a></li>";
                 }
             }
             ?>

@@ -39,7 +39,7 @@ class ThongBao
     {
         try {
             // Kiểm tra xem cột notification_hidden có tồn tại không
-            $checkColumnSql = "SHOW COLUMNS FROM orders LIKE 'notification_hidden'";
+            $checkColumnSql = "SHOW COLUMNS FROM don_hang LIKE 'notification_hidden'";
             $checkColumnStmt = $this->db->prepare($checkColumnSql);
             $checkColumnStmt->execute();
             $hasNotificationHiddenColumn = ($checkColumnStmt->rowCount() > 0);
@@ -47,22 +47,22 @@ class ThongBao
             // Tạo câu truy vấn SQL dựa trên việc có cột notification_hidden hay không
             if ($hasNotificationHiddenColumn) {
                 // Lấy số lượng đơn hàng có trạng thái mới (pending, approved, cancelled) mà người dùng chưa đọc và chưa ẩn
-                $sql = "SELECT COUNT(*) as count FROM orders
-                        WHERE user_id = ?
+                $sql = "SELECT COUNT(*) as count FROM don_hang
+                        WHERE ma_nguoi_dung = ?
                         AND (notification_hidden = 0 OR notification_hidden IS NULL)
                         AND (
-                            (status = 'pending' AND pending_read = 0) OR
-                            (status = 'approved' AND approved_read = 0) OR
-                            (status = 'cancelled' AND cancelled_read = 0)
+                            (trang_thai = 'pending' AND pending_read = 0) OR
+                            (trang_thai = 'approved' AND approved_read = 0) OR
+                            (trang_thai = 'cancelled' AND cancelled_read = 0)
                         )";
             } else {
                 // Lấy số lượng đơn hàng có trạng thái mới (pending, approved, cancelled) mà người dùng chưa đọc
-                $sql = "SELECT COUNT(*) as count FROM orders
-                        WHERE user_id = ?
+                $sql = "SELECT COUNT(*) as count FROM don_hang
+                        WHERE ma_nguoi_dung = ?
                         AND (
-                            (status = 'pending' AND pending_read = 0) OR
-                            (status = 'approved' AND approved_read = 0) OR
-                            (status = 'cancelled' AND cancelled_read = 0)
+                            (trang_thai = 'pending' AND pending_read = 0) OR
+                            (trang_thai = 'approved' AND approved_read = 0) OR
+                            (trang_thai = 'cancelled' AND cancelled_read = 0)
                         )";
             }
 
@@ -87,33 +87,33 @@ class ThongBao
     {
         try {
             // Kiểm tra xem cột notification_hidden có tồn tại không
-            $checkColumnSql = "SHOW COLUMNS FROM orders LIKE 'notification_hidden'";
+            $checkColumnSql = "SHOW COLUMNS FROM don_hang LIKE 'notification_hidden'";
             $checkColumnStmt = $this->db->prepare($checkColumnSql);
             $checkColumnStmt->execute();
             $hasNotificationHiddenColumn = ($checkColumnStmt->rowCount() > 0);
 
             // Tạo câu truy vấn SQL dựa trên việc có cột notification_hidden hay không
             if ($hasNotificationHiddenColumn) {
-                $sql = "SELECT id, order_code, status, total_amount, created_at, updated_at,
+                $sql = "SELECT id, ma_don_hang_text as order_code, trang_thai as status, tong_tien as total_amount, ngay_tao as created_at, ngay_cap_nhat as updated_at,
                         CASE
-                            WHEN status = 'pending' THEN pending_read
-                            WHEN status = 'approved' THEN approved_read
-                            WHEN status = 'cancelled' THEN cancelled_read
+                            WHEN trang_thai = 'pending' THEN pending_read
+                            WHEN trang_thai = 'approved' THEN approved_read
+                            WHEN trang_thai = 'cancelled' THEN cancelled_read
                         END as is_read
-                        FROM orders
-                        WHERE user_id = ? AND (notification_hidden = 0 OR notification_hidden IS NULL)
-                        ORDER BY updated_at DESC
+                        FROM don_hang
+                        WHERE ma_nguoi_dung = ? AND (notification_hidden = 0 OR notification_hidden IS NULL)
+                        ORDER BY ngay_cap_nhat DESC
                         LIMIT 10";
             } else {
-                $sql = "SELECT id, order_code, status, total_amount, created_at, updated_at,
+                $sql = "SELECT id, ma_don_hang_text as order_code, trang_thai as status, tong_tien as total_amount, ngay_tao as created_at, ngay_cap_nhat as updated_at,
                         CASE
-                            WHEN status = 'pending' THEN pending_read
-                            WHEN status = 'approved' THEN approved_read
-                            WHEN status = 'cancelled' THEN cancelled_read
+                            WHEN trang_thai = 'pending' THEN pending_read
+                            WHEN trang_thai = 'approved' THEN approved_read
+                            WHEN trang_thai = 'cancelled' THEN cancelled_read
                         END as is_read
-                        FROM orders
-                        WHERE user_id = ?
-                        ORDER BY updated_at DESC
+                        FROM don_hang
+                        WHERE ma_nguoi_dung = ?
+                        ORDER BY ngay_cap_nhat DESC
                         LIMIT 10";
             }
 
@@ -139,7 +139,7 @@ class ThongBao
     {
         try {
             // Kiểm tra xem đơn hàng có thuộc về người dùng không
-            $checkSql = "SELECT id FROM orders WHERE id = ? AND user_id = ?";
+            $checkSql = "SELECT id FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute([$orderId, $userId]);
 
@@ -164,7 +164,7 @@ class ThongBao
                     return false;
             }
 
-            $sql = "UPDATE orders SET $field = 1 WHERE id = ? AND user_id = ?";
+            $sql = "UPDATE don_hang SET $field = 1 WHERE id = ? AND ma_nguoi_dung = ?";
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([$orderId, $userId]);
         } catch (PDOException $e) {
@@ -182,11 +182,11 @@ class ThongBao
     public function markAllNotificationsAsRead($userId)
     {
         try {
-            $sql = "UPDATE orders SET
+            $sql = "UPDATE don_hang SET
                     pending_read = 1,
                     approved_read = 1,
                     cancelled_read = 1
-                    WHERE user_id = ?";
+                    WHERE ma_nguoi_dung = ?";
 
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([$userId]);
@@ -206,24 +206,24 @@ class ThongBao
     {
         try {
             // Lưu ý: Chúng ta không thực sự xóa đơn hàng, chỉ đánh dấu là đã ẩn khỏi thông báo
-            // Thêm cột notification_hidden vào bảng orders nếu chưa có
-            $checkColumnSql = "SHOW COLUMNS FROM orders LIKE 'notification_hidden'";
+            // Thêm cột notification_hidden vào bảng don_hang nếu chưa có
+            $checkColumnSql = "SHOW COLUMNS FROM don_hang LIKE 'notification_hidden'";
             $checkColumnStmt = $this->db->prepare($checkColumnSql);
             $checkColumnStmt->execute();
 
             if ($checkColumnStmt->rowCount() == 0) {
                 // Cột chưa tồn tại, thêm vào
-                $addColumnSql = "ALTER TABLE orders ADD COLUMN notification_hidden TINYINT(1) NOT NULL DEFAULT 0";
+                $addColumnSql = "ALTER TABLE don_hang ADD COLUMN notification_hidden TINYINT(1) NOT NULL DEFAULT 0";
                 $this->db->exec($addColumnSql);
-                error_log("Đã thêm cột notification_hidden vào bảng orders");
+                error_log("Đã thêm cột notification_hidden vào bảng don_hang");
             }
 
             // Đánh dấu các thông báo đã đọc là đã ẩn
-            $sql = "UPDATE orders SET notification_hidden = 1
-                    WHERE user_id = ? AND (
-                        (status = 'pending' AND pending_read = 1) OR
-                        (status = 'approved' AND approved_read = 1) OR
-                        (status = 'cancelled' AND cancelled_read = 1)
+            $sql = "UPDATE don_hang SET notification_hidden = 1
+                    WHERE ma_nguoi_dung = ? AND (
+                        (trang_thai = 'pending' AND pending_read = 1) OR
+                        (trang_thai = 'approved' AND approved_read = 1) OR
+                        (trang_thai = 'cancelled' AND cancelled_read = 1)
                     )";
 
             $stmt = $this->db->prepare($sql);
@@ -245,7 +245,7 @@ class ThongBao
     {
         try {
             // Kiểm tra xem đơn hàng có thuộc về người dùng không
-            $checkSql = "SELECT id FROM orders WHERE id = ? AND user_id = ?";
+            $checkSql = "SELECT id FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute([$orderId, $userId]);
 
@@ -256,19 +256,19 @@ class ThongBao
             }
 
             // Kiểm tra xem cột notification_hidden có tồn tại không
-            $checkColumnSql = "SHOW COLUMNS FROM orders LIKE 'notification_hidden'";
+            $checkColumnSql = "SHOW COLUMNS FROM don_hang LIKE 'notification_hidden'";
             $checkColumnStmt = $this->db->prepare($checkColumnSql);
             $checkColumnStmt->execute();
 
             if ($checkColumnStmt->rowCount() == 0) {
                 // Cột chưa tồn tại, thêm vào
-                $addColumnSql = "ALTER TABLE orders ADD COLUMN notification_hidden TINYINT(1) NOT NULL DEFAULT 0";
+                $addColumnSql = "ALTER TABLE don_hang ADD COLUMN notification_hidden TINYINT(1) NOT NULL DEFAULT 0";
                 $this->db->exec($addColumnSql);
-                error_log("Đã thêm cột notification_hidden vào bảng orders");
+                error_log("Đã thêm cột notification_hidden vào bảng don_hang");
             }
 
             // Đánh dấu thông báo là đã ẩn
-            $sql = "UPDATE orders SET notification_hidden = 1 WHERE id = ? AND user_id = ?";
+            $sql = "UPDATE don_hang SET notification_hidden = 1 WHERE id = ? AND ma_nguoi_dung = ?";
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([$orderId, $userId]);
         } catch (PDOException $e) {

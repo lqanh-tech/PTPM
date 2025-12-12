@@ -1,438 +1,707 @@
 <?php
 require_once './elements_LQA/mod/userCls.php';
 require_once './elements_LQA/mod/userRoleCls.php';
+require_once './elements_LQA/mod/database.php';
+
+$errors = [];
+$success = false;
+$formData = [
+    'username' => '',
+    'fullname' => '',
+    'gender' => '',
+    'birthdate' => '',
+    'address' => '',
+    'phone' => '',
+    'email' => ''
+];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Bật hiển thị lỗi để dễ debug
-    ini_set('display_errors', 1);
-    ini_set('display_startup_errors', 1);
-    error_reporting(E_ALL);
-
     $user = new user();
     $userRole = new UserRole();
+    $db = Database::getInstance()->getConnection();
 
     // Lấy dữ liệu từ form
-    $username = $_POST['username'];
-    $password = $_POST['password'];
-    $fullname = $_POST['fullname'];
-    $gender = $_POST['gender'] === 'male' ? '1' : '0'; // Chuyển đổi gender sang 1/0
-    $birthdate = $_POST['birthdate'];
-    $address = $_POST['address'];
-    $phone = $_POST['phone'];
+    $formData['username'] = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+    $formData['fullname'] = trim($_POST['fullname'] ?? '');
+    $formData['gender'] = $_POST['gender'] ?? '';
+    $formData['birthdate'] = $_POST['birthdate'] ?? '';
+    $formData['address'] = trim($_POST['address'] ?? '');
+    $formData['phone'] = trim($_POST['phone'] ?? '');
+    $formData['email'] = trim($_POST['email'] ?? '');
 
-    // Kiểm tra username có chứa dấu cách không
-    if (strpos($username, ' ') !== false) {
-        $error = "Tên đăng nhập không được chứa dấu cách!";
+    // === VALIDATION ===
+    
+    // 1. Username (BẮT BUỘC)
+    if (empty($formData['username'])) {
+        $errors['username'] = 'Vui lòng nhập tên đăng nhập';
+    } elseif (strlen($formData['username']) < 4) {
+        $errors['username'] = 'Tên đăng nhập phải có ít nhất 4 ký tự';
+    } elseif (strlen($formData['username']) > 30) {
+        $errors['username'] = 'Tên đăng nhập không được quá 30 ký tự';
+    } elseif (strpos($formData['username'], ' ') !== false) {
+        $errors['username'] = 'Tên đăng nhập không được chứa dấu cách';
+    } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $formData['username'])) {
+        $errors['username'] = 'Tên đăng nhập chỉ được chứa chữ cái, số và dấu gạch dưới';
+    } elseif ($user->UserCheckUsername($formData['username'])) {
+        $errors['username'] = 'Tên đăng nhập đã được sử dụng';
     }
-    // Kiểm tra username đã tồn tại chưa
-    else if ($user->UserCheckUsername($username)) {
-        $error = "Tên đăng nhập đã tồn tại!";
+
+    // 2. Password (BẮT BUỘC)
+    if (empty($password)) {
+        $errors['password'] = 'Vui lòng nhập mật khẩu';
+    } elseif (strlen($password) < 6) {
+        $errors['password'] = 'Mật khẩu phải có ít nhất 6 ký tự';
+    } elseif (strlen($password) > 50) {
+        $errors['password'] = 'Mật khẩu không được quá 50 ký tự';
+    }
+    
+    // 3. Confirm Password (BẮT BUỘC)
+    if (empty($confirmPassword)) {
+        $errors['confirm_password'] = 'Vui lòng xác nhận mật khẩu';
+    } elseif ($password !== $confirmPassword) {
+        $errors['confirm_password'] = 'Mật khẩu xác nhận không khớp';
+    }
+    
+    // 4. Họ tên (BẮT BUỘC)
+    if (empty($formData['fullname'])) {
+        $errors['fullname'] = 'Vui lòng nhập họ tên';
+    } elseif (strlen($formData['fullname']) < 2) {
+        $errors['fullname'] = 'Họ tên phải có ít nhất 2 ký tự';
+    } elseif (strlen($formData['fullname']) > 100) {
+        $errors['fullname'] = 'Họ tên không được quá 100 ký tự';
+    }
+    
+    // 5. Giới tính (KHÔNG BẮT BUỘC)
+    $genderValue = '1'; // Mặc định Nam
+    if (!empty($formData['gender'])) {
+        if (!in_array($formData['gender'], ['male', 'female'])) {
+            $errors['gender'] = 'Giới tính không hợp lệ';
+        } else {
+            $genderValue = $formData['gender'] === 'male' ? '1' : '0';
+        }
+    }
+    
+    // 6. Ngày sinh (KHÔNG BẮT BUỘC nhưng phải hợp lệ nếu nhập)
+    if (!empty($formData['birthdate'])) {
+        $birthDate = strtotime($formData['birthdate']);
+        $minAge = strtotime('-100 years');
+        $maxAge = strtotime('-10 years'); // Tối thiểu 10 tuổi
+        
+        if ($birthDate === false) {
+            $errors['birthdate'] = 'Ngày sinh không hợp lệ';
+        } elseif ($birthDate < $minAge) {
+            $errors['birthdate'] = 'Ngày sinh không hợp lệ';
+        } elseif ($birthDate > $maxAge) {
+            $errors['birthdate'] = 'Bạn phải từ 10 tuổi trở lên để đăng ký';
+        }
+    }
+
+    // 7. Địa chỉ (KHÔNG BẮT BUỘC)
+    if (!empty($formData['address']) && strlen($formData['address']) > 255) {
+        $errors['address'] = 'Địa chỉ không được quá 255 ký tự';
+    }
+    
+    // 8. Số điện thoại (BẮT BUỘC)
+    if (empty($formData['phone'])) {
+        $errors['phone'] = 'Vui lòng nhập số điện thoại';
+    } elseif (!preg_match('/^[0-9]{10,11}$/', $formData['phone'])) {
+        $errors['phone'] = 'Số điện thoại phải có 10-11 chữ số';
+    } elseif (!preg_match('/^(0[3|5|7|8|9])[0-9]{8}$/', $formData['phone'])) {
+        $errors['phone'] = 'Số điện thoại không đúng định dạng Việt Nam (VD: 0912345678)';
     } else {
+        // Kiểm tra trùng số điện thoại
+        $stmt = $db->prepare("SELECT COUNT(*) FROM user WHERE dienthoai = ?");
+        $stmt->execute([$formData['phone']]);
+        if ($stmt->fetchColumn() > 0) {
+            $errors['phone'] = 'Số điện thoại đã được đăng ký bởi tài khoản khác';
+        }
+    }
+    
+    // 9. Email (KHÔNG BẮT BUỘC nhưng phải hợp lệ và không trùng nếu nhập)
+    if (!empty($formData['email'])) {
+        if (!filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Email không đúng định dạng';
+        } elseif (strlen($formData['email']) > 100) {
+            $errors['email'] = 'Email không được quá 100 ký tự';
+        } else {
+            // Kiểm tra trùng email
+            $stmt = $db->prepare("SELECT COUNT(*) FROM user WHERE email = ? AND email != ''");
+            $stmt->execute([$formData['email']]);
+            if ($stmt->fetchColumn() > 0) {
+                $errors['email'] = 'Email đã được đăng ký bởi tài khoản khác';
+            }
+        }
+    }
+    
+    // === ĐĂNG KÝ NẾU KHÔNG CÓ LỖI ===
+    if (empty($errors)) {
         try {
-            // Thực hiện đăng ký sử dụng UserAdd
             $result = $user->UserAdd(
-                $username,
+                $formData['username'],
                 $password,
-                $fullname,
-                $gender,
-                $birthdate,
-                $address,
-                $phone
+                $formData['fullname'],
+                $genderValue,
+                $formData['birthdate'] ?: null,
+                $formData['address'] ?: null,
+                $formData['phone'],
+                $formData['email'] ?: null
             );
 
             if ($result) {
-                // Lấy ID của người dùng vừa tạo
-                $db = Database::getInstance()->getConnection();
                 $newUserId = $db->lastInsertId();
-
-                // Ghi log
-                error_log("Đã tạo người dùng mới với ID: $newUserId, Username: $username");
-
-                // Gán vai trò mặc định (customer) cho người dùng mới
-                $roleResult = $userRole->assignDefaultRole($newUserId);
-
-                if ($roleResult) {
-                    error_log("Đã gán vai trò 'customer' cho người dùng $username (ID: $newUserId)");
-                } else {
-                    error_log("Không thể gán vai trò 'customer' cho người dùng $username (ID: $newUserId)");
-                    // Vẫn cho phép đăng ký thành công ngay cả khi không gán được vai trò
-                }
-
-                // Đăng ký thành công, chuyển hướng đến trang đăng nhập
+                $userRole->assignDefaultRole($newUserId);
                 header("Location: userLogin.php?register=success");
                 exit();
             } else {
-                $error = "Có lỗi xảy ra trong quá trình đăng ký!";
-                error_log("Lỗi khi thêm người dùng mới: $username");
+                $errors['general'] = 'Có lỗi xảy ra trong quá trình đăng ký. Vui lòng thử lại.';
             }
         } catch (Exception $e) {
-            $error = "Có lỗi xảy ra trong quá trình đăng ký: " . $e->getMessage();
-            error_log("Exception khi đăng ký người dùng: " . $e->getMessage());
+            $errors['general'] = 'Có lỗi xảy ra: ' . $e->getMessage();
         }
     }
 }
 ?>
-
-<!doctype html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html lang="vi">
 <head>
-    <title>Đăng ký</title>
+    <title>Đăng ký tài khoản - LQA Shop</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-
         .signup-container {
             background: white;
             border-radius: 20px;
-            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
             max-width: 500px;
             width: 100%;
             padding: 2rem;
-            position: relative;
         }
-
         .signup-header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
-
         .signup-header h2 {
             color: #2c3e50;
             font-weight: 700;
+        }
+        .form-group {
             margin-bottom: 1rem;
         }
-
-        .signup-header p {
-            color: #7f8c8d;
-            font-size: 0.9rem;
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.3rem;
         }
-
-        .form-floating {
-            margin-bottom: 1rem;
+        .form-label .required {
+            color: #dc3545;
+            margin-left: 2px;
         }
-
-        .form-floating input {
+        .form-label .optional {
+            color: #6c757d;
+            font-weight: normal;
+            font-size: 0.85rem;
+        }
+        .form-control, .form-select {
             border-radius: 10px;
-            border: 2px solid #eee;
-            padding: 1rem 0.75rem;
+            border: 2px solid #e9ecef;
+            padding: 0.7rem 1rem;
+            transition: all 0.3s;
         }
-
-        .form-floating input:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
         }
-
-        .form-floating label {
-            padding: 1rem 0.75rem;
+        .form-control.is-valid {
+            border-color: #28a745;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+            padding-right: 2.5rem;
         }
-
+        .form-control.is-invalid, .form-select.is-invalid {
+            border-color: #dc3545;
+        }
+        .invalid-feedback {
+            display: none;
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        .form-control.is-invalid + .invalid-feedback,
+        .form-select.is-invalid + .invalid-feedback {
+            display: block;
+        }
+        .valid-feedback {
+            display: none;
+            color: #28a745;
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+        }
+        .form-control.is-valid + .valid-feedback {
+            display: block;
+        }
         .btn-signup {
             width: 100%;
-            padding: 0.8rem;
-            border-radius: 10px;
-            background: linear-gradient(45deg, #0d6efd, #0dcaf0);
+            padding: 0.9rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border: none;
+            border-radius: 10px;
             color: white;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
-
-        .btn-signup:hover {
+        .btn-signup:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
-
-        .divider {
-            text-align: center;
-            margin: 1.5rem 0;
-            position: relative;
+        .btn-signup:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            width: 45%;
-            height: 1px;
-            background: #eee;
-        }
-
-        .divider::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            width: 45%;
-            height: 1px;
-            background: #eee;
-        }
-
-        .social-signup {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .social-btn {
-            flex: 1;
-            padding: 0.8rem;
-            border-radius: 10px;
-            border: 2px solid #eee;
-            background: white;
-            color: #333;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .social-btn:hover {
-            background: #f8f9fa;
-            transform: translateY(-2px);
-        }
-
-        .social-btn i {
-            font-size: 1.2rem;
-        }
-
         .login-link {
             text-align: center;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
             border-top: 1px solid #eee;
         }
-
         .login-link a {
-            color: #0d6efd;
+            color: #667eea;
             text-decoration: none;
             font-weight: 500;
-            transition: all 0.3s ease;
-            position: relative;
         }
-
-        .login-link a:hover {
-            color: #0a58ca;
+        .password-strength {
+            height: 5px;
+            border-radius: 3px;
+            margin-top: 5px;
+            transition: all 0.3s;
         }
-
-        .login-link a::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 2px;
-            background: #0d6efd;
-            left: 0;
-            bottom: -2px;
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
+        .strength-weak { background: #dc3545; width: 33%; }
+        .strength-medium { background: #ffc107; width: 66%; }
+        .strength-strong { background: #28a745; width: 100%; }
+        .input-group-text {
+            cursor: pointer;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-left: none;
+            border-radius: 0 10px 10px 0;
         }
-
-        .login-link a:hover::after {
-            transform: scaleX(1);
+        .form-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 0.25rem;
         }
-
-        /* Animation cho form validation */
-        .form-floating input.is-invalid {
-            animation: shake 0.5s;
+        .checking-indicator {
+            display: none;
+            color: #6c757d;
+            font-size: 0.85rem;
         }
-
-        @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            25% {
-                transform: translateX(-5px);
-            }
-
-            75% {
-                transform: translateX(5px);
-            }
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 576px) {
-            .signup-container {
-                padding: 1.5rem;
-            }
-
-            .social-signup {
-                flex-direction: column;
-            }
-        }
-
-        /* Thêm style cho select giới tính */
-        .form-select {
-            border-radius: 10px;
-            border: 2px solid #eee;
-            padding: 1rem 0.75rem;
-            height: calc(3.5rem + 2px);
-        }
-
-        .form-select:focus {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
-        }
-
-        /* Style cho date input */
-        input[type="date"] {
-            min-height: calc(3.5rem + 2px);
+        .checking-indicator.show {
+            display: inline;
         }
     </style>
 </head>
-
 <body>
-    <div class="signup-container">
-        <div class="signup-header">
-            <h2>Đăng Ký Tài Khoản</h2>
-            <p>Vui lòng điền đầy đủ thông tin để tạo tài khoản</p>
-        </div>
-
-        <form id="signupForm" method="POST" action="">
-            <?php if (isset($error)): ?>
-                <div class="alert alert-danger" role="alert">
-                    <?php echo $error; ?>
-                </div>
-            <?php endif; ?>
-
-            <div class="form-floating">
-                <input type="text" class="form-control" id="username" name="username" placeholder="Tên đăng nhập">
-                <label for="username"><i class="fas fa-user me-2"></i>Tên đăng nhập</label>
-                <div class="form-text text-danger mt-1">
-                    <i class="fas fa-exclamation-triangle me-1"></i> Vui lòng không sử dụng dấu cách trong tên đăng nhập
-                </div>
-            </div>
-
-            <div class="form-floating">
-                <input type="password" class="form-control" id="password" name="password" placeholder="Mật khẩu">
-                <label for="password"><i class="fas fa-lock me-2"></i>Mật khẩu</label>
-            </div>
-
-            <div class="form-floating">
-                <input type="text" class="form-control" id="fullname" name="fullname" placeholder="Họ tên">
-                <label for="fullname"><i class="fas fa-file-signature me-2"></i>Họ tên</label>
-            </div>
-
-            <div class="form-floating">
-                <select class="form-select" id="gender" name="gender">
-                    <option value="">Chọn giới tính</option>
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                </select>
-                <label for="gender"><i class="fas fa-venus-mars me-2"></i>Giới tính</label>
-            </div>
-
-            <div class="form-floating">
-                <input type="date" class="form-control" id="birthdate" name="birthdate">
-                <label for="birthdate"><i class="fas fa-calendar-alt me-2"></i>Ngày sinh</label>
-            </div>
-
-            <div class="form-floating">
-                <input type="text" class="form-control" id="address" name="address" placeholder="Địa chỉ">
-                <label for="address"><i class="fas fa-map-marker-alt me-2"></i>Địa chỉ</label>
-            </div>
-
-            <div class="form-floating">
-                <input type="tel" class="form-control" id="phone" name="phone" placeholder="Điện thoại">
-                <label for="phone"><i class="fas fa-phone me-2"></i>Điện thoại</label>
-            </div>
-
-            <button type="submit" class="btn btn-signup mt-4">Đăng ký</button>
-        </form>
-
-        <div class="login-link">
-            Đã có tài khoản? <a href="http://localhost:8081/administrator/userLogin.php"><i class="fas fa-sign-in-alt me-1"></i>Đăng nhập ngay</a>
-        </div>
+<div class="signup-container">
+    <div class="signup-header">
+        <h2><i class="fas fa-user-plus me-2"></i>Đăng Ký Tài Khoản</h2>
+        <p class="text-muted">Điền thông tin để tạo tài khoản mới</p>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            $('#signupForm').on('submit', function(e) {
-                let isValid = true;
-                $('.form-control, .form-select').removeClass('is-invalid');
+    <?php if (!empty($errors['general'])): ?>
+        <div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i><?php echo $errors['general']; ?></div>
+    <?php endif; ?>
 
-                // Validate username
-                const username = $('#username').val().trim();
-                if (username === '') {
-                    $('#username').addClass('is-invalid');
-                    isValid = false;
-                } else if (username.includes(' ')) {
-                    $('#username').addClass('is-invalid');
-                    alert('Tên đăng nhập không được chứa dấu cách!');
-                    isValid = false;
-                }
+    <form id="signupForm" method="POST" novalidate>
+        <!-- Username -->
+        <div class="form-group">
+            <label class="form-label">Tên đăng nhập <span class="required">*</span></label>
+            <input type="text" class="form-control <?php echo isset($errors['username']) ? 'is-invalid' : ''; ?>" 
+                   id="username" name="username" value="<?php echo htmlspecialchars($formData['username']); ?>"
+                   placeholder="Nhập tên đăng nhập (4-30 ký tự)" maxlength="30">
+            <div class="invalid-feedback"><?php echo $errors['username'] ?? 'Vui lòng nhập tên đăng nhập hợp lệ'; ?></div>
+            <div class="valid-feedback"><i class="fas fa-check"></i> Tên đăng nhập hợp lệ</div>
+            <div class="form-hint"><i class="fas fa-info-circle"></i> Chỉ chữ cái, số và dấu gạch dưới, không dấu cách</div>
+            <span class="checking-indicator" id="username-checking"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</span>
+        </div>
 
-                // Validate password
-                if ($('#password').val().length < 6) {
-                    $('#password').addClass('is-invalid');
-                    isValid = false;
-                }
+        <!-- Password -->
+        <div class="form-group">
+            <label class="form-label">Mật khẩu <span class="required">*</span></label>
+            <div class="input-group">
+                <input type="password" class="form-control <?php echo isset($errors['password']) ? 'is-invalid' : ''; ?>" 
+                       id="password" name="password" placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)" maxlength="50">
+                <span class="input-group-text" id="togglePassword"><i class="fas fa-eye"></i></span>
+            </div>
+            <div class="password-strength" id="passwordStrength"></div>
+            <div class="invalid-feedback"><?php echo $errors['password'] ?? 'Mật khẩu phải có ít nhất 6 ký tự'; ?></div>
+        </div>
 
-                // Validate fullname
-                if ($('#fullname').val().trim() === '') {
-                    $('#fullname').addClass('is-invalid');
-                    isValid = false;
-                }
+        <!-- Confirm Password -->
+        <div class="form-group">
+            <label class="form-label">Xác nhận mật khẩu <span class="required">*</span></label>
+            <div class="input-group">
+                <input type="password" class="form-control <?php echo isset($errors['confirm_password']) ? 'is-invalid' : ''; ?>" 
+                       id="confirm_password" name="confirm_password" placeholder="Nhập lại mật khẩu">
+                <span class="input-group-text" id="toggleConfirm"><i class="fas fa-eye"></i></span>
+            </div>
+            <div class="invalid-feedback"><?php echo $errors['confirm_password'] ?? 'Mật khẩu xác nhận không khớp'; ?></div>
+        </div>
 
-                // Validate gender
-                if ($('#gender').val() === '') {
-                    $('#gender').addClass('is-invalid');
-                    isValid = false;
-                }
+        <!-- Fullname -->
+        <div class="form-group">
+            <label class="form-label">Họ và tên <span class="required">*</span></label>
+            <input type="text" class="form-control <?php echo isset($errors['fullname']) ? 'is-invalid' : ''; ?>" 
+                   id="fullname" name="fullname" value="<?php echo htmlspecialchars($formData['fullname']); ?>"
+                   placeholder="Nhập họ và tên đầy đủ" maxlength="100">
+            <div class="invalid-feedback"><?php echo $errors['fullname'] ?? 'Vui lòng nhập họ tên'; ?></div>
+        </div>
 
-                // Validate birthdate
-                if ($('#birthdate').val() === '') {
-                    $('#birthdate').addClass('is-invalid');
-                    isValid = false;
-                }
+        <!-- Phone -->
+        <div class="form-group">
+            <label class="form-label">Số điện thoại <span class="required">*</span></label>
+            <input type="tel" class="form-control <?php echo isset($errors['phone']) ? 'is-invalid' : ''; ?>" 
+                   id="phone" name="phone" value="<?php echo htmlspecialchars($formData['phone']); ?>"
+                   placeholder="VD: 0912345678" maxlength="11" inputmode="numeric">
+            <div class="invalid-feedback"><?php echo $errors['phone'] ?? 'Số điện thoại không hợp lệ'; ?></div>
+            <div class="valid-feedback"><i class="fas fa-check"></i> Số điện thoại hợp lệ</div>
+            <span class="checking-indicator" id="phone-checking"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</span>
+        </div>
 
-                // Validate address
-                if ($('#address').val().trim() === '') {
-                    $('#address').addClass('is-invalid');
-                    isValid = false;
-                }
+        <!-- Email -->
+        <div class="form-group">
+            <label class="form-label">Email <span class="optional">(không bắt buộc)</span></label>
+            <input type="email" class="form-control <?php echo isset($errors['email']) ? 'is-invalid' : ''; ?>" 
+                   id="email" name="email" value="<?php echo htmlspecialchars($formData['email']); ?>"
+                   placeholder="VD: example@gmail.com" maxlength="100">
+            <div class="invalid-feedback"><?php echo $errors['email'] ?? 'Email không hợp lệ'; ?></div>
+            <div class="valid-feedback"><i class="fas fa-check"></i> Email hợp lệ</div>
+            <div class="form-hint"><i class="fas fa-info-circle"></i> Dùng để khôi phục mật khẩu và nhận thông báo đơn hàng</div>
+            <span class="checking-indicator" id="email-checking"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</span>
+        </div>
 
-                // Validate phone (10 digits)
-                const phoneRegex = /^[0-9]{10}$/;
-                if (!phoneRegex.test($('#phone').val())) {
-                    $('#phone').addClass('is-invalid');
-                    isValid = false;
-                }
+        <!-- Gender -->
+        <div class="form-group">
+            <label class="form-label">Giới tính <span class="optional">(không bắt buộc)</span></label>
+            <select class="form-select <?php echo isset($errors['gender']) ? 'is-invalid' : ''; ?>" id="gender" name="gender">
+                <option value="">-- Chọn giới tính --</option>
+                <option value="male" <?php echo $formData['gender'] === 'male' ? 'selected' : ''; ?>>Nam</option>
+                <option value="female" <?php echo $formData['gender'] === 'female' ? 'selected' : ''; ?>>Nữ</option>
+            </select>
+            <div class="invalid-feedback"><?php echo $errors['gender'] ?? ''; ?></div>
+        </div>
 
-                if (!isValid) {
-                    e.preventDefault();
-                    alert('Vui lòng điền đầy đủ thông tin và đúng định dạng');
+        <!-- Birthdate -->
+        <div class="form-group">
+            <label class="form-label">Ngày sinh <span class="optional">(không bắt buộc)</span></label>
+            <input type="date" class="form-control <?php echo isset($errors['birthdate']) ? 'is-invalid' : ''; ?>" 
+                   id="birthdate" name="birthdate" value="<?php echo htmlspecialchars($formData['birthdate']); ?>"
+                   max="<?php echo date('Y-m-d', strtotime('-10 years')); ?>">
+            <div class="invalid-feedback"><?php echo $errors['birthdate'] ?? 'Ngày sinh không hợp lệ'; ?></div>
+        </div>
+
+        <!-- Address -->
+        <div class="form-group">
+            <label class="form-label">Địa chỉ <span class="optional">(không bắt buộc)</span></label>
+            <input type="text" class="form-control <?php echo isset($errors['address']) ? 'is-invalid' : ''; ?>" 
+                   id="address" name="address" value="<?php echo htmlspecialchars($formData['address']); ?>"
+                   placeholder="Nhập địa chỉ" maxlength="255">
+            <div class="invalid-feedback"><?php echo $errors['address'] ?? ''; ?></div>
+        </div>
+
+        <button type="submit" class="btn btn-signup mt-3" id="submitBtn">
+            <i class="fas fa-user-plus me-2"></i>Đăng Ký
+        </button>
+    </form>
+
+    <div class="login-link">
+        Đã có tài khoản? <a href="userLogin.php"><i class="fas fa-sign-in-alt me-1"></i>Đăng nhập ngay</a>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    let checkTimeout = {};
+    
+    // Toggle password visibility
+    $('#togglePassword, #toggleConfirm').on('click', function() {
+        const input = $(this).siblings('input');
+        const type = input.attr('type') === 'password' ? 'text' : 'password';
+        input.attr('type', type);
+        $(this).find('i').toggleClass('fa-eye fa-eye-slash');
+    });
+    
+    // Password strength indicator
+    $('#password').on('input', function() {
+        const password = $(this).val();
+        const strength = checkPasswordStrength(password);
+        const strengthBar = $('#passwordStrength');
+        
+        strengthBar.removeClass('strength-weak strength-medium strength-strong');
+        
+        if (password.length === 0) {
+            strengthBar.css('width', '0');
+        } else if (strength < 2) {
+            strengthBar.addClass('strength-weak');
+        } else if (strength < 4) {
+            strengthBar.addClass('strength-medium');
+        } else {
+            strengthBar.addClass('strength-strong');
+        }
+        
+        validateField('password');
+    });
+    
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        if (password.length >= 6) strength++;
+        if (password.length >= 8) strength++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[^a-zA-Z0-9]/.test(password)) strength++;
+        return strength;
+    }
+    
+    // Real-time validation
+    $('#username').on('input', function() {
+        const value = $(this).val().trim();
+        clearTimeout(checkTimeout['username']);
+        
+        // Basic validation first
+        if (value.length < 4) {
+            setFieldError('username', 'Tên đăng nhập phải có ít nhất 4 ký tự');
+            return;
+        }
+        if (value.includes(' ')) {
+            setFieldError('username', 'Tên đăng nhập không được chứa dấu cách');
+            return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+            setFieldError('username', 'Chỉ được chứa chữ cái, số và dấu gạch dưới');
+            return;
+        }
+        
+        // Check duplicate
+        $('#username-checking').addClass('show');
+        checkTimeout['username'] = setTimeout(function() {
+            checkDuplicate('username', value);
+        }, 500);
+    });
+    
+    $('#phone').on('input', function() {
+        // Only allow numbers
+        this.value = this.value.replace(/[^0-9]/g, '');
+        
+        const value = $(this).val();
+        clearTimeout(checkTimeout['phone']);
+        
+        if (value.length === 0) {
+            setFieldError('phone', 'Vui lòng nhập số điện thoại');
+            return;
+        }
+        if (!/^[0-9]{10,11}$/.test(value)) {
+            setFieldError('phone', 'Số điện thoại phải có 10-11 chữ số');
+            return;
+        }
+        if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(value)) {
+            setFieldError('phone', 'Số điện thoại không đúng định dạng VN');
+            return;
+        }
+        
+        // Check duplicate
+        $('#phone-checking').addClass('show');
+        checkTimeout['phone'] = setTimeout(function() {
+            checkDuplicate('phone', value);
+        }, 500);
+    });
+    
+    $('#email').on('input', function() {
+        const value = $(this).val().trim();
+        clearTimeout(checkTimeout['email']);
+        
+        if (value === '') {
+            $(this).removeClass('is-invalid is-valid');
+            return;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+            setFieldError('email', 'Email không đúng định dạng');
+            return;
+        }
+        
+        // Check duplicate
+        $('#email-checking').addClass('show');
+        checkTimeout['email'] = setTimeout(function() {
+            checkDuplicate('email', value);
+        }, 500);
+    });
+
+    // Check duplicate via AJAX
+    function checkDuplicate(type, value) {
+        $.ajax({
+            url: './elements_LQA/mUser/checkDuplicateAct.php',
+            type: 'GET',
+            data: { type: type, value: value },
+            dataType: 'json',
+            success: function(response) {
+                $('#' + type + '-checking').removeClass('show');
+                
+                if (response.exists) {
+                    setFieldError(type, response.message);
                 } else {
-                    // Form is valid, allow submission
-                    return true;
+                    setFieldValid(type);
                 }
-            });
-
-            // Remove invalid class on input
-            $('.form-control, .form-select').on('input change', function() {
-                $(this).removeClass('is-invalid');
-            });
+            },
+            error: function() {
+                $('#' + type + '-checking').removeClass('show');
+            }
         });
-    </script>
+    }
+    
+    function setFieldError(field, message) {
+        const input = $('#' + field);
+        input.removeClass('is-valid').addClass('is-invalid');
+        input.siblings('.invalid-feedback').text(message);
+    }
+    
+    function setFieldValid(field) {
+        const input = $('#' + field);
+        input.removeClass('is-invalid').addClass('is-valid');
+    }
+    
+    // Confirm password validation
+    $('#confirm_password').on('input', function() {
+        const password = $('#password').val();
+        const confirm = $(this).val();
+        
+        if (confirm === '') {
+            $(this).removeClass('is-valid is-invalid');
+        } else if (password !== confirm) {
+            setFieldError('confirm_password', 'Mật khẩu xác nhận không khớp');
+        } else {
+            setFieldValid('confirm_password');
+        }
+    });
+    
+    // Fullname validation
+    $('#fullname').on('input', function() {
+        const value = $(this).val().trim();
+        if (value.length < 2) {
+            setFieldError('fullname', 'Họ tên phải có ít nhất 2 ký tự');
+        } else {
+            setFieldValid('fullname');
+        }
+    });
+    
+    function validateField(field) {
+        const input = $('#' + field);
+        const value = input.val();
+        
+        switch(field) {
+            case 'password':
+                if (value.length < 6) {
+                    setFieldError('password', 'Mật khẩu phải có ít nhất 6 ký tự');
+                } else {
+                    setFieldValid('password');
+                }
+                // Also check confirm password
+                if ($('#confirm_password').val() !== '') {
+                    $('#confirm_password').trigger('input');
+                }
+                break;
+        }
+    }
+    
+    // Form submission validation
+    $('#signupForm').on('submit', function(e) {
+        let isValid = true;
+        const errors = [];
+        
+        // Username
+        const username = $('#username').val().trim();
+        if (username === '' || username.length < 4 || username.includes(' ') || !/^[a-zA-Z0-9_]+$/.test(username)) {
+            isValid = false;
+            if (!$('#username').hasClass('is-invalid')) {
+                setFieldError('username', 'Tên đăng nhập không hợp lệ');
+            }
+            errors.push('Tên đăng nhập');
+        }
+        
+        // Password
+        if ($('#password').val().length < 6) {
+            isValid = false;
+            setFieldError('password', 'Mật khẩu phải có ít nhất 6 ký tự');
+            errors.push('Mật khẩu');
+        }
+        
+        // Confirm password
+        if ($('#password').val() !== $('#confirm_password').val()) {
+            isValid = false;
+            setFieldError('confirm_password', 'Mật khẩu xác nhận không khớp');
+            errors.push('Xác nhận mật khẩu');
+        }
+        
+        // Fullname
+        if ($('#fullname').val().trim().length < 2) {
+            isValid = false;
+            setFieldError('fullname', 'Vui lòng nhập họ tên');
+            errors.push('Họ tên');
+        }
+        
+        // Phone
+        const phone = $('#phone').val();
+        if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(phone)) {
+            isValid = false;
+            setFieldError('phone', 'Số điện thoại không hợp lệ');
+            errors.push('Số điện thoại');
+        }
+        
+        // Email (optional but must be valid if provided)
+        const email = $('#email').val().trim();
+        if (email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            isValid = false;
+            setFieldError('email', 'Email không đúng định dạng');
+            errors.push('Email');
+        }
+        
+        // Check if any field has is-invalid class (from duplicate check)
+        if ($('.form-control.is-invalid, .form-select.is-invalid').length > 0) {
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            
+            // Scroll to first error
+            const firstError = $('.is-invalid').first();
+            if (firstError.length) {
+                $('html, body').animate({
+                    scrollTop: firstError.offset().top - 100
+                }, 300);
+                firstError.focus();
+            }
+            
+            if (errors.length > 0) {
+                alert('Vui lòng kiểm tra lại các trường: ' + errors.join(', '));
+            }
+        }
+    });
+});
+</script>
 </body>
-
 </html>

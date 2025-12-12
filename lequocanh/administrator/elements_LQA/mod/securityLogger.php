@@ -14,26 +14,15 @@ class SecurityLogger
     private static $alertFile;
     private static $instance = null;
 
-    // WHITELIST CỨNG - Principle of Least Privilege
-    private static $userWhitelist = [
-        'admin' => ['*'], // Admin có quyền tất cả
-        'manager1' => [
-            'userprofile',
-            'userUpdateProfile',
-            'thongbao',
-            'baocaoview',
-            'doanhThuView',
-            'sanPhamBanChayView',
-            'loiNhuanView'
-        ],
-        'staff2' => [
-            'userprofile',
-            'userUpdateProfile',
-            'thongbao',
-            'hanghoaview',
-            'dongiaview',
-            'orders'
-        ]
+    // WHITELIST ĐỘNG - Lấy từ database thay vì hardcode
+    // Admin luôn có quyền tất cả, các user khác lấy từ bảng phân quyền
+    private static $adminWhitelist = ['admin'];
+    
+    // Các module cơ bản mà tất cả nhân viên đều có quyền truy cập
+    private static $basicModules = [
+        'userprofile',
+        'userUpdateProfile',
+        'thongbao'
     ];
 
     // Các module nhạy cảm cần cảnh báo đặc biệt
@@ -120,22 +109,113 @@ class SecurityLogger
     }
 
     /**
-     * Kiểm tra whitelist cứng
+     * Kiểm tra whitelist động - lấy từ database
      */
     public static function checkWhitelist($username, $module)
     {
-        if (!isset(self::$userWhitelist[$username])) {
-            return false;
-        }
-
-        $allowedModules = self::$userWhitelist[$username];
-
         // Admin có quyền tất cả
-        if (in_array('*', $allowedModules)) {
+        if (in_array($username, self::$adminWhitelist) || $username === 'admin') {
             return true;
         }
-
-        return in_array($module, $allowedModules);
+        
+        // Các module cơ bản cho tất cả nhân viên
+        if (in_array($module, self::$basicModules)) {
+            return true;
+        }
+        
+        // Kiểm tra quyền từ database
+        try {
+            // Đảm bảo database.php đã được load
+            if (!class_exists('Database')) {
+                $dbPaths = [
+                    __DIR__ . '/database.php',
+                    '../../elements_LQA/mod/database.php',
+                    './elements_LQA/mod/database.php'
+                ];
+                foreach ($dbPaths as $path) {
+                    if (file_exists($path)) {
+                        require_once $path;
+                        break;
+                    }
+                }
+            }
+            
+            if (!class_exists('Database')) {
+                error_log("SecurityLogger: Database class not found");
+                return true; // Cho phép truy cập nếu không thể kiểm tra
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            // Kiểm tra trong bảng phân quyền NhanVien_PhanHeQuanLy
+            $sql = "SELECT COUNT(*) FROM NhanVien_PhanHeQuanLy nvph
+                    JOIN PhanHeQuanLy ph ON nvph.idPhanHe = ph.idPhanHe
+                    JOIN nhanvien nv ON nvph.idNhanVien = nv.idNhanVien
+                    JOIN user u ON nv.iduser = u.iduser
+                    WHERE u.username = ? AND ph.maPhanHe = ? AND ph.trangThai = 1";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$username, $module]);
+            
+            return $stmt->fetchColumn() > 0;
+        } catch (Exception $e) {
+            error_log("SecurityLogger checkWhitelist error: " . $e->getMessage());
+            // Fail Secure: Nếu có lỗi, từ chối truy cập
+            return false;
+        }
+    }
+    
+    /**
+     * Lấy danh sách module được phép của user từ database
+     */
+    public static function getUserAllowedModules($username)
+    {
+        // Admin có quyền tất cả
+        if (in_array($username, self::$adminWhitelist) || $username === 'admin') {
+            return ['*'];
+        }
+        
+        $allowedModules = self::$basicModules;
+        
+        try {
+            // Đảm bảo database.php đã được load
+            if (!class_exists('Database')) {
+                $dbPaths = [
+                    __DIR__ . '/database.php',
+                    '../../elements_LQA/mod/database.php',
+                    './elements_LQA/mod/database.php'
+                ];
+                foreach ($dbPaths as $path) {
+                    if (file_exists($path)) {
+                        require_once $path;
+                        break;
+                    }
+                }
+            }
+            
+            if (!class_exists('Database')) {
+                return $allowedModules;
+            }
+            
+            $db = Database::getInstance()->getConnection();
+            
+            $sql = "SELECT ph.maPhanHe FROM NhanVien_PhanHeQuanLy nvph
+                    JOIN PhanHeQuanLy ph ON nvph.idPhanHe = ph.idPhanHe
+                    JOIN nhanvien nv ON nvph.idNhanVien = nv.idNhanVien
+                    JOIN user u ON nv.iduser = u.iduser
+                    WHERE u.username = ? AND ph.trangThai = 1";
+            
+            $stmt = $db->prepare($sql);
+            $stmt->execute([$username]);
+            
+            while ($row = $stmt->fetch(PDO::FETCH_OBJ)) {
+                $allowedModules[] = $row->maPhanHe;
+            }
+        } catch (Exception $e) {
+            error_log("SecurityLogger getUserAllowedModules error: " . $e->getMessage());
+        }
+        
+        return array_unique($allowedModules);
     }
 
     /**

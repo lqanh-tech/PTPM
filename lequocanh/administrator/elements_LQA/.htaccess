@@ -1,0 +1,6 @@
+# Redirect any request to index.php to the main admin page
+RewriteEngine On
+RewriteRule ^index\.php$ ../index.php [R=301,L]
+
+# Redirect root directory access to main admin page
+DirectoryIndex ../index.php

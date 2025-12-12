@@ -1,413 +1,23 @@
-2025-04-12 05:50:49 - Hanghoa Update request:
-idhanghoa: 46
-tenhanghoa: Xiaomi 12T21
+2025-11-26 08:58:37 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trangthai: ngung_ban
 POST: Array
 (
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Xiaomi 12T21
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Xiaomi 12T21
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 05:50:49 - Exception: SQLSTATE[HY000]: General error: 1366 Incorrect integer value: '' for column 'hinhanh' at row 1
-2025-04-12 05:52:32 - Hanghoa Update request:
-idhanghoa: 46
-tenhanghoa: Xiaomi 12T21
-POST: Array
-(
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Xiaomi 12T21
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Xiaomi 12T21
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 05:52:32 - Exception: SQLSTATE[HY000]: General error: 1366 Incorrect integer value: '' for column 'hinhanh' at row 1
-2025-04-12 05:52:42 - Hanghoa Update request:
-idhanghoa: 45
-tenhanghoa: Samsung Galaxy S2111
-POST: Array
-(
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Samsung Galaxy S2111
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Samsung Galaxy S2111
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 05:52:42 - Update result: Success
-2025-04-12 05:53:44 - Hanghoa Update request:
-idhanghoa: 45
-tenhanghoa: Samsung Galaxy S21
-POST: Array
-(
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 05:53:44 - Update result: Success
-2025-04-12 05:55:20 - Hanghoa Update request:
-idhanghoa: 46
-tenhanghoa: Xiaomi 12Trr
-POST: Array
-(
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => /administrator/index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 12Trr
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => /administrator/index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 12Trr
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 05:55:21 - Update result: Success
-2025-04-12 05:55:38 - Hanghoa Update request:
-idhanghoa: 46
-tenhanghoa: Xiaomi 12T
-POST: Array
-(
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => /administrator/index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 12T
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => /administrator/index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 12T
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 05:55:38 - Update result: Success
-2025-04-12 06:27:19 - Hanghoa Update request:
-idhanghoa: 45
-tenhanghoa: Samsung Galaxy S2111
-POST: Array
-(
-    [idhanghoa] => 45
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S2111
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S2111
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 06:27:19 - Update result: Success
-2025-04-12 06:27:28 - Hanghoa Update request:
-idhanghoa: 45
-tenhanghoa: Samsung Galaxy S21
-POST: Array
-(
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 12000000.00
-    [id_hinhanh] => 0
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 2
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [lequocanh] => 06:17 - 26/03/2025
-    [admin] => 10:06 - 06/04/2025
-    [pma_lang] => vi
-    [PHPSESSID] => 6452bc1058e0c284ffb92dd213e0d4c1
-    [phpMyAdmin] => c40a1260f9d947e6715387c279f9f648
-    [pmaUser-1] => wUjGV5aFE62ss475jORY1+NW4yz+naaHMQHT2EpICO3yoOTJOuF4Gd/bAaA=
-)
-
---------------------------------------
-2025-04-12 06:27:28 - Update result: Success
-2025-04-20 05:13:15 - Hanghoa Update request:
-idhanghoa: 45
-tenhanghoa: Samsung Galaxy S21
-POST: Array
-(
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 11000000.00
-    [soLuong] => 0
-    [id_hinhanh] => 110
-    [idloaihang] => 1
-    [idThuongHieu] => 2
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
     [idNhanVien] => 
+    [trang_thai] => 1
+    [trangthai] => ngung_ban
 )
 
 GET: Array
@@ -418,51 +28,47 @@ GET: Array
 REQUEST: Array
 (
     [reqact] => updatehanghoa
-    [idhanghoa] => 45
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 11000000.00
-    [soLuong] => 0
-    [id_hinhanh] => 110
-    [idloaihang] => 1
-    [idThuongHieu] => 2
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
     [idNhanVien] => 
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [pma_lang] => en_GB
-    [lequocanh] => 07:33 - 16/04/2025
-    [manager1] => 08:06 - 19/04/2025
-    [admin] => 09:02 - 19/04/2025
-    [khachhang] => 03:28 - 19/04/2025
-    [PHPSESSID] => 9dd68853cd52aca74fa2b11b3f28d7d9
-    [phpMyAdmin] => f7fd03e87f34e132395ed10057e3ed06
-    [pmaUser-1] => 8+4uRSWkXuuYi9Ii0nwNx51QfqmkjJBgpfGMxx92ogG/V/MvfWeGJ5R/6es=
-    [pmaAuth-1] => qdzXlPu5Fy6UYo6haG4zMLOqMGmTBBbV9zXYrMO/Ka1tbmreWY/4AIjOc2/ttFpDJ2GqOjQexhs0
+    [trang_thai] => 1
+    [trangthai] => ngung_ban
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
 )
 
 --------------------------------------
-2025-04-20 05:13:15 - Update result: Failed
-2025-04-20 05:13:52 - Hanghoa Update request:
-idhanghoa: 58
-tenhanghoa: Samsung Galaxy Z Fold 5
+2025-11-26 08:58:37 - Status update result: Failed
+2025-11-26 08:58:37 - Update result: Success
+2025-11-26 09:04:17 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trang_thai: 3
 POST: Array
 (
-    [idhanghoa] => 58
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy Z Fold 5
-    [mota] => Điện thoại màn hình gập cao cấp
-    [giathamkhao] => 40990000.00
-    [soLuong] => 0
-    [id_hinhanh] => 111
-    [idloaihang] => 1
-    [idThuongHieu] => 1
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
     [idNhanVien] => 
+    [trang_thai] => 3
+    [trangthai] => dang_ban
 )
 
 GET: Array
@@ -473,262 +79,46 @@ GET: Array
 REQUEST: Array
 (
     [reqact] => updatehanghoa
-    [idhanghoa] => 58
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy Z Fold 5
-    [mota] => Điện thoại màn hình gập cao cấp
-    [giathamkhao] => 40990000.00
-    [soLuong] => 0
-    [id_hinhanh] => 111
-    [idloaihang] => 1
-    [idThuongHieu] => 1
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
     [idNhanVien] => 
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [pma_lang] => en_GB
-    [lequocanh] => 07:33 - 16/04/2025
-    [manager1] => 08:06 - 19/04/2025
-    [admin] => 09:02 - 19/04/2025
-    [khachhang] => 03:28 - 19/04/2025
-    [PHPSESSID] => 9dd68853cd52aca74fa2b11b3f28d7d9
-    [phpMyAdmin] => f7fd03e87f34e132395ed10057e3ed06
-    [pmaUser-1] => 8+4uRSWkXuuYi9Ii0nwNx51QfqmkjJBgpfGMxx92ogG/V/MvfWeGJ5R/6es=
-    [pmaAuth-1] => qdzXlPu5Fy6UYo6haG4zMLOqMGmTBBbV9zXYrMO/Ka1tbmreWY/4AIjOc2/ttFpDJ2GqOjQexhs0
+    [trang_thai] => 3
+    [trangthai] => dang_ban
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
 )
 
 --------------------------------------
-2025-04-20 05:13:52 - Update result: Success
-2025-04-20 05:14:11 - Hanghoa Update request:
-idhanghoa: 45
-tenhanghoa: Samsung Galaxy S21
+2025-11-26 09:04:17 - Update result: Failed
+2025-11-26 09:04:25 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trang_thai: 3
 POST: Array
 (
-    [idhanghoa] => 45
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 11000000.00
-    [soLuong] => 22
-    [id_hinhanh] => 110
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 12
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 45
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Samsung Galaxy S21
-    [mota] => Điện thoại thông minh với màn hình Dynamic AMOLED
-    [giathamkhao] => 11000000.00
-    [soLuong] => 22
-    [id_hinhanh] => 110
-    [idloaihang] => 1
-    [idThuongHieu] => 2
-    [idDonViTinh] => 1
-    [idNhanVien] => 12
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [pma_lang] => en_GB
-    [lequocanh] => 07:33 - 16/04/2025
-    [manager1] => 08:06 - 19/04/2025
-    [admin] => 09:02 - 19/04/2025
-    [khachhang] => 03:28 - 19/04/2025
-    [PHPSESSID] => 9dd68853cd52aca74fa2b11b3f28d7d9
-    [phpMyAdmin] => f7fd03e87f34e132395ed10057e3ed06
-    [pmaUser-1] => 8+4uRSWkXuuYi9Ii0nwNx51QfqmkjJBgpfGMxx92ogG/V/MvfWeGJ5R/6es=
-    [pmaAuth-1] => qdzXlPu5Fy6UYo6haG4zMLOqMGmTBBbV9zXYrMO/Ka1tbmreWY/4AIjOc2/ttFpDJ2GqOjQexhs0
-)
-
---------------------------------------
-2025-04-20 05:14:11 - Update result: Success
-2025-04-20 05:14:39 - Hanghoa Update request:
-idhanghoa: 46
-tenhanghoa: Xiaomi 12T
-POST: Array
-(
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 12T
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [soLuong] => 10
-    [id_hinhanh] => 112
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 46
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 12T
-    [mota] => Điện thoại giá rẻ với cấu hình cao
-    [giathamkhao] => 14000000.00
-    [soLuong] => 10
-    [id_hinhanh] => 112
-    [idloaihang] => 1
-    [idThuongHieu] => 3
-    [idDonViTinh] => 1
-    [idNhanVien] => 7
-    [ajs_anonymous_id] => 55f947c6-565e-4a46-8b19-a46c79297927
-    [pma_lang] => en_GB
-    [lequocanh] => 07:33 - 16/04/2025
-    [manager1] => 08:06 - 19/04/2025
-    [admin] => 09:02 - 19/04/2025
-    [khachhang] => 03:28 - 19/04/2025
-    [PHPSESSID] => 9dd68853cd52aca74fa2b11b3f28d7d9
-    [phpMyAdmin] => f7fd03e87f34e132395ed10057e3ed06
-    [pmaUser-1] => 8+4uRSWkXuuYi9Ii0nwNx51QfqmkjJBgpfGMxx92ogG/V/MvfWeGJ5R/6es=
-    [pmaAuth-1] => qdzXlPu5Fy6UYo6haG4zMLOqMGmTBBbV9zXYrMO/Ka1tbmreWY/4AIjOc2/ttFpDJ2GqOjQexhs0
-)
-
---------------------------------------
-2025-04-20 05:14:39 - Update result: Success
-2025-06-19 01:31:54 - Hanghoa Update request:
-idhanghoa: 143
-tenhanghoa: iPhone 13 Pro.
-POST: Array
-(
-    [idhanghoa] => 143
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => iPhone 13 Pro.
-    [mota] => Điện thoại thông minh cao cấp của Apple với màn hình Super Retina XDR OLED, chip A15 Bionic
-    [giathamkhao] => 30000000.00
-    [id_hinhanh] => 177
-    [idloaihang] => 2
-    [idThuongHieu] => 1
-    [idDonViTinh] => 1
-    [idNhanVien] => 4
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 143
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => iPhone 13 Pro.
-    [mota] => Điện thoại thông minh cao cấp của Apple với màn hình Super Retina XDR OLED, chip A15 Bionic
-    [giathamkhao] => 30000000.00
-    [id_hinhanh] => 177
-    [idloaihang] => 2
-    [idThuongHieu] => 1
-    [idDonViTinh] => 1
-    [idNhanVien] => 4
-    [pma_lang] => en
-    [PHPSESSID] => abfa684d877379c5eceacbd3d8195126
-    [manager1] => 18:36 - 18/06/2025
-    [admin] => 01:17 - 19/06/2025
-    [phpMyAdmin] => ff4a9e28a887f03e2b1910ae3dcc49f8
-    [pmaUser-1] => x36r/UynQG/U0XCt2CdaS7CnhF2zfoRdZA+FgfxiOTBTkODPd0MW0vzP4xw=
-    [pmaAuth-1] => HGCqKrE1mXKN2BKjLdnShJP0ixfRB1tGfbE+/tz7Tp0t7YZ8p1JIsOmeV4rLMiFgVQHWHOpAz4j0
-    [leuquocanh05] => 01:18 - 19/06/2025
-)
-
---------------------------------------
-2025-06-19 01:31:54 - Update result: Success
-2025-07-01 09:16:25 - Hanghoa Update request:
-idhanghoa: 144
-tenhanghoa: iPhone 13 Pro vvvvvvvvvvvvvv
-POST: Array
-(
-    [idhanghoa] => 144
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => iPhone 13 Pro vvvvvvvvvvvvvv
-    [mota] => Điện thoại thông minh cao cấp của Apple với màn hình Super Retina XDR OLED, chip A15 Bionic
-    [giathamkhao] => 30000000.00
-    [id_hinhanh] => 150
-    [idloaihang] => 2
-    [idThuongHieu] => 1
-    [idDonViTinh] => 2
-    [idNhanVien] => 11
-)
-
-GET: Array
-(
-    [reqact] => updatehanghoa
-)
-
-REQUEST: Array
-(
-    [reqact] => updatehanghoa
-    [idhanghoa] => 144
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => iPhone 13 Pro vvvvvvvvvvvvvv
-    [mota] => Điện thoại thông minh cao cấp của Apple với màn hình Super Retina XDR OLED, chip A15 Bionic
-    [giathamkhao] => 30000000.00
-    [id_hinhanh] => 150
-    [idloaihang] => 2
-    [idThuongHieu] => 1
-    [idDonViTinh] => 2
-    [idNhanVien] => 11
-    [pma_lang] => en
-    [phpMyAdmin] => 5593581554fab6f25e316f83e2c32181
-    [pmaUser-1] => cx8kvOAk4CoGu6fgCdo3IhEjZWqWmsW6X8JPmoAsfSDE54CjLcdsNRlfFz8=
-    [pmaAuth-1] => hpDvjU6jltFxj8i4gpcqI4beyXmmBCVtQuVPaMYOYctuS1A/2ljfQgBdpSIx7jPQXbCOUuNNDWSG
-    [PHPSESSID] => 2cbd6223a13e51c33ffa0e8bb449b1d9
-    [lequocanh02] => 09:12 - 01/07/2025
-    [admin] => 09:13 - 01/07/2025
-    [lequocanh04] => 09:13 - 01/07/2025
-)
-
---------------------------------------
-2025-07-01 09:16:25 - Update result: Success
-2025-07-18 02:39:58 - Hanghoa Update request:
-idhanghoa: 61
-tenhanghoa: Xiaomi 13T Pro
-POST: Array
-(
-    [idhanghoa] => 61
-    [debug_log] => true
-    [ajax] => false
-    [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 13T Pro
-    [mota] => Camera Leica, sạc 120W
-    [giathamkhao] => 1000
-    [id_hinhanh] => 143
-    [idloaihang] => 1
-    [idThuongHieu] => 3
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
     [idNhanVien] => 
+    [trang_thai] => 3
+    [trangthai] => het_hang
 )
 
 GET: Array
@@ -739,44 +129,46 @@ GET: Array
 REQUEST: Array
 (
     [reqact] => updatehanghoa
-    [idhanghoa] => 61
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => Xiaomi 13T Pro
-    [mota] => Camera Leica, sạc 120W
-    [giathamkhao] => 1000
-    [id_hinhanh] => 143
-    [idloaihang] => 1
-    [idThuongHieu] => 3
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
     [idNhanVien] => 
-    [pma_lang] => en
-    [phpMyAdmin] => 0ac6cd3bd4c86a6b17d4b628431c2c4a
-    [PHPSESSID] => cad4eab6245cafac18d616136b9ff837
-    [admin] => 02:37 - 18/07/2025
-    [khachhang] => 02:38 - 18/07/2025
+    [trang_thai] => 3
+    [trangthai] => het_hang
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
 )
 
 --------------------------------------
-2025-07-18 02:39:58 - Update result: Success
-2025-07-19 13:03:40 - Hanghoa Update request:
-idhanghoa: 143
-tenhanghoa: iPhone 13 Pro.
+2025-11-26 09:04:25 - Update result: Failed
+2025-11-26 09:14:49 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trang_thai: 1
 POST: Array
 (
-    [idhanghoa] => 143
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => iPhone 13 Pro.
-    [mota] => Điện thoại thông minh cao cấp của Apple với màn hình Super Retina XDR OLED, chip A15 Bionic
-    [giathamkhao] => 3000
-    [id_hinhanh] => 177
-    [idloaihang] => 2
-    [idThuongHieu] => 1
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
-    [idNhanVien] => 4
+    [idNhanVien] => 
+    [trang_thai] => 1
+    [trangthai] => het_hang
 )
 
 GET: Array
@@ -787,23 +179,379 @@ GET: Array
 REQUEST: Array
 (
     [reqact] => updatehanghoa
-    [idhanghoa] => 143
+    [idhanghoa] => 78
     [debug_log] => true
     [ajax] => false
     [redirect] => ./index.php?req=hanghoaview
-    [tenhanghoa] => iPhone 13 Pro.
-    [mota] => Điện thoại thông minh cao cấp của Apple với màn hình Super Retina XDR OLED, chip A15 Bionic
-    [giathamkhao] => 3000
-    [id_hinhanh] => 177
-    [idloaihang] => 2
-    [idThuongHieu] => 1
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
     [idDonViTinh] => 1
-    [idNhanVien] => 4
-    [abuse_interstitial] => 7d7cfb004083.ngrok-free.app
-    [PHPSESSID] => 1fe62fe78a39f0e060e7f6ff61997325
-    [admin] => 12:41 - 19/07/2025
-    [khachhang] => 13:01 - 19/07/2025
+    [idNhanVien] => 
+    [trang_thai] => 1
+    [trangthai] => het_hang
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
 )
 
 --------------------------------------
-2025-07-19 13:03:40 - Update result: Success
+2025-11-26 09:14:49 - Update result: Failed
+2025-11-26 09:16:52 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trang_thai: 1
+POST: Array
+(
+    [idhanghoa] => 78
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 1
+    [trangthai] => het_hang
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 78
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 1
+    [trangthai] => het_hang
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
+)
+
+--------------------------------------
+2025-11-26 09:16:52 - Product update result: No rows affected
+2025-11-26 09:16:52 - Status update result: Success
+2025-11-26 09:16:52 - Final result: Success
+2025-11-26 09:19:02 - Hanghoa Update request:
+idhanghoa: 77
+tenhanghoa: ASUS ROG Phone 7 Ultimate
+trang_thai: 3
+POST: Array
+(
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 3
+    [trangthai] => het_hang
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 3
+    [trangthai] => het_hang
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
+)
+
+--------------------------------------
+2025-11-26 09:19:02 - Product update result: Success (rows: 1)
+2025-11-26 09:19:02 - Status update result: Success
+2025-11-26 09:19:02 - Final result: Success
+2025-11-26 09:20:20 - Hanghoa Update request:
+idhanghoa: 77
+tenhanghoa: ASUS ROG Phone 7 Ultimate
+trang_thai: 3
+POST: Array
+(
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 3
+    [trangthai] => het_hang
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 3
+    [trangthai] => het_hang
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
+)
+
+--------------------------------------
+2025-11-26 09:20:20 - Product update result: No rows affected
+2025-11-26 09:20:20 - Status update result: Success
+2025-11-26 09:20:20 - Final result: Success
+2025-11-26 09:24:33 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trang_thai: 3
+POST: Array
+(
+    [idhanghoa] => 78
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 3
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 78
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 3
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
+)
+
+--------------------------------------
+2025-11-26 09:24:33 - Product update result: No rows affected
+2025-11-26 09:24:33 - Status update result: Success
+2025-11-26 09:24:33 - Final result: Success
+2025-11-26 09:30:36 - Hanghoa Update request:
+idhanghoa: 78
+tenhanghoa: ASUS ROG Phone 6D
+trang_thai: 1
+POST: Array
+(
+    [idhanghoa] => 78
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 1
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 78
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 6D
+    [mota] => MediaTek D9000+, RAM 12GB, màn hình 165Hz
+    [giathamkhao] => 1000.00
+    [id_hinhanh] => 158
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 1
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [khachhang] => 15:48 - 26/11/2025
+)
+
+--------------------------------------
+2025-11-26 09:30:36 - Product update result: No rows affected
+2025-11-26 09:30:36 - Status update result: Success
+2025-11-26 09:30:36 - Final result: Success
+2025-11-26 09:54:59 - Hanghoa Update request:
+idhanghoa: 77
+tenhanghoa: ASUS ROG Phone 7 Ultimate
+trang_thai: 1
+POST: Array
+(
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 1
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 1
+    [PHPSESSID] => efcf24c3fce229d06bd4275bbcb44ddc
+    [admin] => 16:33 - 26/11/2025
+    [khachhang] => 16:51 - 26/11/2025
+)
+
+--------------------------------------
+2025-11-26 09:54:59 - Product update result: No rows affected
+2025-11-26 09:54:59 - Status update result: Success
+2025-11-26 09:54:59 - Final result: Success
+2025-12-05 11:29:49 - Hanghoa Update request:
+idhanghoa: 77
+tenhanghoa: ASUS ROG Phone 7 Ultimate
+trang_thai: 2
+POST: Array
+(
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 2
+)
+
+GET: Array
+(
+    [reqact] => updatehanghoa
+)
+
+REQUEST: Array
+(
+    [reqact] => updatehanghoa
+    [idhanghoa] => 77
+    [debug_log] => true
+    [ajax] => false
+    [redirect] => ./index.php?req=hanghoaview
+    [tenhanghoa] => ASUS ROG Phone 7 Ultimate
+    [mota] => Snapdragon 8 Gen 2, RAM 16GB, màn hình 165Hz AMOLED
+    [giathamkhao] => 29990000.00
+    [id_hinhanh] => 159
+    [idloaihang] => 3
+    [idThuongHieu] => 6
+    [idDonViTinh] => 1
+    [idNhanVien] => 
+    [trang_thai] => 2
+    [PHPSESSID] => a6b038f633c0966d7bfb98905a1045b4
+)
+
+--------------------------------------
+2025-12-05 11:29:49 - Product update result: No rows affected
+2025-12-05 11:29:49 - Status update result: Success
+2025-12-05 11:29:49 - Final result: Success

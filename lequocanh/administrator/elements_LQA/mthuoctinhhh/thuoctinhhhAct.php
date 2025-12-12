@@ -17,6 +17,7 @@ if (isset($_GET['reqact'])) {
 
     switch ($requestAction) {
         case 'addnew':
+            // Validate CSRF token (already done by SecurityEnhancement::initializePage)
             // Lấy dữ liệu từ form
             $idhanghoa = $_POST['idhanghoa'] ?? null;
             $idThuocTinh = $_POST['idThuocTinh'] ?? null;

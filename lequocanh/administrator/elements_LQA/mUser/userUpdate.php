@@ -60,6 +60,10 @@ if (!$getUserUpdate) {
                 <td>Điện thoại:</td>
                 <td><input type="tel" name="dienthoai" value="<?php echo htmlspecialchars($getUserUpdate->dienthoai); ?>" pattern="[0-9]{10}" required /></td>
             </tr>
+            <tr>
+                <td>Email:</td>
+                <td><input type="email" name="email" value="<?php echo isset($getUserUpdate->email) ? htmlspecialchars($getUserUpdate->email) : ''; ?>" placeholder="Email (không bắt buộc)" /></td>
+            </tr>
 
             <?php if ($getUserUpdate->username === 'admin'): ?>
                 <tr>

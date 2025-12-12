@@ -3,10 +3,14 @@
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
+// Start output buffering to prevent any output before JSON
+ob_start();
+
 // Start session safely
 SessionManager::start();
 require_once '../../elements_LQA/mod/giohangCls.php';
 require_once '../../elements_LQA/mod/mtonkhoCls.php';
+require_once '../../elements_LQA/mod/hanghoaCls.php';
 
 $giohang = new GioHang();
 
@@ -14,6 +18,7 @@ $giohang = new GioHang();
 if (!$giohang->canUseCart()) {
     // Nếu là yêu cầu AJAX, trả về lỗi dưới dạng JSON
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') {
+        ob_clean(); // Clear any output before JSON
         header('Content-Type: application/json');
         if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
             echo json_encode(['success' => false, 'message' => 'Vui lòng đăng nhập để sử dụng giỏ hàng', 'redirect' => '../../userLogin.php']);
@@ -58,6 +63,41 @@ if (isset($_GET['action'])) {
                 $productId = $_GET['productId'];
                 $quantity = $_GET['quantity'];
 
+                // Kiểm tra xem có phải AJAX request không
+                $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
+                         strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+
+                // Kiểm tra trạng thái sản phẩm trước
+                $hanghoa = new hanghoa();
+                $productStatus = $hanghoa->getProductStatusValue($productId);
+
+                // Nếu trang_thai = 2 (Ngừng bán) hoặc = 3 (Hết hàng) thì không cho mua
+                if ($productStatus == 2) {
+                    // Sản phẩm đã ngừng bán
+                    if ($isAjax) {
+                        ob_clean(); // Clear any output before JSON
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'message' => 'Sản phẩm này đã ngừng bán!']);
+                        exit();
+                    }
+                    $_SESSION['cart_error'] = 'Sản phẩm này đã ngừng bán!';
+                    $referrer = $_SERVER['HTTP_REFERER'] ?? '../../../index.php';
+                    header('Location: ' . $referrer);
+                    exit();
+                } elseif ($productStatus == 3) {
+                    // Sản phẩm hết hàng (trạng thái)
+                    if ($isAjax) {
+                        ob_clean(); // Clear any output before JSON
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'message' => 'Sản phẩm này đã hết hàng!']);
+                        exit();
+                    }
+                    $_SESSION['cart_error'] = 'Sản phẩm này đã hết hàng!';
+                    $referrer = $_SERVER['HTTP_REFERER'] ?? '../../../index.php';
+                    header('Location: ' . $referrer);
+                    exit();
+                }
+
                 // Kiểm tra số lượng tồn kho
                 $tonkhoInfo = $tonkho->getTonKhoByIdHangHoa($productId);
 
@@ -78,26 +118,54 @@ if (isset($_GET['action'])) {
                 // Kiểm tra xem có đủ hàng không
                 if (!$tonkhoInfo || $tonkhoInfo->soLuong == 0) {
                     // Sản phẩm hết hàng
+                    if ($isAjax) {
+                        ob_clean(); // Clear any output before JSON
+                        header('Content-Type: application/json');
+                        echo json_encode(['success' => false, 'message' => 'Sản phẩm đã hết hàng!']);
+                        exit();
+                    }
                     $_SESSION['cart_error'] = 'Sản phẩm đã hết hàng!';
-
-                    // Lưu HTTP_REFERER vào biến
-                    $referrer = $_SERVER['HTTP_REFERER'];
+                    $referrer = $_SERVER['HTTP_REFERER'] ?? '../../../index.php';
                     header('Location: ' . $referrer);
                     exit();
                 } elseif ($totalQuantity > $tonkhoInfo->soLuong) {
                     // Số lượng yêu cầu vượt quá số lượng tồn kho
+                    if ($isAjax) {
+                        ob_clean(); // Clear any output before JSON
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => false, 
+                            'message' => 'Số lượng tồn kho chỉ còn ' . $tonkhoInfo->soLuong . ' sản phẩm!',
+                            'available' => $tonkhoInfo->soLuong
+                        ]);
+                        exit();
+                    }
                     $_SESSION['cart_error'] = 'Số lượng tồn kho chỉ còn ' . $tonkhoInfo->soLuong . ' sản phẩm!';
-
-                    // Lưu HTTP_REFERER vào biến
-                    $referrer = $_SERVER['HTTP_REFERER'];
+                    $referrer = $_SERVER['HTTP_REFERER'] ?? '../../../index.php';
                     header('Location: ' . $referrer);
                     exit();
                 } else {
                     // Đủ hàng, thêm vào giỏ hàng
                     $result = $giohang->addToCart($productId, $quantity);
 
-                    // Lưu HTTP_REFERER vào biến
-                    $referrer = $_SERVER['HTTP_REFERER'];
+                    if ($isAjax) {
+                        // Trả về JSON cho AJAX request
+                        ob_clean(); // Clear any output before JSON
+                        header('Content-Type: application/json');
+                        if ($result) {
+                            echo json_encode([
+                                'success' => true, 
+                                'message' => 'Đã thêm sản phẩm vào giỏ hàng!',
+                                'cartCount' => $giohang->getCartItemCount()
+                            ]);
+                        } else {
+                            echo json_encode(['success' => false, 'message' => 'Không thể thêm vào giỏ hàng!']);
+                        }
+                        exit();
+                    }
+
+                    // Redirect cho non-AJAX request
+                    $referrer = $_SERVER['HTTP_REFERER'] ?? '../../../index.php';
 
                     if (strpos($referrer, 'administrator') !== false && strpos($referrer, 'administrator/elements_LQA/mgiohang') === false) {
                         // Nếu đang ở trang admin (không phải trang giỏ hàng), chuyển về trang giỏ hàng admin

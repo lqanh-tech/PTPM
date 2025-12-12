@@ -1,512 +1,385 @@
 <?php
-
 /**
- * Trang return cho thanh toán MoMo từ giỏ hàng
- * Hiển thị hóa đơn chi tiết và kết quả thanh toán
+ * MoMo Return Handler - Xử lý khi user quay lại từ MoMo
  */
 
-// Start session nếu chưa có với config phù hợp
-if (session_status() == PHP_SESSION_NONE) {
-    // Cấu hình session để tương thích với domain/subdomain
-    ini_set('session.cookie_domain', '');
-    ini_set('session.cookie_path', '/');
-    ini_set('session.cookie_secure', false);
-    ini_set('session.cookie_httponly', true);
-    session_start();
-}
+session_start();
 
-require_once '../../../payment/MoMoPayment.php';
-require_once '../mPDO.php';
-require_once '../mod/mtonkhoCls.php';
+// Include required files
+require_once __DIR__ . '/../../../payment/MoMoPayment.php';
+require_once __DIR__ . '/../mod/database.php';
 
-// Lấy thông tin từ URL parameters
+// Log callback data
+error_log('MoMo Return Callback: ' . json_encode($_GET));
+
+// Lấy dữ liệu từ callback
 $partnerCode = $_GET['partnerCode'] ?? '';
 $orderId = $_GET['orderId'] ?? '';
 $requestId = $_GET['requestId'] ?? '';
 $amount = $_GET['amount'] ?? '';
 $orderInfo = $_GET['orderInfo'] ?? '';
+$orderType = $_GET['orderType'] ?? '';
 $transId = $_GET['transId'] ?? '';
 $resultCode = $_GET['resultCode'] ?? '';
 $message = $_GET['message'] ?? '';
+$payType = $_GET['payType'] ?? '';
+$responseTime = $_GET['responseTime'] ?? '';
 $extraData = $_GET['extraData'] ?? '';
+$signature = $_GET['signature'] ?? '';
 
-// Log thông tin return
-error_log('MoMo Cart Return: ' . json_encode($_GET));
+// Decode extraData
+$extraDataDecoded = json_decode(urldecode($extraData), true);
+$orderCode = $extraDataDecoded['order_code'] ?? '';
+$userId = $extraDataDecoded['user_id'] ?? '';
+$shippingAddress = $extraDataDecoded['shipping_address'] ?? '';
 
-// Debug: Hiển thị thông tin GET và SESSION để kiểm tra
-echo "<!-- DEBUG: GET Parameters -->";
-echo "<!-- " . json_encode($_GET, JSON_PRETTY_PRINT) . " -->";
-echo "<!-- DEBUG: SESSION Data -->";
-echo "<!-- " . json_encode($_SESSION, JSON_PRETTY_PRINT) . " -->";
-
-// Ngăn auto-redirect bằng cách flush output
-ob_start();
-echo "<!-- Preventing auto-redirect -->";
-ob_flush();
-flush();
-
-// Verify signature (bỏ qua cho test localhost)
-$verifyResult = true; // Luôn true cho test
-if (strpos($_SERVER['HTTP_HOST'], 'localhost') === false) {
-    $momoPayment = new MoMoPayment();
-    $verifyResult = $momoPayment->verifyCallback($_GET);
-}
-
-// Decode extraData để lấy thông tin đơn hàng
-$orderData = null;
-if ($extraData) {
-    $orderData = json_decode($extraData, true);
-}
-
-// Lấy thông tin từ session
-$pendingOrder = $_SESSION['pending_order'] ?? null;
-$userId = null;
-if (isset($_SESSION['USER'])) {
-    $userId = is_object($_SESSION['USER']) ? $_SESSION['USER']->iduser : $_SESSION['USER'];
-}
-
-// Lấy thông tin sản phẩm đã chọn từ session (thay vì tất cả sản phẩm trong giỏ hàng)
-$cartItems = [];
-$totalAmount = 0;
-
-// Ưu tiên lấy từ order_details trong session (chỉ sản phẩm được chọn)
-if (isset($_SESSION['order_details']) && !empty($_SESSION['order_details'])) {
-    $orderDetails = $_SESSION['order_details'];
-
-    // Chuyển đổi format từ order_details sang cartItems để tương thích với giao diện
-    foreach ($orderDetails as $item) {
-        $cartItems[] = [
-            'product_id' => $item['id'],
-            'quantity' => $item['quantity'],
-            'tenhanghoa' => $item['name'],
-            'giathamkhao' => $item['price'],
-            'hinhanh' => $item['image']
-        ];
-        $totalAmount += $item['price'] * $item['quantity'];
-    }
-} else if ($userId) {
-    // Fallback: nếu không có order_details, lấy từ giỏ hàng (logic cũ)
-    try {
-        $pdo = new mPDO();
-        $cartQuery = "SELECT g.product_id, g.quantity, h.tenhanghoa, h.giathamkhao, h.hinhanh
-                      FROM tbl_giohang g
-                      LEFT JOIN hanghoa h ON g.product_id = h.idhanghoa
-                      WHERE g.user_id = ?";
-        $cartItems = $pdo->executeS($cartQuery, [$userId], true);
-
-        // Tính tổng tiền
-        foreach ($cartItems as $item) {
-            $totalAmount += $item['giathamkhao'] * $item['quantity'];
-        }
-    } catch (Exception $e) {
-        error_log('Error getting cart items: ' . $e->getMessage());
-    }
-}
-
-// Xác định trạng thái thanh toán
-$isSuccess = ($resultCode == '0');
-$statusClass = $isSuccess ? 'success' : 'danger';
-$statusIcon = $isSuccess ? 'fa-check-circle' : 'fa-times-circle';
-$statusText = $isSuccess ? 'Thanh toán thành công!' : 'Thanh toán thất bại!';
-
-// Chỉ sử dụng cart_items từ pending_order nếu không có order_details
-if ($pendingOrder && isset($pendingOrder['cart_items']) && empty($cartItems)) {
-    $cartItems = $pendingOrder['cart_items'];
-    $totalAmount = $pendingOrder['amount'];
-}
-
-// Fallback: Nếu vẫn không có cartItems, tạo item từ orderInfo
-if (empty($cartItems) && $orderInfo && $amount) {
-    $cartItems = [
-        [
-            'id' => 'unknown',
-            'tenhanghoa' => $orderInfo,
-            'quantity' => 1,
-            'giathamkhao' => $amount,
-            'hinhanh' => null,
-            'thanhtien' => $amount
-        ]
-    ];
-    $totalAmount = $amount;
-}
-
-// Nếu thanh toán thành công, xóa chỉ những sản phẩm đã thanh toán khỏi giỏ hàng và cập nhật tồn kho
-if ($isSuccess && isset($_SESSION['order_details'])) {
-    try {
-        $pdo = new mPDO();
-        $tonkho = new mtonkho();
-
-        // Create notifications for successful payment
-        if ($userId && $pendingOrder && isset($pendingOrder['order_id'])) {
-            require_once '../mod/CustomerNotificationManager.php';
-            $notificationManager = new CustomerNotificationManager();
-
-            // Get order from database
-            $orderQuery = "SELECT * FROM don_hang WHERE ma_don_hang_text = ?";
-            $orderResult = $pdo->executeS($orderQuery, [$orderId], true);
-
-            if ($orderResult && count($orderResult) > 0) {
-                $dbOrder = $orderResult[0];
-
-                // Send payment confirmed notification
-                $notificationManager->notifyPaymentConfirmed($dbOrder['id'], $userId);
-
-                // If order is already approved, send approved notification too
-                if ($dbOrder['trang_thai'] == 'approved') {
-                    $notificationManager->notifyOrderApproved($dbOrder['id'], $userId);
-                }
-
-                error_log('Created notifications for order #' . $dbOrder['id'] . ' user: ' . $userId);
-            }
-        }
-
-        // Xóa từng sản phẩm đã thanh toán khỏi giỏ hàng và cập nhật tồn kho
-        foreach ($_SESSION['order_details'] as $item) {
-            // 1. Cập nhật tồn kho (giảm số lượng)
-            $tonkhoInfo = $tonkho->getTonKhoByIdHangHoa($item['id']);
-            if ($tonkhoInfo) {
-                error_log("Tồn kho hiện tại của sản phẩm ID " . $item['id'] . ": " . $tonkhoInfo->soLuong);
-
-                // Sử dụng hàm updateSoLuong với isIncrement = false để giảm số lượng
-                $updateResult = $tonkho->updateSoLuong($item['id'], $item['quantity'], false);
-
-                if ($updateResult) {
-                    error_log("Đã cập nhật tồn kho thành công cho sản phẩm ID: " . $item['id'] . ", giảm: " . $item['quantity']);
-
-                    // Kiểm tra lại tồn kho sau khi cập nhật
-                    $updatedTonkhoInfo = $tonkho->getTonKhoByIdHangHoa($item['id']);
-                    if ($updatedTonkhoInfo) {
-                        error_log("Tồn kho sau khi cập nhật của sản phẩm ID " . $item['id'] . ": " . $updatedTonkhoInfo->soLuong);
-                    }
-                } else {
-                    error_log("Cập nhật tồn kho thất bại cho sản phẩm ID: " . $item['id']);
-                }
-            } else {
-                error_log("Không tìm thấy thông tin tồn kho cho sản phẩm ID: " . $item['id']);
-            }
-
-            // 2. Xóa khỏi giỏ hàng
-            if ($userId) {
-                // Nếu có user đăng nhập, xóa từ database
-                $pdo->execute(
-                    "DELETE FROM tbl_giohang WHERE user_id = ? AND product_id = ?",
-                    [$userId, $item['id']]
-                );
-            } else {
-                // Nếu không đăng nhập, xóa từ session cart
-                if (isset($_SESSION['cart'])) {
-                    foreach ($_SESSION['cart'] as $key => $cartItem) {
-                        if ($cartItem['id'] == $item['id']) {
-                            unset($_SESSION['cart'][$key]);
-                            break;
-                        }
-                    }
-                    // Reindex array
-                    $_SESSION['cart'] = array_values($_SESSION['cart']);
-                }
-            }
-        }
-
-        // Xóa order_details sau khi xử lý xong
-        unset($_SESSION['order_details']);
-
-        // Debug: Log session cart after removal
-        if (isset($_SESSION['cart'])) {
-            error_log('Session cart after removal: ' . json_encode($_SESSION['cart']));
-        }
-
-        error_log('Paid products removed from cart and inventory updated. User: ' . ($userId ?? 'guest'));
-    } catch (Exception $e) {
-        error_log('Error processing payment success: ' . $e->getMessage());
-    }
-}
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $isSuccess ? 'Thanh toán thành công' : 'Thanh toán thất bại'; ?></title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px 0;
-        }
-
-        .result-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        .result-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .result-header {
-            padding: 30px;
-            text-align: center;
-            color: white;
-        }
-
-        .result-header.success {
-            background: linear-gradient(135deg, #28a745, #20c997);
-        }
-
-        .result-header.danger {
-            background: linear-gradient(135deg, #dc3545, #fd7e14);
-        }
-
-        .result-icon {
-            font-size: 4rem;
-            margin-bottom: 15px;
-        }
-
-        .invoice-section {
-            padding: 30px;
-        }
-
-        .invoice-header {
-            border-bottom: 2px solid #dee2e6;
-            padding-bottom: 20px;
-            margin-bottom: 25px;
-        }
-
-        .invoice-table {
-            margin-bottom: 25px;
-        }
-
-        .invoice-table th {
-            background-color: #f8f9fa;
-            border: none;
-            font-weight: 600;
-        }
-
-        .invoice-table td {
-            border: none;
-            border-bottom: 1px solid #dee2e6;
-            padding: 12px 8px;
-        }
-
-        .total-row {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .transaction-info {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
-        }
-
-        .btn-return {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            border: none;
-            padding: 12px 30px;
-            font-weight: 600;
-            border-radius: 25px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-return:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
-        }
-
-        .product-image {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 5px;
-        }
-    </style>
+    <title>Kết Quả Thanh Toán MoMo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-
 <body>
-
-    <div class="container">
-        <div class="result-container">
-            <div class="result-card">
-                <!-- Header với trạng thái -->
-                <div class="result-header <?php echo $statusClass; ?>">
-                    <i class="fas <?php echo $statusIcon; ?> result-icon"></i>
-                    <h2><?php echo $statusText; ?></h2>
-                    <?php if ($isSuccess): ?>
-                        <p class="mb-0">Cảm ơn bạn đã mua hàng tại cửa hàng chúng tôi!</p>
-                    <?php else: ?>
-                        <p class="mb-0"><?php echo htmlspecialchars($message); ?></p>
-                    <?php endif; ?>
-                </div>
-
-                <!-- DEBUG: Check variables -->
-                <!-- isSuccess: <?php echo $isSuccess ? 'true' : 'false'; ?> -->
-                <!-- cartItems count: <?php echo count($cartItems); ?> -->
-                <!-- cartItems: <?php echo json_encode($cartItems); ?> -->
-
-                <?php if ($isSuccess): ?>
-                    <!-- Hóa đơn chi tiết -->
-                    <div class="invoice-section">
-                        <div class="invoice-header">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h4><i class="fas fa-receipt text-primary"></i> Hóa đơn thanh toán</h4>
-                                    <p class="text-muted mb-0">Mã đơn hàng: <strong><?php echo htmlspecialchars($orderId); ?></strong></p>
-                                </div>
-                                <div class="col-md-6 text-md-end">
-                                    <p class="text-muted mb-1">Ngày: <?php echo date('d/m/Y H:i:s'); ?></p>
-                                    <p class="text-muted mb-0">Khách hàng: <strong><?php echo htmlspecialchars($userId ?? 'Khách vãng lai'); ?></strong></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Thông tin giao dịch -->
-                        <div class="transaction-info">
-                            <h5><i class="fas fa-credit-card text-success"></i> Thông tin giao dịch</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Mã giao dịch MoMo:</strong> <?php echo htmlspecialchars($transId); ?></p>
-                                    <p><strong>Phương thức:</strong> Ví MoMo</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <p><strong>Thời gian:</strong> <?php echo date('d/m/Y H:i:s'); ?></p>
-                                    <p><strong>Trạng thái:</strong> <span class="text-success">Đã thanh toán</span></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Chi tiết sản phẩm -->
-                        <h5><i class="fas fa-shopping-cart text-primary"></i> Chi tiết đơn hàng</h5>
-                        <div class="table-responsive">
-                            <table class="table invoice-table">
-                                <thead>
-                                    <tr>
-                                        <th>Sản phẩm</th>
-                                        <th>Tên sản phẩm</th>
-                                        <th class="text-center">Số lượng</th>
-                                        <th class="text-end">Đơn giá</th>
-                                        <th class="text-end">Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($cartItems as $item):
-                                        $price = $item['giathamkhao'] ?? 0;
-                                        $quantity = $item['quantity'] ?? 1;
-                                        $subtotal = $price * $quantity;
-                                    ?>
-                                        <tr>
-                                            <td>
-                                                <?php if (isset($item['hinhanh']) && $item['hinhanh']): ?>
-                                                    <img src="../../../administrator/elements_LQA/mhanghoa/displayImage.php?id=<?php echo $item['hinhanh']; ?>"
-                                                        alt="<?php echo htmlspecialchars($item['tenhanghoa']); ?>"
-                                                        class="product-image">
-                                                <?php else: ?>
-                                                    <div class="product-image bg-light d-flex align-items-center justify-content-center">
-                                                        <i class="fas fa-image text-muted"></i>
-                                                    </div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <strong><?php echo htmlspecialchars($item['tenhanghoa']); ?></strong>
-                                            </td>
-                                            <td class="text-center"><?php echo $quantity; ?></td>
-                                            <td class="text-end"><?php echo number_format($price, 0, ',', '.'); ?> đ</td>
-                                            <td class="text-end"><?php echo number_format($subtotal, 0, ',', '.'); ?> đ</td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                                <tfoot>
-                                    <tr class="total-row">
-                                        <td colspan="4" class="text-end"><strong>Tổng cộng:</strong></td>
-                                        <td class="text-end"><strong><?php echo number_format($totalAmount, 0, ',', '.'); ?> đ</strong></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-
-                        <!-- Địa chỉ giao hàng -->
-                        <?php if ($pendingOrder && isset($pendingOrder['shipping_address'])): ?>
-                            <div class="transaction-info">
-                                <h5><i class="fas fa-truck text-info"></i> Thông tin giao hàng</h5>
-                                <p><strong>Địa chỉ:</strong> <?php echo htmlspecialchars($pendingOrder['shipping_address']); ?></p>
-                                <p class="text-muted mb-0">Đơn hàng sẽ được giao trong 2-3 ngày làm việc.</p>
-                            </div>
-                        <?php endif; ?>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header <?php echo ($resultCode == '0') ? 'bg-success' : 'bg-danger'; ?> text-white text-center">
+                        <h4 class="mb-0">
+                            <?php if ($resultCode == '0'): ?>
+                                <i class="fas fa-check-circle"></i> Thanh Toán Thành Công
+                            <?php else: ?>
+                                <i class="fas fa-times-circle"></i> Thanh Toán Thất Bại
+                            <?php endif; ?>
+                        </h4>
                     </div>
-                <?php endif; ?>
-
-                <!-- Nút hành động -->
-                <div class="invoice-section border-top">
-                    <div class="text-center">
-                        <?php if ($isSuccess): ?>
-                            <div class="alert alert-info mb-3">
-                                <i class="fas fa-info-circle me-2"></i>
-                                <strong>Thanh toán hoàn tất!</strong>
+                    <div class="card-body">
+                        <?php if ($resultCode == '0'): ?>
+                            <div class="alert alert-success">
+                                <h5><i class="fas fa-check"></i> Giao dịch thành công!</h5>
+                                <p>Cảm ơn bạn đã thanh toán. Đơn hàng của bạn đang được xử lý.</p>
                             </div>
-                            <?php
-                            // Always redirect customers to main shopping page after payment
-                            // Even if they have admin privileges, they're shopping as customers
-                            $continueShoppingUrl = '../../../index.php';
-
-                            // Debug log
-                            error_log('MoMo Return - Redirect URL: ' . $continueShoppingUrl);
-                            error_log('MoMo Return - Session USER: ' . ($_SESSION['USER'] ?? 'Not set'));
-                            error_log('MoMo Return - Session ADMIN: ' . ($_SESSION['ADMIN'] ?? 'Not set'));
-                            ?>
-                            <a href="<?php echo $continueShoppingUrl; ?>" class="btn btn-primary btn-return">
-                                <i class="fas fa-shopping-bag me-2"></i>Tiếp tục mua hàng
-                            </a>
-                            <a href="../../../customer/order_history.php" class="btn btn-success ms-2">
-                                <i class="fas fa-history me-2"></i>Lịch sử mua hàng
-                            </a>
-                            <button onclick="window.print()" class="btn btn-outline-secondary ms-2">
-                                <i class="fas fa-print me-2"></i>In hóa đơn
-                            </button>
                         <?php else: ?>
-                            <div class="alert alert-warning mb-3">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>Thanh toán không thành công!</strong> Vui lòng thử lại hoặc liên hệ hỗ trợ.
+                            <div class="alert alert-danger">
+                                <h5><i class="fas fa-exclamation-triangle"></i> Giao dịch thất bại!</h5>
+                                <p><strong>Lỗi:</strong> <?php echo htmlspecialchars(urldecode($message)); ?></p>
+                                <p><strong>Mã lỗi:</strong> <?php echo htmlspecialchars($resultCode); ?></p>
                             </div>
-                            <a href="checkout.php" class="btn btn-primary btn-return">
-                                <i class="fas fa-redo me-2"></i>Thử lại thanh toán
-                            </a>
-                            <a href="../../../index.php" class="btn btn-outline-secondary ms-3">
-                                <i class="fas fa-home me-2"></i>Về trang chủ
-                            </a>
                         <?php endif; ?>
 
+                        <h5>Thông Tin Giao Dịch</h5>
+                        <table class="table table-bordered">
+                            <tr>
+                                <td><strong>Mã đơn hàng:</strong></td>
+                                <td><?php echo htmlspecialchars($orderCode); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Số tiền:</strong></td>
+                                <td><?php echo number_format($amount, 0, ',', '.'); ?> ₫</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mã giao dịch MoMo:</strong></td>
+                                <td><?php echo htmlspecialchars($transId); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Thời gian:</strong></td>
+                                <td><?php echo date('d/m/Y H:i:s', intval($responseTime/1000)); ?></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phương thức:</strong></td>
+                                <td><?php echo htmlspecialchars($payType); ?></td>
+                            </tr>
+                        </table>
 
+                        <?php if (!empty($shippingAddress)): ?>
+                        <h5>Thông Tin Giao Hàng</h5>
+                        <p><strong>Địa chỉ:</strong> <?php echo htmlspecialchars(urldecode($shippingAddress)); ?></p>
+                        <?php endif; ?>
+
+                        <div class="text-center mt-4">
+                            <?php if ($resultCode == '0'): ?>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-spinner fa-spin"></i> Đang chuyển đến trang hóa đơn...
+                                </div>
+                                <div class="progress mt-3">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                                </div>
+                                <div id="manualRedirectBtn" class="mt-3" style="display: none;">
+                                    <p class="text-muted">Nếu không tự động chuyển hướng, vui lòng click nút bên dưới:</p>
+                                    <a href="#" id="viewInvoiceBtn" class="btn btn-success btn-lg">
+                                        <i class="fas fa-file-invoice"></i> Xem Hóa Đơn
+                                    </a>
+                                </div>
+                            <?php else: ?>
+                                <a href="checkout.php" class="btn btn-primary">
+                                    <i class="fas fa-redo"></i> Thử Lại
+                                </a>
+                                <a href="giohangView.php" class="btn btn-secondary">
+                                    <i class="fas fa-shopping-cart"></i> Về Giỏ Hàng
+                                </a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Debug Info (chỉ hiển thị khi development) -->
+                <?php if (isset($_GET['debug'])): ?>
+                <div class="card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">Debug Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre><?php print_r($_GET); ?></pre>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <style media="print">
-        .btn,
-        .result-header {
-            display: none !important;
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <?php if ($resultCode == '0'): ?>
+    <script>
+        // Redirect ngay lập tức nếu thanh toán thành công
+        let redirectUrl = null;
+        let redirectTimer = null;
+        let manualBtnTimer = null;
+        
+        function performRedirect() {
+            if (redirectUrl) {
+                console.log('Redirecting to:', redirectUrl);
+                window.location.href = redirectUrl;
+            } else {
+                console.log('Waiting for redirect URL...');
+                // Nếu sau 5 giây vẫn không có URL, hiển thị nút thủ công
+                if (!redirectTimer) {
+                    redirectTimer = setTimeout(function() {
+                        console.log('Timeout - showing manual redirect button');
+                        document.getElementById('manualRedirectBtn').style.display = 'block';
+                        
+                        // Set href cho nút
+                        if (redirectUrl) {
+                            document.getElementById('viewInvoiceBtn').href = redirectUrl;
+                        } else {
+                            document.getElementById('viewInvoiceBtn').href = 'giohangView.php';
+                        }
+                    }, 5000);
+                }
+            }
         }
-
-        body {
-            background: white !important;
-        }
-
-        .result-card {
-            box-shadow: none !important;
-        }
-    </style>
-
+        
+        // Hiển thị nút thủ công sau 3 giây (backup)
+        manualBtnTimer = setTimeout(function() {
+            if (redirectUrl) {
+                document.getElementById('manualRedirectBtn').style.display = 'block';
+                document.getElementById('viewInvoiceBtn').href = redirectUrl;
+            }
+        }, 3000);
+        
+        // Thử redirect sau 1 giây
+        setTimeout(performRedirect, 1000);
+    </script>
+    <?php endif; ?>
 </body>
-
 </html>
+
+<?php
+// Cập nhật trạng thái đơn hàng trong database nếu thanh toán thành công
+if ($resultCode == '0') {
+    try {
+        $db = Database::getInstance();
+        $conn = $db->getConnection();
+        
+        // Tìm đơn hàng theo orderId từ MoMo
+        $findOrderSql = "SELECT id, ma_nguoi_dung, tong_tien, ma_don_hang_text FROM don_hang WHERE ma_don_hang_text = ? LIMIT 1";
+        $findStmt = $conn->prepare($findOrderSql);
+        $findStmt->execute([$orderId]);
+        $order = $findStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($order) {
+            $dbOrderId = $order['id'];
+            $orderUserId = $order['ma_nguoi_dung'];
+            $orderTotal = $order['tong_tien'];
+            $orderCode = $order['ma_don_hang_text'];
+            
+            // Cập nhật trạng thái đơn hàng
+            $updateSql = "UPDATE don_hang SET 
+                          trang_thai_thanh_toan = 'paid',
+                          trang_thai = 'approved',
+                          ngay_cap_nhat = NOW()
+                          WHERE id = ?";
+            
+            $stmt = $conn->prepare($updateSql);
+            $stmt->execute([$dbOrderId]);
+            
+            // GHI NHẬN SỬ DỤNG COUPON (nếu có)
+            if (isset($_SESSION['pending_coupon']) && !empty($_SESSION['pending_coupon'])) {
+                try {
+                    require_once __DIR__ . '/../mod/CouponCls.php';
+                    $couponManager = new Coupon();
+                    
+                    $pendingCoupon = $_SESSION['pending_coupon'];
+                    $couponResult = $couponManager->applyCoupon(
+                        $pendingCoupon['code'], 
+                        $dbOrderId, 
+                        $orderUserId, 
+                        $pendingCoupon['discount']
+                    );
+                    
+                    if ($couponResult) {
+                        error_log("MoMo Return - Coupon applied successfully: {$pendingCoupon['code']}, discount: {$pendingCoupon['discount']}");
+                    } else {
+                        error_log("MoMo Return - Failed to apply coupon: {$pendingCoupon['code']}");
+                    }
+                    
+                    // Xóa coupon khỏi session sau khi đã sử dụng
+                    unset($_SESSION['pending_coupon']);
+                    unset($_SESSION['applied_coupon']);
+                    unset($_SESSION['coupon_discount']);
+                    unset($_SESSION['coupon_data']);
+                    
+                } catch (Exception $couponError) {
+                    error_log("MoMo Return - Coupon apply error: " . $couponError->getMessage());
+                }
+            }
+            
+            // GỬI THÔNG BÁO ĐẾN KHÁCH HÀNG
+            try {
+                require_once __DIR__ . '/../mod/CustomerNotificationManager.php';
+                $notificationManager = new CustomerNotificationManager();
+                
+                // Gửi thông báo xác nhận thanh toán
+                $notificationManager->notifyPaymentConfirmed($dbOrderId, $orderUserId);
+                
+                error_log("MoMo Return - Notification sent for order $dbOrderId to user $orderUserId");
+            } catch (Exception $notifError) {
+                error_log("MoMo Return - Error sending notification: " . $notifError->getMessage());
+            }
+            
+            error_log("MoMo Return - Order updated successfully: $orderId (DB ID: $dbOrderId)");
+            
+            // LƯU Ý: Tồn kho đã được trừ khi tạo đơn hàng trong momo_payment.php
+            // Ở đây chỉ cần xóa giỏ hàng và cập nhật trạng thái
+            error_log("MoMo Return - Inventory was already deducted when order was created");
+            
+            // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
+            if (!empty($userId)) {
+                require_once __DIR__ . '/../mod/giohangCls.php';
+                $giohang = new GioHang();
+                
+                // Lấy tổng số sản phẩm trong giỏ TRƯỚC KHI xóa
+                $cartBeforeSql = "SELECT COUNT(*) as total FROM tbl_giohang WHERE user_id = ?";
+                $cartBeforeStmt = $conn->prepare($cartBeforeSql);
+                $cartBeforeStmt->execute([$userId]);
+                $cartBefore = $cartBeforeStmt->fetch(PDO::FETCH_ASSOC);
+                $totalBeforeRemoval = $cartBefore['total'] ?? 0;
+                
+                error_log("MoMo Return - Cart items BEFORE removal: $totalBeforeRemoval for user: $userId");
+                
+                // QUAN TRỌNG: Ưu tiên lấy danh sách sản phẩm từ session (đã được lưu khi tạo đơn hàng)
+                // Điều này đảm bảo chỉ xóa đúng các sản phẩm đã thanh toán
+                $orderItems = [];
+                
+                if (isset($_SESSION['pending_order']['purchased_product_ids']) && 
+                    is_array($_SESSION['pending_order']['purchased_product_ids'])) {
+                    $orderItems = $_SESSION['pending_order']['purchased_product_ids'];
+                    error_log("MoMo Return - Using purchased_product_ids from session: " . implode(', ', $orderItems));
+                } else {
+                    // Fallback: Lấy từ chi_tiet_don_hang (chỉ khi session không có)
+                    error_log("MoMo Return - Session purchased_product_ids not found, falling back to database");
+                    $orderItemsSql = "SELECT ma_san_pham FROM chi_tiet_don_hang WHERE ma_don_hang = ?";
+                    $orderItemsStmt = $conn->prepare($orderItemsSql);
+                    $orderItemsStmt->execute([$dbOrderId]);
+                    $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_COLUMN);
+                }
+                
+                error_log("MoMo Return - Products to remove from cart: " . implode(', ', $orderItems));
+                
+                // Chỉ xóa các sản phẩm đã thanh toán
+                $removedCount = 0;
+                foreach ($orderItems as $productId) {
+                    if ($giohang->removeFromCart($productId)) {
+                        $removedCount++;
+                        error_log("MoMo Return - Successfully removed product ID: $productId from cart");
+                    } else {
+                        error_log("MoMo Return - Failed to remove product ID: $productId from cart (may not exist)");
+                    }
+                }
+                
+                // Kiểm tra số sản phẩm còn lại trong giỏ SAU KHI xóa
+                $cartAfterSql = "SELECT COUNT(*) as total FROM tbl_giohang WHERE user_id = ?";
+                $cartAfterStmt = $conn->prepare($cartAfterSql);
+                $cartAfterStmt->execute([$userId]);
+                $cartAfter = $cartAfterStmt->fetch(PDO::FETCH_ASSOC);
+                $totalAfterRemoval = $cartAfter['total'] ?? 0;
+                
+                error_log("MoMo Return - Cart items AFTER removal: $totalAfterRemoval for user: $userId");
+                error_log("MoMo Return - Removed $removedCount purchased items from cart (Expected: " . count($orderItems) . ")");
+                
+                // Xóa thông tin pending_order khỏi session sau khi xử lý xong
+                unset($_SESSION['pending_order']);
+            }
+            
+            // Set session để order_success.php không redirect về giỏ hàng
+            $_SESSION['payment_success'] = true;
+            $_SESSION['order_id'] = $dbOrderId;
+            
+            // Redirect đến trang hóa đơn - Sử dụng JavaScript để set URL
+            echo "<script>
+                redirectUrl = 'order_success.php?order_id={$dbOrderId}';
+                console.log('Order processed successfully. Redirect URL set:', redirectUrl);
+                // Redirect ngay lập tức
+                setTimeout(function() {
+                    window.location.href = redirectUrl;
+                }, 1500);
+            </script>";
+            
+            // Flush output để đảm bảo JavaScript được gửi
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+            flush();
+            
+        } else {
+            error_log("Order not found in database: $orderId");
+            echo "<script>
+                redirectUrl = 'giohangView.php';
+                console.log('Order not found. Redirecting to cart.');
+                setTimeout(function() {
+                    window.location.href = redirectUrl;
+                }, 1500);
+            </script>";
+            
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+            flush();
+        }
+        
+    } catch (Exception $e) {
+        error_log("Error updating order: " . $e->getMessage());
+        echo "<script>
+            redirectUrl = 'giohangView.php';
+            console.log('Error processing order:', '<?php echo addslashes($e->getMessage()); ?>');
+            setTimeout(function() {
+                window.location.href = redirectUrl;
+            }, 1500);
+        </script>";
+        
+        if (ob_get_level() > 0) {
+            ob_flush();
+        }
+        flush();
+    }
+} else {
+    // Nếu thanh toán thất bại, không cần redirect
+    echo "<script>
+        console.log('Payment failed. Result code:', '<?php echo $resultCode; ?>');
+    </script>";
+}
+?>

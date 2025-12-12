@@ -1,0 +1,7 @@
+tunnel: superior-downloadable-wayne-buildings
+credentials-file: C:\Users\quoca\.cloudflared\superior-downloadable-wayne-buildings.json
+
+ingress:
+  - hostname: superior-downloadable-wayne-buildings.trycloudflare.com
+    service: http://localhost:18080
+  - service: http_status:404

@@ -111,13 +111,45 @@ try {
                         if ($approveResult['success']) {
                             error_log("Auto approved order #{$order['id']} after MoMo payment");
 
-                            // Gửi thông báo duyệt đơn hàng
+                            // Xóa giỏ hàng sau khi thanh toán thành công và đơn hàng được duyệt
+                            try {
+                                require_once '../administrator/elements_LQA/mod/giohangCls.php';
+                                
+                                // Tạm thời set session để có thể xóa giỏ hàng
+                                $originalSession = $_SESSION;
+                                $_SESSION['USER'] = $order['ma_nguoi_dung'];
+                                
+                                $giohang = new GioHang();
+                                $clearResult = $giohang->clearCart();
+                                
+                                // Khôi phục session gốc
+                                $_SESSION = $originalSession;
+                                
+                                if ($clearResult) {
+                                    error_log("Successfully cleared cart for user: " . $order['ma_nguoi_dung']);
+                                } else {
+                                    error_log("Failed to clear cart for user: " . $order['ma_nguoi_dung']);
+                                }
+                            } catch (Exception $e) {
+                                error_log("Error clearing cart: " . $e->getMessage());
+                            }
+
+                            // Gửi thông báo đặt hàng thành công và duyệt đơn hàng
                             require_once '../administrator/elements_LQA/mod/CustomerNotificationManager.php';
                             $notificationManager = new CustomerNotificationManager();
 
                             if ($order['ma_nguoi_dung']) {
+                                // Gửi email đặt hàng thành công
+                                $notificationManager->notifyOrderSuccess($order['id'], $order['ma_nguoi_dung']);
+                                error_log("Order success notification sent for order: {$order['id']}");
+                                
+                                // Gửi email xác nhận thanh toán
                                 $notificationManager->notifyPaymentConfirmed($order['id'], $order['ma_nguoi_dung']);
+                                error_log("Payment confirmed notification sent for order: {$order['id']}");
+                                
+                                // Gửi email đơn hàng đã được duyệt
                                 $notificationManager->notifyOrderApproved($order['id'], $order['ma_nguoi_dung']);
+                                error_log("Order approved notification sent for order: {$order['id']}");
                             }
                         } else {
                             error_log("Failed to auto approve order #{$order['id']}: " . $approveResult['message']);

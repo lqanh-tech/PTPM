@@ -95,7 +95,11 @@ $defaultImagePaths = [
     "../../../administrator/elements_LQA/img_LQA/no-image.png",
     "../../administrator/elements_LQA/img_LQA/no-image.png",
     "../administrator/elements_LQA/img_LQA/no-image.png",
-    "./administrator/elements_LQA/img_LQA/no-image.png"
+    "./administrator/elements_LQA/img_LQA/no-image.png",
+    "../../../img_LQA/no-image.png",
+    "../../img_LQA/no-image.png",
+    "../img_LQA/no-image.png",
+    "./img_LQA/no-image.png"
 ];
 
 $defaultImageFound = false;
@@ -105,18 +109,18 @@ foreach ($defaultImagePaths as $defaultImage) {
         header("Content-Length: " . filesize($defaultImage));
         readfile($defaultImage);
         $defaultImageFound = true;
-        break;
+        exit; // Exit after sending the default image
     }
 }
 
-// Nếu không tìm thấy file no-image.png, tạo một hình ảnh đơn giản
-if (!$defaultImageFound) {
-    // Tạo một hình ảnh đơn giản với text "No Image"
-    header("Content-Type: image/png");
-    $width = 200;
-    $height = 200;
-    $image = imagecreatetruecolor($width, $height);
+// Nếu không tìm thấy file no-image.png, tạo một hình ảnh đơn giản với text "No Image"
+header("Content-Type: image/png");
+$width = 200;
+$height = 200;
+$image = imagecreatetruecolor($width, $height);
 
+// Kiểm tra nếu GD extension có sẵn
+if (function_exists('imagecreatetruecolor')) {
     // Màu nền và màu chữ
     $bgColor = imagecolorallocate($image, 240, 240, 240);
     $textColor = imagecolorallocate($image, 100, 100, 100);
@@ -141,4 +145,9 @@ if (!$defaultImageFound) {
     // Output hình ảnh
     imagepng($image);
     imagedestroy($image);
+} else {
+    // Nếu GD không có sẵn, tạo một hình ảnh PNG đơn giản bằng dữ liệu base64
+    // Đây là một hình ảnh PNG 1x1 pixel trong base64
+    $base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+    echo base64_decode($base64Image);
 }

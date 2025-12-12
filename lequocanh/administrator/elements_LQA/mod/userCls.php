@@ -3,9 +3,17 @@ $s = '../../elements_LQA/mod/database.php';
 if (file_exists($s)) {
     $f = $s;
 } else {
-    $f = './elements_LQA/mod/database.php';
+    $f = __DIR__ . '/database.php';
 }
 require_once $f;
+
+// Include PasswordHelper để sử dụng Bcrypt
+$passwordHelperPath = __DIR__ . '/PasswordHelper.php';
+if (file_exists($passwordHelperPath)) {
+    require_once $passwordHelperPath;
+} else {
+    require_once './elements_LQA/mod/PasswordHelper.php';
+}
 
 // Kiểm tra xem class user đã được định nghĩa chưa
 if (!class_exists('user')) {
@@ -37,10 +45,41 @@ if (!class_exists('user')) {
             $user = $select->fetch();
 
             if ($user) {
-                error_log("UserCheckLogin - Tìm thấy user: " . json_encode($user));
+                error_log("UserCheckLogin - Tìm thấy user: " . $user->username);
 
-                // Kiểm tra mật khẩu
-                if ($user->password === $password) {
+                // Kiểm tra mật khẩu sử dụng Bcrypt
+                $passwordMatch = false;
+                
+                // Kiểm tra xem password trong DB có phải là plain text không
+                if (PasswordHelper::isPlainText($user->password)) {
+                    error_log("UserCheckLogin - Password là plain text, đang migration sang Bcrypt");
+                    
+                    // So sánh plain text
+                    if ($user->password === $password) {
+                        $passwordMatch = true;
+                        
+                        // Tự động hash lại password và cập nhật vào database
+                        $hashedPassword = PasswordHelper::hash($password);
+                        $update_sql = "UPDATE user SET password = ? WHERE iduser = ?";
+                        $update = $this->db->prepare($update_sql);
+                        $update->execute(array($hashedPassword, $user->iduser));
+                        error_log("UserCheckLogin - Đã migration password sang Bcrypt cho user: " . $username);
+                    }
+                } else {
+                    // Verify password với Bcrypt hash
+                    $passwordMatch = PasswordHelper::verify($password, $user->password);
+                    
+                    // Kiểm tra xem có cần rehash không (khi thay đổi cost factor)
+                    if ($passwordMatch && PasswordHelper::needsRehash($user->password)) {
+                        $hashedPassword = PasswordHelper::hash($password);
+                        $update_sql = "UPDATE user SET password = ? WHERE iduser = ?";
+                        $update = $this->db->prepare($update_sql);
+                        $update->execute(array($hashedPassword, $user->iduser));
+                        error_log("UserCheckLogin - Đã rehash password cho user: " . $username);
+                    }
+                }
+
+                if ($passwordMatch) {
                     error_log("UserCheckLogin - Mật khẩu khớp");
 
                     // Kiểm tra trạng thái tài khoản
@@ -59,7 +98,7 @@ if (!class_exists('user')) {
                         return true; // Cho phép đăng nhập sau khi kích hoạt
                     }
                 } else {
-                    error_log("UserCheckLogin - Mật khẩu không khớp. DB: '" . $user->password . "', Input: '$password'");
+                    error_log("UserCheckLogin - Mật khẩu không khớp");
                     return false;
                 }
             } else {
@@ -72,7 +111,7 @@ if (!class_exists('user')) {
                 $similar_users = $stmt_like->fetchAll(PDO::FETCH_OBJ);
 
                 if (count($similar_users) > 0) {
-                    error_log("UserCheckLogin - Tìm thấy các user tương tự: " . json_encode($similar_users));
+                    error_log("UserCheckLogin - Tìm thấy " . count($similar_users) . " user tương tự");
                 }
 
                 return false;
@@ -105,13 +144,16 @@ if (!class_exists('user')) {
 
             return $getAll->fetchAll();
         }
-        public function UserAdd($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai)
+        public function UserAdd($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $email = null)
         {
             // Loại bỏ khoảng trắng thừa từ username
             $username = trim($username);
 
-            $sql = "INSERT INTO user (username, password, hoten, gioitinh, ngaysinh, diachi, dienthoai, setlock) VALUES (?,?,?,?,?,?,?,?)";
-            $data = array($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, 1); // Thêm setlock=1 để kích hoạt tài khoản
+            // Hash password sử dụng Bcrypt
+            $hashedPassword = PasswordHelper::hash($password);
+
+            $sql = "INSERT INTO user (username, password, hoten, gioitinh, ngaysinh, diachi, dienthoai, email, setlock) VALUES (?,?,?,?,?,?,?,?,?)";
+            $data = array($username, $hashedPassword, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $email, 1); // Thêm setlock=1 để kích hoạt tài khoản
 
             $add = $this->db->prepare($sql);
             $add->execute($data);
@@ -126,9 +168,17 @@ if (!class_exists('user')) {
             $del->execute($data);
             return $del->rowCount();
         }
-        public function UserUpdate($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $iduser)
+        public function UserUpdate($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $iduser, $email = null)
         {
             try {
+                // Nếu password không rỗng, hash nó trước khi update
+                if (!empty($password)) {
+                    // Kiểm tra xem password có phải là hash chưa
+                    if (PasswordHelper::isPlainText($password)) {
+                        $password = PasswordHelper::hash($password);
+                    }
+                }
+
                 $sql = "UPDATE user SET
                     username=?,
                     password=?,
@@ -136,10 +186,11 @@ if (!class_exists('user')) {
                     gioitinh=?,
                     ngaysinh=?,
                     diachi=?,
-                    dienthoai=?
+                    dienthoai=?,
+                    email=?
                     WHERE iduser=?";
 
-                $data = array($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $iduser);
+                $data = array($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $email, $iduser);
                 $update = $this->db->prepare($sql);
                 $update->execute($data);
                 return $update->rowCount();
@@ -160,8 +211,11 @@ if (!class_exists('user')) {
         }
         public function UserSetPassword($iduser, $password)
         {
+            // Hash password sử dụng Bcrypt
+            $hashedPassword = PasswordHelper::hash($password);
+
             $sql = "UPDATE user set password = ? WHERE iduser =? ";
-            $data = array($password, $iduser);
+            $data = array($hashedPassword, $iduser);
 
             $update_pass = $this->db->prepare($sql);
             $update_pass->execute($data);
@@ -178,21 +232,40 @@ if (!class_exists('user')) {
         }
         public function UserChangePassword($iduser, $passwordold, $passwordnew)
         {
-            $sql = 'select * from user where iduser = ? and password = ?';
-            $data = array($iduser, $passwordold);
+            // Lấy thông tin user
+            $sql = 'SELECT * FROM user WHERE iduser = ?';
+            $data = array($iduser);
 
             $select = $this->db->prepare($sql);
             $select->setFetchMode(PDO::FETCH_OBJ);
             $select->execute($data);
 
-            $get_obj = count($select->fetchAll());
-            if ($get_obj === 1) {
-                $sql = "UPDATE user set password = ? WHERE iduser =? ";
-                $data = array($passwordnew, $iduser);
+            $user = $select->fetch();
+            
+            if ($user) {
+                // Verify password cũ
+                $passwordMatch = false;
+                
+                if (PasswordHelper::isPlainText($user->password)) {
+                    // So sánh plain text
+                    $passwordMatch = ($user->password === $passwordold);
+                } else {
+                    // Verify với Bcrypt
+                    $passwordMatch = PasswordHelper::verify($passwordold, $user->password);
+                }
+                
+                if ($passwordMatch) {
+                    // Hash password mới và update
+                    $hashedPassword = PasswordHelper::hash($passwordnew);
+                    $sql = "UPDATE user SET password = ? WHERE iduser = ?";
+                    $data = array($hashedPassword, $iduser);
 
-                $update_pass = $this->db->prepare($sql);
-                $update_pass->execute($data);
-                return $update_pass->rowCount();
+                    $update_pass = $this->db->prepare($sql);
+                    $update_pass->execute($data);
+                    return $update_pass->rowCount();
+                } else {
+                    return false;
+                }
             } else {
                 return false;
             }

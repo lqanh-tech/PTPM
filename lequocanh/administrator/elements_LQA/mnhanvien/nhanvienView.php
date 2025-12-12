@@ -5,6 +5,16 @@
 require_once './elements_LQA/mod/nhanvienCls.php';
 require_once './elements_LQA/mod/userCls.php';
 require_once './elements_LQA/mod/roleCls.php';
+require_once './elements_LQA/mod/phanHeQuanLyCls.php';
+
+// Tự động đồng bộ các module phân quyền mới khi admin truy cập
+if (isset($_SESSION['ADMIN'])) {
+    $phanHeSync = new PhanHeQuanLy();
+    $syncResult = $phanHeSync->syncModules();
+    if ($syncResult > 0) {
+        echo '<div class="alert alert-info">Đã tự động thêm ' . $syncResult . ' module phân quyền mới.</div>';
+    }
+}
 
 // Hiển thị thông báo nếu có
 if (isset($_GET['notice']) && $_GET['notice'] == 'duplicate_user') {

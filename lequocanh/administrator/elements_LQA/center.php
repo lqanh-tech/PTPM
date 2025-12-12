@@ -1,18 +1,33 @@
 <?php
-require_once './elements_LQA/mod/phanquyenCls.php';
+require_once __DIR__ . '/mod/phanquyenCls.php';
 
 // Khởi tạo đối tượng PhanQuyen
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
+$isAdmin = isset($_SESSION['ADMIN']);
+$isNhanVien = $phanQuyen->isNhanVien($username);
 
 if (isset($_GET['req'])) {
     $request = $_GET['req'];
 
     // Log để debug
-    error_log("Center.php - Yêu cầu truy cập module: $request, Username: $username");
+    error_log("Center.php - Yêu cầu truy cập module: $request, Username: $username, isAdmin: " . ($isAdmin ? 'true' : 'false') . ", isNhanVien: " . ($isNhanVien ? 'true' : 'false'));
 
     // Kiểm tra quyền truy cập
-    if (!$phanQuyen->checkAccess($request, $username)) {
+    $hasAccess = false;
+    
+    if ($isAdmin) {
+        // Admin có quyền truy cập tất cả
+        $hasAccess = true;
+    } else if ($isNhanVien) {
+        // Nhân viên: kiểm tra quyền từ database
+        $hasAccess = $phanQuyen->checkAccessForEmployee($request, $username);
+    } else {
+        // User thông thường: kiểm tra quyền cơ bản
+        $hasAccess = $phanQuyen->checkAccess($request, $username);
+    }
+    
+    if (!$hasAccess) {
         echo '<div class="alert alert-danger">
                 <strong>Lỗi:</strong> Bạn không có quyền truy cập vào chức năng này.
                 <p>Module yêu cầu: ' . htmlspecialchars($request) . '</p>
@@ -26,135 +41,182 @@ if (isset($_GET['req'])) {
 
     switch ($request) {
         case 'userview':
-            require './elements_LQA/mUser/userView.php';
+            require __DIR__ . '/mUser/userView.php';
             break;
         case 'updateuser':
-            require './elements_LQA/mUser/userUpdate.php';
+            require __DIR__ . '/mUser/userUpdate.php';
             break;
         case 'userupdate':
-            require './elements_LQA/mUser/userUpdate.php';
+            require __DIR__ . '/mUser/userUpdate.php';
             break;
 
         case 'userUpdateProfile':
-            require './elements_LQA/mUser/userUpdateProfile.php';
+            require __DIR__ . '/mUser/userUpdateProfile.php';
             break;
         case 'loaihangview':
-            require './elements_LQA/mLoaihang/loaihangView.php';
+            require __DIR__ . '/mLoaihang/loaihangView.php';
             break;
         case 'hanghoaview':
-            require './elements_LQA/mhanghoa/hanghoaView.php';
+            require __DIR__ . '/mhanghoa/hanghoaView.php';
             break;
         case 'dongiaview': // Đảm bảo rằng trường hợp này được xử lý
-            require './elements_LQA/mdongia/dongiaView.php';
+            require __DIR__ . '/mdongia/dongiaView.php';
             break;
         case 'thuonghieuview':
-            require './elements_LQA/mthuonghieu/thuonghieuView.php';
+            require __DIR__ . '/mthuonghieu/thuonghieuView.php';
             break;
         case 'donvitinhview':
-            require './elements_LQA/mdonvitinh/donvitinhView.php';
+            require __DIR__ . '/mdonvitinh/donvitinhView.php';
             break;
         case 'nhanvienview':
-            require './elements_LQA/mnhanvien/nhanvienView.php';
+            require __DIR__ . '/mnhanvien/nhanvienView.php';
             break;
         case 'thuoctinhview':
-            require './elements_LQA/mthuoctinh/thuoctinhView.php';
+            require __DIR__ . '/mthuoctinh/thuoctinhView.php';
             break;
         case 'thuoctinhhhview':
-            require './elements_LQA/mthuoctinhhh/thuoctinhhhView.php';
+            require __DIR__ . '/mthuoctinhhh/thuoctinhhhView.php';
             break;
         case 'adminGiohangView':
-            require './elements_LQA/mgiohang/adminGiohangView.php';
+            require __DIR__ . '/mgiohang/adminGiohangView.php';
             break;
         case 'hinhanhview':
-            require './elements_LQA/mhinhanh/hinhanhView.php';
+            require __DIR__ . '/mhinhanh/hinhanhView.php';
             break;
         case 'nhacungcapview':
-            require './elements_LQA/mnhacungcap/nhacungcapView.php';
+            require __DIR__ . '/mnhacungcap/nhacungcapView.php';
             break;
         case 'mphieunhap':
-            require './elements_LQA/mmphieunhap/mphieunhapView.php';
+            require __DIR__ . '/mmphieunhap/mphieunhapView.php';
             break;
         case 'mphieunhapedit':
-            require './elements_LQA/mmphieunhap/mphieunhapEdit.php';
+            require __DIR__ . '/mmphieunhap/mphieunhapEdit.php';
             break;
         case 'mchitietphieunhap':
-            require './elements_LQA/mmphieunhap/mchitietphieunhapView.php';
+            require __DIR__ . '/mmphieunhap/mchitietphieunhapView.php';
             break;
         case 'mchitietphieunhapedit':
-            require './elements_LQA/mmphieunhap/mchitietphieunhapEdit.php';
+            require __DIR__ . '/mmphieunhap/mchitietphieunhapEdit.php';
             break;
         case 'mtonkho':
-            require './elements_LQA/mmtonkho/mtonkhoView.php';
+            require __DIR__ . '/mmtonkho/mtonkhoView.php';
             break;
         case 'mtonkhoedit':
-            require './elements_LQA/mmtonkho/mtonkhoEdit.php';
+            require __DIR__ . '/mmtonkho/mtonkhoEdit.php';
             break;
         case 'mphieunhapfixtonkho':
-            require './elements_LQA/mmphieunhap/mphieunhapFixTonKho.php';
+            require __DIR__ . '/mmphieunhap/mphieunhapFixTonKho.php';
             break;
         case 'payment_config':
-            require './elements_LQA/madmin/payment_config.php';
+            require __DIR__ . '/madmin/payment_config.php';
             break;
         case 'cau_hinh_thanh_toan':
-            require './elements_LQA/madmin/payment_config.php';
+            require __DIR__ . '/madmin/payment_config.php';
+            break;
+        case 'marketing_content':
+            require __DIR__ . '/madmin/marketing_content.php';
+            break;
+        case 'shipping_dashboard':
+            require __DIR__ . '/madmin/shipping_dashboard.php';
+            break;
+        case 'shipping_report':
+            require __DIR__ . '/madmin/shipping_report.php';
+            break;
+        case 'shipping_config':
+            require __DIR__ . '/madmin/shipping_config.php';
             break;
         case 'orders':
-            require './elements_LQA/madmin/orders.php';
+            require __DIR__ . '/madmin/orders_v2.php';
             break;
         case 'don_hang':
-            require './elements_LQA/madmin/orders.php';
+            require __DIR__ . '/madmin/orders_v2.php';
             break;
 
         case 'khachhangview':
-            require './elements_LQA/mkhachhang/khachhangController.php';
+            require __DIR__ . '/mkhachhang/khachhangController.php';
             break;
 
         case 'lichsumuahang':
-            require './elements_LQA/mkhachhang/lichsumuahangController.php';
+            require __DIR__ . '/mkhachhang/lichsumuahangController.php';
             break;
 
         case 'baocaoview':
-            require './elements_LQA/mbaocao/baocaoView.php';
+            require __DIR__ . '/mbaocao/baocaoView.php';
             break;
 
         case 'doanhThuView':
-            require './elements_LQA/mbaocao/doanhThuView.php';
+            require __DIR__ . '/mbaocao/doanhThuView.php';
             break;
 
         case 'sanPhamBanChayView':
-            require './elements_LQA/mbaocao/sanPhamBanChayView.php';
+            require __DIR__ . '/mbaocao/sanPhamBanChayView.php';
             break;
 
         case 'loiNhuanView':
-            require './elements_LQA/mbaocao/loiNhuanView.php';
+            require __DIR__ . '/mbaocao/loiNhuanView.php';
             break;
 
         case 'roleview':
-            require './elements_LQA/mrole/roleView.php';
+            require __DIR__ . '/mrole/roleView.php';
             break;
 
         case 'vaiTroView':
-            require './elements_LQA/mphanquyen/vaiTroView.php';
+            require __DIR__ . '/mphanquyen/vaiTroView.php';
             break;
 
         case 'nguoiDungVaiTroView':
-            require './elements_LQA/mphanquyen/nguoiDungVaiTroView.php';
+            require __DIR__ . '/mphanquyen/nguoiDungVaiTroView.php';
             break;
 
         case 'danhSachVaiTroView':
-            require './elements_LQA/mphanquyen/danhSachVaiTroView.php';
+            require __DIR__ . '/mphanquyen/danhSachVaiTroView.php';
             break;
 
 
 
         case 'nhatKyHoatDongTichHop':
-            require './elements_LQA/mnhatkyhoatdong/nhatKyHoatDongTichHop.php';
+            require __DIR__ . '/mnhatkyhoatdong/nhatKyHoatDongTichHop.php';
             break;
 
         case 'thongKeNhanVienCaiThien':
-            require './elements_LQA/mnhatkyhoatdong/thongKeNhanVienCaiThien.php';
+            require __DIR__ . '/mnhatkyhoatdong/thongKeNhanVienCaiThien.php';
+            break;
+
+        // MENU MỚI GỘP - Quản Lý & Khuyến Mãi Sản Phẩm
+        case 'quanLySanPhamDacBiet':
+            require __DIR__ . '/../quan_ly_san_pham_dac_biet.php';
+            break;
+            
+        // GIỮ LẠI CÁC MENU CŨ ĐỂ TƯƠNG THÍCH NGƯỢC (nếu có link cũ)
+        case 'sanphamnoibat':
+        case 'autoFeaturedDashboard':
+        case 'manageFeatured':
+            // Redirect đến menu mới - tab featured
+            header('Location: index.php?req=quanLySanPhamDacBiet&tab=featured');
+            exit;
+            break;
+            
+        case 'addPromotion':
+            require __DIR__ . '/msanphamnoibat/addPromotionView.php';
+            break;
+            
+        case 'removePromotion':
+            require __DIR__ . '/msanphamnoibat/removePromotionAct.php';
+            break;
+            
+        // Review Management System
+        case 'review_management':
+            require __DIR__ . '/mreview_management/reviewManagementView.php';
+            break;
+            
+        case 'support_tickets':
+            require __DIR__ . '/msupport_tickets/supportTicketsView.php';
+            break;
+            
+        case 'coupon':
+            require __DIR__ . '/mcoupon/couponView.php';
             break;
     }
 } else {
-    require './elements_LQA/default.php';
+    require __DIR__ . '/default.php';
 }

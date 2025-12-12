@@ -1,4 +1,8 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Use SessionManager for safe session handling
 require_once __DIR__ . '/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/elements_LQA/config/logger_config.php';
@@ -12,6 +16,9 @@ if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     exit(); // Add exit to prevent further execution
 }
 
+// Process marketing content forms BEFORE HTML output
+require_once __DIR__ . '/elements_LQA/madmin/marketing_content_handler.php';
+
 // Tích hợp hệ thống ghi nhật ký truy cập menu
 require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
 ?>
@@ -23,7 +30,7 @@ require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin page</title>
     <link href="./stylecss_LQA/mycss.css" rel="stylesheet" type="text/css">
-    <link href="./layoutcss_LQA/layout.css" rel="stylesheet" type="text/css">
+    <link href="./layoutcss/fixed.css" rel="stylesheet" type="text/css">
 
     <!-- Bootstrap CSS (sử dụng Bootstrap 4 vì modal sử dụng cú pháp này) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
@@ -32,6 +39,11 @@ require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
     <!-- Thêm jQuery từ CDN (trước Bootstrap và các script khác) -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
         integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <!-- Inject BASE_URL from PHP to JavaScript -->
+    <script>
+        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http://localhost:20080', '/'); ?>';
+    </script>
 
     <!-- Thêm style trực tiếp để sửa vấn đề hình ảnh -->
     <style>

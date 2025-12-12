@@ -67,6 +67,13 @@ class PhanQuyen
      */
     public function isNhanVien($username)
     {
+        error_log("isNhanVien - Kiểm tra username: '$username'");
+        
+        if (empty($username)) {
+            error_log("isNhanVien - Username rỗng, trả về false");
+            return false;
+        }
+        
         // Kiểm tra trong bảng nhanvien (cách cũ)
         $sql = 'SELECT nv.* FROM nhanvien nv
                 INNER JOIN user u ON nv.iduser = u.iduser
@@ -74,6 +81,8 @@ class PhanQuyen
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$username]);
         $isStaffOldWay = $stmt->rowCount() > 0;
+        
+        error_log("isNhanVien - Kiểm tra bảng nhanvien: " . ($isStaffOldWay ? 'Có' : 'Không'));
 
         // Kiểm tra trong bảng vai_tro (cách mới)
         if ($this->vai_troTableExists() && class_exists('Role') && $this->roleManager) {
@@ -85,11 +94,15 @@ class PhanQuyen
 
             if ($user) {
                 $isStaffNewWay = $this->roleManager->userHasRole($user->iduser, 'staff');
+                error_log("isNhanVien - Kiểm tra bảng vai_tro: " . ($isStaffNewWay ? 'Có' : 'Không'));
                 // Trả về true nếu một trong hai cách kiểm tra cho kết quả là nhân viên
-                return $isStaffOldWay || $isStaffNewWay;
+                $result = $isStaffOldWay || $isStaffNewWay;
+                error_log("isNhanVien - Kết quả cuối cùng: " . ($result ? 'Là nhân viên' : 'Không phải nhân viên'));
+                return $result;
             }
         }
 
+        error_log("isNhanVien - Kết quả cuối cùng (không có vai_tro): " . ($isStaffOldWay ? 'Là nhân viên' : 'Không phải nhân viên'));
         return $isStaffOldWay;
     }
 
@@ -138,33 +151,16 @@ class PhanQuyen
      */
     public function checkAccess($module, $username)
     {
-        // TÍCH HỢP SECURITY MIDDLEWARE - Chỉ log, không chặn để debug
-        try {
-            require_once __DIR__ . '/securityMiddleware.php';
-            $securityMiddleware = SecurityMiddleware::getInstance();
-
-            // Chỉ log để debug, không chặn truy cập
-            $securityResult = $securityMiddleware->checkStrictAccess($username, $module);
-            error_log("Security middleware result - Module: $module, Username: $username, Result: " . ($securityResult ? 'PASS' : 'FAIL'));
-
-            // Tạm thời không chặn để debug menu
-            // if (!$securityResult) {
-            //     error_log("Security middleware denied access - Module: $module, Username: $username");
-            //     return false;
-            // }
-        } catch (Exception $e) {
-            // Log lỗi nhưng không chặn
-            error_log("Security middleware error: " . $e->getMessage());
-            // return false;
-        }
-
         // Log để debug
-        error_log("Kiểm tra quyền truy cập - Module: $module, Username: $username");
+        error_log("checkAccess - Module: $module, Username: $username");
 
         // Nếu là Admin thì có quyền truy cập toàn bộ
         if ($this->isAdmin($username)) {
             error_log("User là admin, cho phép truy cập");
-            SecurityLogger::logAccess($username, $module, true, "Admin access granted");
+            // Ghi log nếu SecurityLogger tồn tại
+            if (class_exists('SecurityLogger')) {
+                SecurityLogger::logAccess($username, $module, true, "Admin access granted");
+            }
             return true;
         }
 
@@ -265,5 +261,104 @@ class PhanQuyen
         // Mặc định không có quyền truy cập
         error_log("Không có quyền truy cập mặc định cho module: $module");
         return false;
+    }
+
+    /**
+     * Kiểm tra quyền truy cập cho nhân viên (không kiểm tra session, chỉ kiểm tra database)
+     * Dùng cho việc hiển thị menu
+     */
+    public function checkAccessForEmployee($module, $username)
+    {
+        // Log để debug
+        error_log("checkAccessForEmployee - Module: $module, Username: $username");
+
+        // Các module cơ bản mà tất cả nhân viên đều có quyền truy cập
+        $basicModules = [
+            'userprofile',
+            'userUpdateProfile',
+            'thongbao'
+        ];
+
+        if (in_array($module, $basicModules)) {
+            return true;
+        }
+
+        // Kiểm tra quyền truy cập dựa trên phần hệ được gán trong database
+        try {
+            // Tìm đường dẫn đúng đến các file cần thiết
+            $additionalPaths = [
+                'phanHeQuanLyCls.php' => [
+                    '../../elements_LQA/mod/phanHeQuanLyCls.php',
+                    './elements_LQA/mod/phanHeQuanLyCls.php',
+                    './administrator/elements_LQA/mod/phanHeQuanLyCls.php',
+                    __DIR__ . '/phanHeQuanLyCls.php'
+                ],
+                'nhanvienCls.php' => [
+                    '../../elements_LQA/mod/nhanvienCls.php',
+                    './elements_LQA/mod/nhanvienCls.php',
+                    './administrator/elements_LQA/mod/nhanvienCls.php',
+                    __DIR__ . '/nhanvienCls.php'
+                ]
+            ];
+
+            foreach ($additionalPaths as $file => $filePaths) {
+                foreach ($filePaths as $duong_dan) {
+                    if (file_exists($duong_dan)) {
+                        require_once $duong_dan;
+                        break;
+                    }
+                }
+            }
+
+            // Lấy ID nhân viên từ username
+            if (!class_exists('user')) {
+                error_log("Class user không tồn tại");
+                return false;
+            }
+
+            $userObj = new user();
+            $userData = $userObj->UserGetbyUsername($username);
+
+            if (!$userData) {
+                error_log("Không tìm thấy thông tin user: $username");
+                return false;
+            }
+
+            if (!class_exists('NhanVien')) {
+                error_log("Class NhanVien không tồn tại");
+                return false;
+            }
+
+            $nvObj = new NhanVien();
+            $nhanVienList = $nvObj->nhanvienGetAll();
+            $idNhanVien = null;
+
+            foreach ($nhanVienList as $nv) {
+                if ($nv->iduser == $userData->iduser) {
+                    $idNhanVien = $nv->idNhanVien;
+                    break;
+                }
+            }
+
+            if (!$idNhanVien) {
+                error_log("Không tìm thấy nhân viên liên kết với user: $username");
+                return false;
+            }
+
+            if (!class_exists('PhanHeQuanLy')) {
+                error_log("Class PhanHeQuanLy không tồn tại");
+                return false;
+            }
+
+            // Kiểm tra quyền truy cập vào module cụ thể
+            $phanHeObj = new PhanHeQuanLy();
+            $hasAccess = $phanHeObj->checkNhanVienHasAccess($idNhanVien, $module);
+
+            error_log("checkAccessForEmployee - Nhân viên ID: $idNhanVien, Module: $module, Cho phép: " . ($hasAccess ? 'Có' : 'Không'));
+            return $hasAccess;
+        } catch (Exception $e) {
+            error_log("checkAccessForEmployee error: " . $e->getMessage());
+            return false;
+        }
     }
 }

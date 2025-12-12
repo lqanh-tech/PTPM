@@ -325,21 +325,24 @@ $l = count($list_hanghoa);
     }
     ?>
 
-    <table class="content-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Tên hàng hóa</th>
-                <th>Giá tham khảo</th>
-                <th>Mô tả</th>
-                <th>Hình ảnh</th>
-                <th>Thương Hiệu</th>
-                <th>Đơn Vị Tính</th>
-                <th>Nhân Viên</th>
-                <th>Chức năng</th>
-            </tr>
-        </thead>
-        <tbody id="product-list">
+    <!-- Scrollable Table Container -->
+    <div class="table-scroll-container">
+        <table class="content-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tên hàng hóa</th>
+                    <th>Giá tham khảo</th>
+                    <th>Mô tả</th>
+                    <th>Hình ảnh</th>
+                    <th>Thương Hiệu</th>
+                    <th>Đơn Vị Tính</th>
+                    <th>Nhân Viên</th>
+                    <th>Trạng thái</th>
+                    <th>Chức năng</th>
+                </tr>
+            </thead>
+            <tbody id="product-list">
             <?php
             if ($l > 0) {
                 foreach ($list_hanghoa as $u) {
@@ -375,6 +378,16 @@ $l = count($list_hanghoa);
                         <td><?php echo htmlspecialchars($u->ten_nhanvien ?? 'Chưa chọn'); ?></td>
                         <td align="center">
                             <?php
+                            $displayStatus = $hanghoaObj->getProductStatus($u->idhanghoa);
+                            $statusClass = $hanghoaObj->getStatusCssClass($displayStatus);
+                            $statusColor = $hanghoaObj->getStatusColor($displayStatus);
+                            ?>
+                            <span class="status-badge <?php echo $statusClass; ?>" style="background-color: <?php echo $statusColor; ?>; color: white; padding: 5px 10px; border-radius: 5px; display: inline-block; font-weight: bold;">
+                                <?php echo $displayStatus; ?>
+                            </span>
+                        </td>
+                        <td align="center">
+                            <?php
                             if (isset($_SESSION['ADMIN'])) {
                             ?>
                                 <a
@@ -402,8 +415,9 @@ $l = count($list_hanghoa);
                 }
             }
             ?>
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div><!-- End table-scroll-container -->
 </div>
 
 <hr />
@@ -417,6 +431,57 @@ $l = count($list_hanghoa);
 </div>
 
 <style>
+    /* Scrollable Table Container */
+    .table-scroll-container {
+        max-height: 60vh;
+        min-height: 300px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 15px;
+        background: #fff;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: #007bff;
+        border-radius: 5px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #0056b3;
+    }
+    
+    .table-scroll-container .content-table {
+        margin-bottom: 0;
+        width: 100%;
+    }
+    
+    .table-scroll-container .content-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8f9fa;
+    }
+    
+    .table-scroll-container .content-table thead th {
+        background: #343a40;
+        color: #fff;
+        padding: 12px 10px;
+        font-weight: 600;
+        border-bottom: 2px solid #007bff;
+    }
+
     #w_update_hh {
         position: fixed;
         top: 50%;
@@ -551,6 +616,40 @@ $l = count($list_hanghoa);
     .action-steps li {
         margin: 8px 0;
         line-height: 1.4;
+    }
+
+    /* Status Badge Styling */
+    .status-badge {
+        font-size: 13px;
+        font-weight: bold;
+        padding: 6px 12px;
+        border-radius: 20px;
+        display: inline-block;
+        text-align: center;
+        min-width: 100px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+    }
+
+    .status-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .status-active {
+        background-color: #27ae60 !important;
+    }
+
+    .status-discontinued {
+        background-color: #e74c3c !important;
+    }
+
+    .status-outofstock {
+        background-color: #95a5a6 !important;
+    }
+
+    .status-unknown {
+        background-color: #34495e !important;
     }
 </style>
 

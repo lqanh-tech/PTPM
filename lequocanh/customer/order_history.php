@@ -272,10 +272,31 @@ $userInfo = $userStmt->fetch(PDO::FETCH_ASSOC);
                                     }
                                     ?>
                                 </p>
-                                <p class="mb-0">
+                                <p class="mb-2">
                                     <strong>Địa chỉ giao hàng:</strong> 
-                                    <?php echo htmlspecialchars($order['dia_chi_giao_hang']); ?>
+                                    <?php echo htmlspecialchars($order['dia_chi_giao_hang'] ?? 'Chưa có'); ?>
                                 </p>
+                                <?php if (isset($order['thue']) && $order['thue'] > 0): ?>
+                                <p class="mb-2">
+                                    <strong>Thuế VAT:</strong> 
+                                    <span class="text-muted"><?php echo number_format($order['thue'], 0, ',', '.'); ?> đ</span>
+                                </p>
+                                <?php endif; ?>
+                                <?php if (isset($order['phi_van_chuyen']) && $order['phi_van_chuyen'] > 0): ?>
+                                <p class="mb-2">
+                                    <strong>Phí vận chuyển:</strong> 
+                                    <span class="text-muted"><?php echo number_format($order['phi_van_chuyen'], 0, ',', '.'); ?> đ</span>
+                                    <?php if (isset($order['shipping_method_name']) && !empty($order['shipping_method_name'])): ?>
+                                        <small class="text-info">(<?php echo htmlspecialchars($order['shipping_method_name']); ?>)</small>
+                                    <?php endif; ?>
+                                </p>
+                                <?php endif; ?>
+                                <?php if (isset($order['estimated_delivery']) && !empty($order['estimated_delivery'])): ?>
+                                <p class="mb-0">
+                                    <strong>Dự kiến giao:</strong> 
+                                    <span class="text-success"><?php echo htmlspecialchars($order['estimated_delivery']); ?></span>
+                                </p>
+                                <?php endif; ?>
                             </div>
                             <div class="col-md-4">
                                 <div class="order-actions justify-content-end">

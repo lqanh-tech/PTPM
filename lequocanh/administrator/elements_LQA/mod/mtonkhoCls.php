@@ -1,14 +1,5 @@
 <?php
-$s = '../../elements_LQA/mod/database.php';
-if (file_exists($s)) {
-    $f = $s;
-} else {
-    $f = './elements_LQA/mod/database.php';
-    if (!file_exists($f)) {
-        $f = './administrator/elements_LQA/mod/database.php';
-    }
-}
-require_once $f;
+require_once __DIR__ . '/database.php';
 
 class MTonKho
 {
@@ -93,12 +84,12 @@ class MTonKho
                 $result = $stmt->execute([$newSoLuong, $idhanghoa]);
 
                 if ($result) {
-                    if ($needInternalTransaction) {
+                    if ($needInternalTransaction && $this->db->inTransaction()) {
                         $this->db->commit();
                     }
                     $logMessage = "Update result: success, rows affected: " . $stmt->rowCount() . ", idhanghoa: " . $idhanghoa . ", new soLuong: " . $newSoLuong;
                 } else {
-                    if ($needInternalTransaction) {
+                    if ($needInternalTransaction && $this->db->inTransaction()) {
                         $this->db->rollBack();
                     }
                     $logMessage = "Update result: failed, idhanghoa: " . $idhanghoa;
@@ -155,12 +146,12 @@ class MTonKho
                 $result = $stmt->execute([$idhanghoa, $initialSoLuong]);
 
                 if ($result) {
-                    if ($needInternalTransaction) {
+                    if ($needInternalTransaction && $this->db->inTransaction()) {
                         $this->db->commit();
                     }
                     $logMessage = "Insert result: success, last insert ID: " . $this->db->lastInsertId() . ", idhanghoa: " . $idhanghoa . ", soLuong: " . $initialSoLuong;
                 } else {
-                    if ($needInternalTransaction) {
+                    if ($needInternalTransaction && $this->db->inTransaction()) {
                         $this->db->rollBack();
                     }
                     $logMessage = "Insert result: failed, idhanghoa: " . $idhanghoa;

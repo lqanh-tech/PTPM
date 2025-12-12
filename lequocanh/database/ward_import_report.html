@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ward Import Report - 2025-12-01 16:26:39</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-card h3 { margin: 0; font-size: 14px; opacity: 0.9; }
+        .stat-card .number { font-size: 36px; font-weight: bold; margin: 10px 0; }
+        .success { color: #27ae60; }
+        .warning { color: #f39c12; }
+        .error { color: #e74c3c; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover { background-color: #f5f5f5; }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge.success { background: #d4edda; color: #155724; }
+        .badge.warning { background: #fff3cd; color: #856404; }
+        .badge.error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Ward/Commune Import Report</h1>
+        <p>Generated: 2025-12-01 16:26:39</p>
+        
+        <h2>Overview Statistics</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Provinces</h3>
+                <div class="number">97</div>
+            </div>
+            <div class="stat-card">
+                <h3>Districts</h3>
+                <div class="number">743</div>
+            </div>
+            <div class="stat-card">
+                <h3>Wards/Communes</h3>
+                <div class="number">3351</div>
+            </div>
+        </div>
+        
+        <h2>Data Quality Checks</h2>
+        <table>
+            <tr>
+                <th>Check</th>
+                <th>Result</th>
+                <th>Status</th>
+            </tr>
+            <tr>
+                <td>Orphaned Wards (no district reference)</td>
+                <td>0</td>
+                <td><span class="badge success">PASS</span></td>
+            </tr>
+            <tr>
+                <td>Duplicate Ward Codes</td>
+                <td>0</td>
+                <td><span class="badge success">PASS</span></td>
+            </tr>
+            <tr>
+                <td>Expected Ward Count (from CSV)</td>
+                <td>3351 / ~3,325</td>
+                <td><span class="badge success">PASS</span></td>
+            </tr>
+        </table>
+        
+        <h2>Top 10 Provinces by Ward Count</h2>
+        <table>
+            <tr>
+                <th>Province</th>
+                <th>Ward Count</th>
+            </tr>
+                        <tr>
+                <td>Tp Hồ Chí Minh</td>
+                <td>168</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Thanh Hóa</td>
+                <td>166</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Phú Thọ</td>
+                <td>148</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Gia Lai</td>
+                <td>135</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Nghệ An</td>
+                <td>130</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Ninh Bình</td>
+                <td>129</td>
+            </tr>
+                        <tr>
+                <td>Thành phố Hà Nội</td>
+                <td>126</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Lâm Đồng</td>
+                <td>124</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Tuyên Quang</td>
+                <td>124</td>
+            </tr>
+                        <tr>
+                <td>Tỉnh Vĩnh Long</td>
+                <td>124</td>
+            </tr>
+                    </table>
+        
+        <h2>Sample Data (First 50 Wards)</h2>
+        <table>
+            <tr>
+                <th>Code</th>
+                <th>Ward Name</th>
+                <th>District</th>
+                <th>Province</th>
+            </tr>
+                        <tr>
+                <td><code>10101003</code></td>
+                <td>Phường Ba Đình</td>
+                <td>Quận Ba Đình</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10101004</code></td>
+                <td>Phường Ngọc Hà</td>
+                <td>Quận Ba Đình</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10101005</code></td>
+                <td>Phường Giảng Võ</td>
+                <td>Quận Ba Đình</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10103014</code></td>
+                <td>Phường Hồng Hà</td>
+                <td>Quận Tây Hồ</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10103028</code></td>
+                <td>Phường Tây Hồ</td>
+                <td>Quận Tây Hồ</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10105001</code></td>
+                <td>Phường Hoàn Kiếm</td>
+                <td>Quận Hoàn Kiếm</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10105002</code></td>
+                <td>Phường Cửa Nam</td>
+                <td>Quận Hoàn Kiếm</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10106039</code></td>
+                <td>Phường Long Biên</td>
+                <td>Quận Long Biên</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10106040</code></td>
+                <td>Phường Bồ Đề</td>
+                <td>Quận Long Biên</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10106041</code></td>
+                <td>Phường Việt Hưng</td>
+                <td>Quận Long Biên</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10106042</code></td>
+                <td>Phường Phúc Lợi</td>
+                <td>Quận Long Biên</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10107006</code></td>
+                <td>Phường Hai Bà Trưng</td>
+                <td>Quận Hai Bà Trưng</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10107007</code></td>
+                <td>Phường Vĩnh Tuy</td>
+                <td>Quận Hai Bà Trưng</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10107008</code></td>
+                <td>Phường Bạch Mai</td>
+                <td>Quận Hai Bà Trưng</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10108015</code></td>
+                <td>Phường Lĩnh Nam</td>
+                <td>Quận Hoàng Mai</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10108016</code></td>
+                <td>Phường Hoàng Mai</td>
+                <td>Quận Hoàng Mai</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10108017</code></td>
+                <td>Phường Vĩnh Hưng</td>
+                <td>Quận Hoàng Mai</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10108018</code></td>
+                <td>Phường Tương Mai</td>
+                <td>Quận Hoàng Mai</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10108019</code></td>
+                <td>Phường Định Công</td>
+                <td>Quận Hoàng Mai</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10108021</code></td>
+                <td>Phường Yên Sở</td>
+                <td>Quận Hoàng Mai</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10109009</code></td>
+                <td>Phường Đống Đa</td>
+                <td>Quận Đống Đa</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10109010</code></td>
+                <td>Phường Kim Liên</td>
+                <td>Quận Đống Đa</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10109011</code></td>
+                <td>Phường Văn Miếu - Quốc Tử Giám</td>
+                <td>Quận Đống Đa</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10109012</code></td>
+                <td>Phường Láng</td>
+                <td>Quận Đống Đa</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10109013</code></td>
+                <td>Phường Ô Chợ Dừa</td>
+                <td>Quận Đống Đa</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10111022</code></td>
+                <td>Phường Thanh Xuân</td>
+                <td>Quận Thanh Xuân</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10111023</code></td>
+                <td>Phường Khương Đình</td>
+                <td>Quận Thanh Xuân</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10111024</code></td>
+                <td>Phường Phương Liệt</td>
+                <td>Quận Thanh Xuân</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10113025</code></td>
+                <td>Phường Cầu Giấy</td>
+                <td>Quận Cầu Giấy</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10113026</code></td>
+                <td>Phường Nghĩa Đô</td>
+                <td>Quận Cầu Giấy</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10113027</code></td>
+                <td>Phường Yên Hoà</td>
+                <td>Quận Cầu Giấy</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10115122</code></td>
+                <td>Xã Sóc Sơn</td>
+                <td>Huyện Sóc Sơn</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10115123</code></td>
+                <td>Xã Đa Phúc</td>
+                <td>Huyện Sóc Sơn</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10115124</code></td>
+                <td>Xã Nội Bài</td>
+                <td>Huyện Sóc Sơn</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10115125</code></td>
+                <td>Xã Trung Giã</td>
+                <td>Huyện Sóc Sơn</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10115126</code></td>
+                <td>Xã Kim Anh</td>
+                <td>Huyện Sóc Sơn</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10117113</code></td>
+                <td>Xã Thư Lâm</td>
+                <td>Huyện Đông Anh</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10117114</code></td>
+                <td>Xã Đông Anh</td>
+                <td>Huyện Đông Anh</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10117115</code></td>
+                <td>Xã Phúc Thịnh</td>
+                <td>Huyện Đông Anh</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10117116</code></td>
+                <td>Xã Thiên Lộc</td>
+                <td>Huyện Đông Anh</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10117117</code></td>
+                <td>Xã Vĩnh Thanh</td>
+                <td>Huyện Đông Anh</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10119109</code></td>
+                <td>Xã Gia Lâm</td>
+                <td>Huyện Gia Lâm</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10119110</code></td>
+                <td>Xã Thuận An</td>
+                <td>Huyện Gia Lâm</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10119111</code></td>
+                <td>Xã Bát Tràng</td>
+                <td>Huyện Gia Lâm</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10119112</code></td>
+                <td>Xã Phù Đổng</td>
+                <td>Huyện Gia Lâm</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10123020</code></td>
+                <td>Phường Hoàng Liệt</td>
+                <td>Huyện Thanh Trì</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10123048</code></td>
+                <td>Xã Thanh Trì</td>
+                <td>Huyện Thanh Trì</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10123049</code></td>
+                <td>Xã Đại Thanh</td>
+                <td>Huyện Thanh Trì</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10123050</code></td>
+                <td>Xã Nam Phù</td>
+                <td>Huyện Thanh Trì</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                        <tr>
+                <td><code>10123051</code></td>
+                <td>Xã Ngọc Hồi</td>
+                <td>Huyện Thanh Trì</td>
+                <td>Thành phố Hà Nội</td>
+            </tr>
+                    </table>
+        
+        <h2>Test Queries</h2>
+        <p>Use these SQL queries to verify the data:</p>
+        <pre style="background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto;">
+-- Count all wards
+SELECT COUNT(*) as total_wards FROM wards;
+
+-- Get wards for a specific province (e.g., Hanoi)
+SELECT w.code, w.name, d.name as district, p.name as province
+FROM wards w
+JOIN districts d ON w.district_id = d.id
+JOIN provinces p ON d.province_id = p.id
+WHERE p.code = '101'
+LIMIT 20;
+
+-- Verify specific ward from CSV (Phường Hoàn Kiếm)
+SELECT w.code, w.name, d.name as district, p.name as province
+FROM wards w
+JOIN districts d ON w.district_id = d.id
+JOIN provinces p ON d.province_id = p.id
+WHERE w.code = '10105001';
+        </pre>
+    </div>
+</body>
+</html>
+    

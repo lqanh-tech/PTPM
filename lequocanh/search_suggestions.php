@@ -59,15 +59,29 @@ if (empty($results)) {
                     $imagePath = "./administrator/elements_LQA/mhanghoa/displayImage.php?id=" . $item->hinhanh;
                 }
 
-                // Format price - assuming giathamkhao is the price
-                $price = isset($item->giathamkhao) ?
-                    number_format($item->giathamkhao, 0, ',', '.') . '₫' :
-                    'Liên hệ';
+                // Format price - ưu tiên giá khuyến mãi nếu có
+                $hasDiscount = false;
+                $displayPrice = 0;
+                $originalPrice = 0;
+                
+                if (isset($item->giakhuyenmai) && $item->giakhuyenmai > 0 && $item->giakhuyenmai < $item->giathamkhao) {
+                    // Có khuyến mãi
+                    $hasDiscount = true;
+                    $displayPrice = $item->giakhuyenmai;
+                    $originalPrice = $item->giathamkhao;
+                } else {
+                    // Không khuyến mãi
+                    $displayPrice = isset($item->giathamkhao) ? $item->giathamkhao : 0;
+                }
+                
+                $price = $displayPrice > 0 ? number_format($displayPrice, 0, ',', '.') . '₫' : 'Liên hệ';
 
                 $results[] = [
                     'id' => $item->idhanghoa,
                     'name' => $item->tenhanghoa,
                     'price' => $price,
+                    'original_price' => $hasDiscount ? number_format($originalPrice, 0, ',', '.') . '₫' : null,
+                    'has_discount' => $hasDiscount,
                     'image' => $imagePath,
                     'brand' => isset($item->thuonghieu) ? $item->thuonghieu : '',
                     'url' => 'index.php?reqHanghoa=' . $item->idhanghoa

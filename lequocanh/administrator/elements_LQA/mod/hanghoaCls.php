@@ -1,33 +1,44 @@
 <?php
 
-// Xác định đường dẫn tới file database.php
-$possible_paths = array(
-    dirname(__FILE__) . '/database.php',                    // Cùng thư mục
-    dirname(dirname(dirname(__FILE__))) . '/elements_LQA/mod/database.php',  // Từ thư mục administrator
-    dirname(dirname(dirname(dirname(__FILE__)))) . '/administrator/elements_LQA/mod/database.php'  // Từ thư mục gốc
-);
-
-$database_file = null;
-foreach ($possible_paths as $path) {
-    if (file_exists($path)) {
-        $database_file = $path;
-        break;
-    }
-}
-
-if ($database_file === null) {
-    die("Không thể tìm thấy file database.php");
-}
-
-require_once $database_file;
+require_once __DIR__ . '/database.php';
+require_once __DIR__ . '/hanghoaStatusExtension.php';
 
 class hanghoa
 {
+    use HanghoaStatusTrait;
+
     private $db;
+    private static $statusColumnInfo = null;
 
     public function __construct()
     {
         $this->db = Database::getInstance()->getConnection();
+    }
+
+    private function getStatusColumnInfo()
+    {
+        if (self::$statusColumnInfo !== null) {
+            return self::$statusColumnInfo;
+        }
+
+        self::$statusColumnInfo = ['column' => null, 'type' => null];
+
+        try {
+            $checkNew = $this->db->query("SHOW COLUMNS FROM hanghoa LIKE 'trangthai'");
+            if ($checkNew && $checkNew->rowCount() > 0) {
+                self::$statusColumnInfo = ['column' => 'trangthai', 'type' => 'enum'];
+                return self::$statusColumnInfo;
+            }
+
+            $checkLegacy = $this->db->query("SHOW COLUMNS FROM hanghoa LIKE 'trang_thai'");
+            if ($checkLegacy && $checkLegacy->rowCount() > 0) {
+                self::$statusColumnInfo = ['column' => 'trang_thai', 'type' => 'int'];
+            }
+        } catch (PDOException $e) {
+            error_log('hanghoa::getStatusColumnInfo error: ' . $e->getMessage());
+        }
+
+        return self::$statusColumnInfo;
     }
 
     public function HanghoaGetAll()
@@ -40,7 +51,19 @@ class hanghoa
                     WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != "" 
                     THEN 0 
                     ELSE 1 
-                END as image_priority
+                END as image_priority,
+                -- Thêm logic xử lý giá khuyến mãi
+                CASE 
+                    WHEN h.giakhuyenmai IS NOT NULL AND h.giakhuyenmai > 0 AND h.giakhuyenmai < h.giathamkhao
+                    THEN h.giakhuyenmai
+                    ELSE h.giathamkhao
+                END as gia_hien_thi,
+                -- Tính % giảm giá
+                CASE 
+                    WHEN h.giakhuyenmai IS NOT NULL AND h.giakhuyenmai > 0 AND h.giakhuyenmai < h.giathamkhao
+                    THEN ROUND(((h.giathamkhao - h.giakhuyenmai) / h.giathamkhao) * 100)
+                    ELSE 0
+                END as discount_percent
                 FROM hanghoa h
                 LEFT JOIN thuonghieu t ON h.idThuongHieu = t.idThuongHieu
                 LEFT JOIN donvitinh d ON h.idDonViTinh = d.idDonViTinh
@@ -277,14 +300,37 @@ class hanghoa
 
     public function HanghoaGetbyIdloaihang($idloaihang)
     {
+        // Lọc sản phẩm: chỉ lấy những sản phẩm không bị ngừng bán
+        $statusInfo = $this->getStatusColumnInfo();
+        $statusCondition = '';
+        if ($statusInfo['column']) {
+            if ($statusInfo['column'] === 'trangthai') {
+                $statusCondition = " AND ({$statusInfo['column']} IS NULL OR {$statusInfo['column']} != 'ngung_ban')";
+            } else {
+                $statusCondition = " AND ({$statusInfo['column']} IS NULL OR {$statusInfo['column']} != 2)";
+            }
+        }
+
         $sql = 'SELECT *,
                 CASE 
                     WHEN hinhanh IS NOT NULL AND hinhanh != 0 AND hinhanh != "" 
                     THEN 0 
                     ELSE 1 
-                END as image_priority
+                END as image_priority,
+                -- Thêm logic xử lý giá khuyến mãi
+                CASE 
+                    WHEN giakhuyenmai IS NOT NULL AND giakhuyenmai > 0 AND giakhuyenmai < giathamkhao
+                    THEN giakhuyenmai
+                    ELSE giathamkhao
+                END as gia_hien_thi,
+                -- Tính % giảm giá
+                CASE 
+                    WHEN giakhuyenmai IS NOT NULL AND giakhuyenmai > 0 AND giakhuyenmai < giathamkhao
+                    THEN ROUND(((giathamkhao - giakhuyenmai) / giathamkhao) * 100)
+                    ELSE 0
+                END as discount_percent
                 FROM hanghoa 
-                WHERE idloaihang = ?
+                WHERE idloaihang = ?' . $statusCondition . '
                 ORDER BY image_priority ASC, tenhanghoa ASC';
         $data = array($idloaihang);
 
@@ -305,45 +351,145 @@ class hanghoa
         return $update->rowCount();
     }
 
+    /**
+     * Enhanced search: name, description, AND attributes
+     * Single query with LEFT JOIN for performance
+     * 
+     * @param string $keyword Search keyword
+     * @return array Array of product objects
+     */
     public function searchHanghoa($keyword)
     {
         try {
-            // Ghi log để debug
-            error_log("searchHanghoa - Bắt đầu tìm kiếm với từ khóa: " . $keyword);
+            // Log for debugging
+            error_log("searchHanghoa - Starting search with keyword: " . $keyword);
 
-            // Kiểm tra kết nối database
+            // Check database connection
             if (!$this->db || !($this->db instanceof PDO)) {
-                error_log("searchHanghoa - Lỗi: Không có kết nối database hợp lệ");
+                error_log("searchHanghoa - Error: No valid database connection");
                 return [];
             }
 
-            // Kiểm tra bảng hanghoa có tồn tại không
+            // Check if hanghoa table exists
             try {
                 $checkTable = $this->db->query("SHOW TABLES LIKE 'hanghoa'");
                 if ($checkTable->rowCount() == 0) {
-                    error_log("searchHanghoa - Bảng hanghoa không tồn tại");
+                    error_log("searchHanghoa - hanghoa table does not exist");
                     return [];
                 }
             } catch (PDOException $e) {
-                error_log("searchHanghoa - Lỗi khi kiểm tra bảng hanghoa: " . $e->getMessage());
+                error_log("searchHanghoa - Error checking hanghoa table: " . $e->getMessage());
                 return [];
             }
 
-            $select = "SELECT * FROM hanghoa
-                       WHERE LOWER(tenhanghoa) LIKE LOWER(:keyword)
-                       ORDER BY tenhanghoa ASC
-                       LIMIT 10";
-            $stmt = $this->db->prepare($select);
-            $stmt->bindValue(':keyword', '%' . $keyword . '%', PDO::PARAM_STR);
+            $searchTerm = '%' . $keyword . '%';
+
+            // OPTIMIZED: Single query with LEFT JOIN to search in attributes
+            $sql = "SELECT DISTINCT h.*,
+                    CASE 
+                        -- Priority 1: Exact match in product name
+                        WHEN LOWER(h.tenhanghoa) LIKE LOWER(:exact_keyword) THEN 1
+                        -- Priority 2: Match in product name
+                        WHEN LOWER(h.tenhanghoa) LIKE LOWER(:search_term) THEN 2
+                        -- Priority 3: Match in attributes
+                        WHEN tt.tenThuocTinhHH IS NOT NULL AND LOWER(tt.tenThuocTinhHH) LIKE LOWER(:search_term) THEN 3
+                        -- Priority 4: Match in description
+                        WHEN LOWER(h.mota) LIKE LOWER(:search_term) THEN 4
+                        ELSE 5
+                    END as search_priority,
+                    CASE 
+                        WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' 
+                        THEN 0 
+                        ELSE 1 
+                    END as image_priority,
+                    -- Thêm logic xử lý giá khuyến mãi
+                    CASE 
+                        WHEN h.giakhuyenmai IS NOT NULL AND h.giakhuyenmai > 0 AND h.giakhuyenmai < h.giathamkhao
+                        THEN h.giakhuyenmai
+                        ELSE h.giathamkhao
+                    END as gia_hien_thi,
+                    -- Tính % giảm giá
+                    CASE 
+                        WHEN h.giakhuyenmai IS NOT NULL AND h.giakhuyenmai > 0 AND h.giakhuyenmai < h.giathamkhao
+                        THEN ROUND(((h.giathamkhao - h.giakhuyenmai) / h.giathamkhao) * 100)
+                        ELSE 0
+                    END as discount_percent
+                    FROM hanghoa h
+                    LEFT JOIN thuoctinhhh tt ON h.idhanghoa = tt.idhanghoa
+                    WHERE LOWER(h.tenhanghoa) LIKE LOWER(:search_term)
+                       OR LOWER(h.mota) LIKE LOWER(:search_term)
+                       OR (tt.tenThuocTinhHH IS NOT NULL AND LOWER(tt.tenThuocTinhHH) LIKE LOWER(:search_term))
+                    ORDER BY search_priority ASC, image_priority ASC, h.tenhanghoa ASC
+                    LIMIT 50";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindValue(':search_term', $searchTerm, PDO::PARAM_STR);
+            $stmt->bindValue(':exact_keyword', $keyword, PDO::PARAM_STR);
             $stmt->execute();
 
             $results = $stmt->fetchAll(PDO::FETCH_OBJ);
-            error_log("searchHanghoa - Tìm thấy " . count($results) . " kết quả");
+            error_log("searchHanghoa - Found " . count($results) . " results");
 
             return $results;
         } catch (PDOException $e) {
-            error_log("searchHanghoa - Lỗi: " . $e->getMessage());
+            error_log("searchHanghoa - Error: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Calculate average rating for a product
+     * Uses indexed query for performance
+     * Returns 0 if no reviews
+     * 
+     * @param int $idhanghoa Product ID
+     * @return array ['average' => float, 'count' => int]
+     */
+    public function getAverageRating($idhanghoa)
+    {
+        try {
+            // Chỉ tính rating từ các bình luận visible (không bị ẩn/xóa)
+            $sql = "SELECT COALESCE(AVG(rating), 0) as avg_rating,
+                           COUNT(*) as review_count
+                    FROM product_reviews 
+                    WHERE ma_san_pham = ? 
+                    AND is_approved = 1
+                    AND (status = 'visible' OR status IS NULL)";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idhanghoa]);
+            $result = $stmt->fetch(PDO::FETCH_OBJ);
+
+            return [
+                'average' => round($result->avg_rating, 1),
+                'count' => (int)$result->review_count
+            ];
+        } catch (PDOException $e) {
+            error_log("Error getting average rating: " . $e->getMessage());
+            return ['average' => 0, 'count' => 0];
+        }
+    }
+
+    /**
+     * Get review count for a product
+     * Helper method for quick count retrieval
+     * 
+     * @param int $idhanghoa Product ID
+     * @return int Number of approved reviews
+     */
+    public function getReviewCount($idhanghoa)
+    {
+        try {
+            // Chỉ đếm bình luận visible (không bị ẩn/xóa)
+            $sql = "SELECT COUNT(*) FROM product_reviews 
+                    WHERE ma_san_pham = ? AND is_approved = 1
+                    AND (status = 'visible' OR status IS NULL)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idhanghoa]);
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("Error getting review count: " . $e->getMessage());
+            return 0;
         }
     }
 
@@ -662,27 +808,16 @@ class hanghoa
                 return false;
             }
 
-            // Kiểm tra trạng thái transaction hiện tại
+            // Kiểm tra trạng thái transaction hiện tại và bắt đầu nếu chưa có
             try {
-                // Bắt đầu giao dịch mới
-                $this->db->beginTransaction();
-            } catch (PDOException $e) {
-                // Nếu có lỗi "There is no active transaction", thử commit trước khi bắt đầu mới
-                if (strpos($e->getMessage(), 'There is no active transaction') !== false) {
-                    error_log("Đang thử phục hồi transaction: " . $e->getMessage());
-                    try {
-                        // Thử commit transaction hiện tại nếu có
-                        $this->db->commit();
-                    } catch (Exception $ex) {
-                        // Bỏ qua lỗi nếu không có transaction để commit
-                    }
-                    // Bắt đầu transaction mới
+                // Chỉ bắt đầu transaction nếu chưa có transaction nào đang active
+                if (!$this->db->inTransaction()) {
                     $this->db->beginTransaction();
-                } else {
-                    // Lỗi khác, ghi log và trả về false
-                    error_log("Lỗi transaction: " . $e->getMessage());
-                    return false;
                 }
+            } catch (PDOException $e) {
+                // Ghi log lỗi và trả về false
+                error_log("Lỗi transaction: " . $e->getMessage());
+                return false;
             }
 
             // Đảm bảo bảng hanghoa_hinhanh đã được tạo
@@ -967,7 +1102,9 @@ class hanghoa
     public function ApplyAllExactMatchImages()
     {
         try {
-            $this->db->beginTransaction();
+            if (!$this->db->inTransaction()) {
+                $this->db->beginTransaction();
+            }
 
             // Lấy tất cả sản phẩm
             $sqlProducts = "SELECT idhanghoa, tenhanghoa FROM hanghoa";
@@ -1038,8 +1175,10 @@ class hanghoa
 
             error_log("RemoveImageFromProduct - Hình ảnh hiện tại của sản phẩm: " . ($currentImageId ?: 'NULL'));
 
-            // Bắt đầu giao dịch
-            $this->db->beginTransaction();
+            // Bắt đầu giao dịch nếu chưa có
+            if (!$this->db->inTransaction()) {
+                $this->db->beginTransaction();
+            }
 
             // Đặt hình ảnh về NULL cho sản phẩm
             $sqlUpdate = "UPDATE hanghoa SET hinhanh = NULL WHERE idhanghoa = ?";
@@ -1109,8 +1248,10 @@ class hanghoa
         try {
             error_log("RemoveAllMismatchedImages - Bắt đầu gỡ bỏ tất cả hình ảnh không khớp");
 
-            // Bắt đầu giao dịch
-            $this->db->beginTransaction();
+            // Bắt đầu giao dịch nếu chưa có
+            if (!$this->db->inTransaction()) {
+                $this->db->beginTransaction();
+            }
 
             // Lấy danh sách sản phẩm có hình ảnh không khớp
             $mismatched = $this->GetMismatchedProductImages();
@@ -1185,5 +1326,829 @@ class hanghoa
         }
 
         return false;
+    }
+
+    /**
+     * Filter products by price, color, size, and rating
+     * 
+     * @param array $filters Array containing filter criteria
+     * @return array Filtered products
+     */
+    public function filterProducts($filters)
+    {
+        try {
+            // Query với rating subqueries
+            // Lọc sản phẩm: chỉ lấy những sản phẩm không bị ngừng bán (trang_thai != 2)
+            $sql = 'SELECT DISTINCT h.*,
+                    (SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as average_rating,
+                    (SELECT COUNT(*) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as review_count
+                    FROM hanghoa h';
+
+            $joins = [];
+            $conditions = ['h.trang_thai != 2'];
+            $params = [];
+
+            // Color and Size filters using thuoctinhhh table
+            if (!empty($filters['colors']) || !empty($filters['sizes'])) {
+                $joins[] = 'INNER JOIN thuoctinhhh tt ON h.idhanghoa = tt.idhanghoa';
+
+                $filterConditions = [];
+
+                // Color filter: Tìm ID thuộc tính màu sắc động
+                if (!empty($filters['colors'])) {
+                    // Lấy ID thuộc tính màu sắc từ database
+                    $colorAttrStmt = $this->db->query("SELECT idThuocTinh FROM thuoctinh WHERE tenThuocTinh LIKE '%màu%' OR tenThuocTinh LIKE '%color%' LIMIT 1");
+                    $colorAttr = $colorAttrStmt->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($colorAttr) {
+                        $colorAttrId = $colorAttr['idThuocTinh'];
+                        
+                        // Mapping màu từ tiếng Anh sang tiếng Việt
+                        $colorMapping = [
+                            'red' => 'Đỏ',
+                            'blue' => 'Xanh dương',
+                            'green' => 'Xanh lá',
+                            'yellow' => 'Vàng',
+                            'orange' => 'Cam',
+                            'purple' => 'Tím',
+                            'pink' => 'Hồng',
+                            'black' => 'Đen',
+                            'white' => 'Trắng',
+                            'gray' => 'Xám',
+                            'brown' => 'Nâu',
+                            'silver' => 'Bạc'
+                        ];
+                        
+                        $colorOrConditions = [];
+                        foreach ($filters['colors'] as $colorEn) {
+                            $colorEn = trim($colorEn);
+                            // Chuyển từ tiếng Anh sang tiếng Việt
+                            $colorVi = isset($colorMapping[$colorEn]) ? $colorMapping[$colorEn] : $colorEn;
+                            
+                            // Tìm chính xác tên màu (không dùng LIKE để tránh lỗi)
+                            $colorOrConditions[] = "LOWER(TRIM(tt.tenThuocTinhHH)) = LOWER(?)";
+                            $params[] = $colorVi;
+                        }
+                        
+                        $colorCondition = "tt.idThuocTinh = $colorAttrId AND (" . implode(' OR ', $colorOrConditions) . ")";
+                        $filterConditions[] = $colorCondition;
+                    }
+                }
+
+                // Size filter: check RAM (8) or Storage (9) or Battery (10)
+                if (!empty($filters['sizes'])) {
+                    $sizeValues = array_map(function ($s) {
+                        return trim($s);
+                    }, $filters['sizes']);
+
+                    $sizeOrConditions = [];
+                    foreach ($sizeValues as $size) {
+                        $sizeOrConditions[] = "CONCAT(',', tt.tenThuocTinhHH, ',') LIKE ?";
+                        $params[] = '%,' . $size . ',%';
+                    }
+
+                    // Check multiple size-related IDs: 8 (RAM), 9 (Storage), 10 (Battery)
+                    $sizeCondition = "tt.idThuocTinh IN (8, 9, 10) AND (" . implode(' OR ', $sizeOrConditions) . ")";
+                    $filterConditions[] = $sizeCondition;
+                }
+
+                if (!empty($filterConditions)) {
+                    if (count($filterConditions) > 1) {
+                        $conditions[] = '(' . implode(' OR ', $filterConditions) . ')';
+                    } else {
+                        $conditions[] = $filterConditions[0];
+                    }
+                }
+            }
+
+            // Price filter - lấy giá hiển thị (khuyến mại nếu có, nếu không thì giá tham khảo)
+            if (isset($filters['min_price']) && isset($filters['max_price'])) {
+                $conditions[] = '(CASE 
+                    WHEN h.giakhuyenmai > 0 THEN h.giakhuyenmai 
+                    ELSE h.giathamkhao 
+                END) BETWEEN ? AND ?';
+                $params[] = $filters['min_price'];
+                $params[] = $filters['max_price'];
+            }
+
+            // Category filter
+            if (isset($filters['category']) && $filters['category'] > 0) {
+                $conditions[] = 'h.idloaihang = ?';
+                $params[] = $filters['category'];
+            }
+
+            // Rating filter - lọc theo đánh giá trung bình
+            if (isset($filters['min_rating']) && $filters['min_rating'] > 0) {
+                // Subquery để tính rating trung bình
+                $conditions[] = '(SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) >= ?';
+                $params[] = $filters['min_rating'];
+            }
+
+            // Build final query
+            if (!empty($joins)) {
+                $sql .= ' ' . implode(' ', $joins);
+            }
+
+            if (!empty($conditions)) {
+                $sql .= ' WHERE ' . implode(' AND ', $conditions);
+            }
+
+            // Order by: sản phẩm có ảnh lên trước, sau đó theo tên
+            $sql .= ' ORDER BY (CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != "" THEN 0 ELSE 1 END) ASC, h.tenhanghoa ASC';
+
+            // Execute query
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            $stmt->setFetchMode(PDO::FETCH_OBJ);
+
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error in filterProducts: " . $e->getMessage());
+            error_log("SQL: " . ($sql ?? 'N/A'));
+            error_log("Params: " . print_r($params ?? [], true));
+            return [];
+        }
+    }
+
+    /**
+     * Get available filter options (colors, sizes, price range)
+     * 
+     * @param int|null $idloaihang Category ID to filter options by
+     * @return array Available filter options
+     */
+    public function getFilterOptions($idloaihang = null)
+    {
+        try {
+            $options = [
+                'colors' => [],
+                'sizes' => [],
+                'price_range' => ['min' => 0, 'max' => 100000000]
+            ];
+
+            // Build base query for attributes
+            $sql = 'SELECT DISTINCT tt.tenThuocTinhHH 
+                    FROM thuoctinhhh tt
+                    INNER JOIN hanghoa h ON tt.idhanghoa = h.idhanghoa';
+
+            $params = [];
+
+            if ($idloaihang) {
+                $sql .= ' WHERE h.idloaihang = ?';
+                $params[] = $idloaihang;
+            }
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            $attributes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // Extract colors and sizes from attributes
+            $colorKeywords = ['màu', 'color'];
+            $sizeKeywords = ['kích', 'size', 'cỡ'];
+
+            foreach ($attributes as $attr) {
+                $attrLower = mb_strtolower($attr, 'UTF-8');
+
+                // Check if it's a color attribute
+                foreach ($colorKeywords as $keyword) {
+                    if (strpos($attrLower, $keyword) !== false) {
+                        // Extract color value
+                        $color = $this->extractAttributeValue($attr, $colorKeywords);
+                        if ($color && !in_array($color, $options['colors'])) {
+                            $options['colors'][] = $color;
+                        }
+                        break;
+                    }
+                }
+
+                // Check if it's a size attribute
+                foreach ($sizeKeywords as $keyword) {
+                    if (strpos($attrLower, $keyword) !== false) {
+                        // Extract size value
+                        $size = $this->extractAttributeValue($attr, $sizeKeywords);
+                        if ($size && !in_array($size, $options['sizes'])) {
+                            $options['sizes'][] = $size;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // Get price range
+            $priceSql = 'SELECT MIN(giathamkhao) as min_price, MAX(giathamkhao) as max_price FROM hanghoa';
+
+            if ($idloaihang) {
+                $priceSql .= ' WHERE idloaihang = ?';
+                $priceStmt = $this->db->prepare($priceSql);
+                $priceStmt->execute([$idloaihang]);
+            } else {
+                $priceStmt = $this->db->prepare($priceSql);
+                $priceStmt->execute();
+            }
+
+            $priceRange = $priceStmt->fetch(PDO::FETCH_OBJ);
+
+            if ($priceRange) {
+                $options['price_range']['min'] = (int)$priceRange->min_price;
+                $options['price_range']['max'] = (int)$priceRange->max_price;
+            }
+
+            return $options;
+        } catch (PDOException $e) {
+            error_log("Error in getFilterOptions: " . $e->getMessage());
+            return [
+                'colors' => [],
+                'sizes' => [],
+                'price_range' => ['min' => 0, 'max' => 100000000]
+            ];
+        }
+    }
+
+    /**
+     * Extract attribute value from attribute string
+     * 
+     * @param string $attribute Full attribute string
+     * @param array $keywords Keywords to remove
+     * @return string|null Extracted value
+     */
+    private function extractAttributeValue($attribute, $keywords)
+    {
+        $value = $attribute;
+
+        // Remove common separators and keywords
+        $value = preg_replace('/[:\-\|]/u', ' ', $value);
+
+        foreach ($keywords as $keyword) {
+            $value = preg_replace('/' . preg_quote($keyword, '/') . '/iu', '', $value);
+        }
+
+        $value = trim($value);
+
+        // Return null if empty or too long
+        if (empty($value) || mb_strlen($value, 'UTF-8') > 50) {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Get related products with stricter relevance criteria
+     * 
+     * @param int $idhanghoa Current product ID
+     * @param int $limit Maximum number of similar products to return
+     * @return array Array of similar product objects
+     * 
+     * IMPROVED ALGORITHM (v2.0):
+     * Tier 1: Cùng thương hiệu + Cùng loại hàng (ưu tiên cao nhất)
+     * Tier 2: Cùng loại hàng + Giá tương tự (±30%)
+     * Tier 3: Cùng thương hiệu (khác loại hàng)
+     * Tier 4: Cùng loại hàng (bất kỳ giá)
+     * Tier 5: Giá tương tự (fallback)
+     * Tier 6: Bất kỳ sản phẩm nào
+     */
+    public function getRelatedProducts($idhanghoa, $limit = 6)
+    {
+        try {
+            // Get current product info
+            $current = $this->HanghoaGetbyId($idhanghoa);
+
+            if (!$current) {
+                return [];
+            }
+
+            $results = [];
+            $excludeIds = [$idhanghoa]; // Always exclude current product
+
+            // Tier 1: Cùng thương hiệu + Cùng loại hàng (BEST MATCH)
+            if (!empty($current->idThuongHieu) && !empty($current->idloaihang)) {
+                $tier1 = $this->getProductsSameBrandSameCategory($current, $limit, $excludeIds);
+                foreach ($tier1 as $p) {
+                    $results[] = $p;
+                    $excludeIds[] = $p->idhanghoa;
+                }
+            }
+
+            // Tier 2: Cùng loại hàng + Giá tương tự (±30%)
+            if (count($results) < $limit && !empty($current->idloaihang)) {
+                $remaining = $limit - count($results);
+                $tier2 = $this->getProductsSameCategorySimilarPrice($current, $remaining, $excludeIds);
+                foreach ($tier2 as $p) {
+                    $results[] = $p;
+                    $excludeIds[] = $p->idhanghoa;
+                }
+            }
+
+            // Tier 3: Cùng thương hiệu (khác loại hàng)
+            if (count($results) < $limit && !empty($current->idThuongHieu)) {
+                $remaining = $limit - count($results);
+                $tier3 = $this->getProductsSameBrandOnly($current, $remaining, $excludeIds);
+                foreach ($tier3 as $p) {
+                    $results[] = $p;
+                    $excludeIds[] = $p->idhanghoa;
+                }
+            }
+
+            // Tier 4: Cùng loại hàng (bất kỳ giá)
+            if (count($results) < $limit && !empty($current->idloaihang)) {
+                $remaining = $limit - count($results);
+                $tier4 = $this->getProductsSameCategoryOnly($current, $remaining, $excludeIds);
+                foreach ($tier4 as $p) {
+                    $results[] = $p;
+                    $excludeIds[] = $p->idhanghoa;
+                }
+            }
+
+            // Tier 5: Giá tương tự (±30%)
+            if (count($results) < $limit) {
+                $remaining = $limit - count($results);
+                $tier5 = $this->getSimilarPriceProducts($current, $remaining, $excludeIds);
+                foreach ($tier5 as $p) {
+                    $results[] = $p;
+                    $excludeIds[] = $p->idhanghoa;
+                }
+            }
+
+            // Tier 6: Bất kỳ sản phẩm nào (fallback)
+            if (count($results) < $limit) {
+                $remaining = $limit - count($results);
+                $tier6 = $this->getAnyProducts($current, $remaining, $excludeIds);
+                foreach ($tier6 as $p) {
+                    $results[] = $p;
+                }
+            }
+
+            return array_slice($results, 0, $limit);
+        } catch (Exception $e) {
+            error_log("Error getting related products: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Tier 1: Cùng thương hiệu + Cùng loại hàng
+     */
+    private function getProductsSameBrandSameCategory($current, $limit, $excludeIds = [])
+    {
+        if (empty($current->idThuongHieu) || empty($current->idloaihang)) {
+            return [];
+        }
+
+        $excludeClause = "";
+        $params = [$current->idhanghoa, $current->idThuongHieu, $current->idloaihang, $current->giathamkhao];
+        
+        if (!empty($excludeIds)) {
+            $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+            $excludeClause = "AND h.idhanghoa NOT IN ({$placeholders})";
+            $params = array_merge($params, $excludeIds);
+        }
+
+        $sql = "SELECT h.* FROM hanghoa h
+                WHERE h.idhanghoa != ? 
+                AND h.idThuongHieu = ?
+                AND h.idloaihang = ?
+                AND h.trang_thai != 2
+                {$excludeClause}
+                ORDER BY 
+                    CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                    ABS(h.giathamkhao - ?) ASC,
+                    h.tenhanghoa ASC
+                LIMIT " . intval($limit);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Tier 2: Cùng loại hàng + Giá tương tự (±30%)
+     */
+    private function getProductsSameCategorySimilarPrice($current, $limit, $excludeIds = [])
+    {
+        if (empty($current->idloaihang)) {
+            return [];
+        }
+
+        $priceMin = $current->giathamkhao * 0.7;
+        $priceMax = $current->giathamkhao * 1.3;
+
+        $excludeClause = "";
+        $params = [$current->idhanghoa, $current->idloaihang, $priceMin, $priceMax];
+        
+        if (!empty($excludeIds)) {
+            $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+            $excludeClause = "AND h.idhanghoa NOT IN ({$placeholders})";
+            $params = array_merge($params, $excludeIds);
+        }
+        
+        $params[] = $current->giathamkhao; // For ORDER BY
+
+        $sql = "SELECT h.* FROM hanghoa h
+                WHERE h.idhanghoa != ? 
+                AND h.idloaihang = ?
+                AND h.giathamkhao BETWEEN ? AND ?
+                AND h.trang_thai != 2
+                {$excludeClause}
+                ORDER BY 
+                    CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                    ABS(h.giathamkhao - ?) ASC,
+                    h.tenhanghoa ASC
+                LIMIT " . intval($limit);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Tier 3: Cùng thương hiệu (khác loại hàng)
+     */
+    private function getProductsSameBrandOnly($current, $limit, $excludeIds = [])
+    {
+        if (empty($current->idThuongHieu)) {
+            return [];
+        }
+
+        $excludeClause = "";
+        $params = [$current->idhanghoa, $current->idThuongHieu, $current->giathamkhao];
+        
+        if (!empty($excludeIds)) {
+            $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+            $excludeClause = "AND h.idhanghoa NOT IN ({$placeholders})";
+            $params = array_merge($params, $excludeIds);
+        }
+
+        $sql = "SELECT h.* FROM hanghoa h
+                WHERE h.idhanghoa != ? 
+                AND h.idThuongHieu = ?
+                AND h.trang_thai != 2
+                {$excludeClause}
+                ORDER BY 
+                    CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                    ABS(h.giathamkhao - ?) ASC,
+                    h.tenhanghoa ASC
+                LIMIT " . intval($limit);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Tier 4: Cùng loại hàng (bất kỳ giá)
+     */
+    private function getProductsSameCategoryOnly($current, $limit, $excludeIds = [])
+    {
+        if (empty($current->idloaihang)) {
+            return [];
+        }
+
+        $excludeClause = "";
+        $params = [$current->idhanghoa, $current->idloaihang, $current->giathamkhao];
+        
+        if (!empty($excludeIds)) {
+            $placeholders = implode(',', array_fill(0, count($excludeIds), '?'));
+            $excludeClause = "AND h.idhanghoa NOT IN ({$placeholders})";
+            $params = array_merge($params, $excludeIds);
+        }
+
+        $sql = "SELECT h.* FROM hanghoa h
+                WHERE h.idhanghoa != ? 
+                AND h.idloaihang = ?
+                AND h.trang_thai != 2
+                {$excludeClause}
+                ORDER BY 
+                    CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                    ABS(h.giathamkhao - ?) ASC,
+                    h.tenhanghoa ASC
+                LIMIT " . intval($limit);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    // Method getSameBrandProducts đã được thay thế bởi getProductsSameBrandSameCategory và getProductsSameBrandOnly
+
+    /**
+     * Get products with similar price range
+     * 
+     * @param object $current Current product
+     * @param int $limit Maximum number of products
+     * @param array $excludeIds Product IDs to exclude
+     * @return array Array of similar price products
+     */
+    private function getSimilarPriceProducts($current, $limit, $excludeIds = [])
+    {
+        // Price range: ±30% of current product price
+        $priceMin = $current->giathamkhao * 0.7;
+        $priceMax = $current->giathamkhao * 1.3;
+        
+        if (!empty($excludeIds)) {
+            $placeholders = str_repeat('?,', count($excludeIds) - 1) . '?';
+            $sql = "SELECT h.* FROM hanghoa h
+                    WHERE h.idhanghoa != ? 
+                    AND h.giathamkhao BETWEEN ? AND ?
+                    AND h.trang_thai != 2
+                    AND h.idhanghoa NOT IN ({$placeholders})
+                    ORDER BY 
+                        CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                        ABS(h.giathamkhao - ?) ASC,
+                        h.tenhanghoa ASC
+                    LIMIT " . intval($limit);
+            
+            $params = array_merge(
+                [$current->idhanghoa, $priceMin, $priceMax],
+                $excludeIds,
+                [$current->giathamkhao]
+            );
+        } else {
+            $sql = "SELECT h.* FROM hanghoa h
+                    WHERE h.idhanghoa != ? 
+                    AND h.giathamkhao BETWEEN ? AND ?
+                    AND h.trang_thai != 2
+                    ORDER BY 
+                        CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                        ABS(h.giathamkhao - ?) ASC,
+                        h.tenhanghoa ASC
+                    LIMIT " . intval($limit);
+            
+            $params = [$current->idhanghoa, $priceMin, $priceMax, $current->giathamkhao];
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Get any products as fallback (to ensure we always have results)
+     * 
+     * @param object $current Current product
+     * @param int $limit Maximum number of products
+     * @param array $excludeIds Product IDs to exclude
+     * @return array Array of any available products
+     */
+    private function getAnyProducts($current, $limit, $excludeIds = [])
+    {
+        if (!empty($excludeIds)) {
+            $placeholders = str_repeat('?,', count($excludeIds) - 1) . '?';
+            $sql = "SELECT h.* FROM hanghoa h
+                    WHERE h.idhanghoa != ? 
+                    AND h.trang_thai != 2
+                    AND h.idhanghoa NOT IN ({$placeholders})
+                    ORDER BY 
+                        CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                        h.idhanghoa DESC
+                    LIMIT " . intval($limit);
+            
+            $params = array_merge([$current->idhanghoa], $excludeIds);
+        } else {
+            $sql = "SELECT h.* FROM hanghoa h
+                    WHERE h.idhanghoa != ? 
+                    AND h.trang_thai != 2
+                    ORDER BY 
+                        CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != '' THEN 0 ELSE 1 END,
+                        h.idhanghoa DESC
+                    LIMIT " . intval($limit);
+            
+            $params = [$current->idhanghoa];
+        }
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Get product status for display
+     * Logic:
+     * - If trang_thai = 2 (Ngừng bán): Always show "Ngừng bán"
+     * - If trang_thai = 3 (Hết hàng): Show "Hết hàng"
+     * - If trang_thai = 1 (Đang bán): Check quantity; if 0 show "Hết hàng", else show "Đang bán"
+     * 
+     * @param int $idhanghoa Product ID
+     * @return string Display status (Đang bán, Ngừng bán, Hết hàng)
+     */
+    public function getProductStatus($idhanghoa)
+    {
+        try {
+            $sql = "SELECT trang_thai FROM hanghoa WHERE idhanghoa = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idhanghoa]);
+            $product = $stmt->fetch(PDO::FETCH_OBJ);
+
+            if (!$product) {
+                return "Không xác định";
+            }
+
+            // Status values: 1=Đang bán, 2=Ngừng bán, 3=Hết hàng
+            switch ((int)$product->trang_thai) {
+                case 2:
+                    return "Ngừng bán";
+                case 3:
+                    return "Hết hàng";
+                case 1:
+                default:
+                    // For active products, check if quantity is 0
+                    $quantity = $this->getProductQuantity($idhanghoa);
+                    if ($quantity == 0) {
+                        return "Hết hàng";
+                    }
+                    return "Đang bán";
+            }
+        } catch (PDOException $e) {
+            error_log("Error getting product status: " . $e->getMessage());
+            return "Không xác định";
+        }
+    }
+
+    /**
+     * Get product quantity from tonkho table
+     * 
+     * @param int $idhanghoa Product ID
+     * @return int Product quantity (0 if not found)
+     */
+    public function getProductQuantity($idhanghoa)
+    {
+        try {
+            // Check if tonkho table exists
+            $checkTable = $this->db->query("SHOW TABLES LIKE 'tonkho'");
+            if ($checkTable->rowCount() == 0) {
+                return 0;
+            }
+
+            $sql = "SELECT soLuong FROM tonkho WHERE idhanghoa = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idhanghoa]);
+            $result = $stmt->fetch(PDO::FETCH_OBJ);
+
+            return $result ? (int)$result->soLuong : 0;
+        } catch (PDOException $e) {
+            error_log("Error getting product quantity: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Update product status
+     * 
+     * @param int $idhanghoa Product ID
+     * @param int $status Status value (1=Đang bán, 2=Ngừng bán, 3=Hết hàng)
+     * @return bool True if successful, false otherwise
+     */
+    public function updateProductStatus($idhanghoa, $status)
+    {
+        try {
+            // Validate status value
+            if (!in_array($status, [1, 2, 3])) {
+                error_log("Invalid status value: " . $status);
+                return false;
+            }
+
+            $sql = "UPDATE hanghoa SET trang_thai = ? WHERE idhanghoa = ?";
+            $stmt = $this->db->prepare($sql);
+            $result = $stmt->execute([$status, $idhanghoa]);
+
+            if ($result) {
+                error_log("Product status updated - ID: $idhanghoa, Status: $status");
+            }
+
+            return $result;
+        } catch (PDOException $e) {
+            error_log("Error updating product status: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get product status value (numeric)
+     * 
+     * @param int $idhanghoa Product ID
+     * @return int Status value (1, 2, or 3)
+     */
+    public function getProductStatusValue($idhanghoa)
+    {
+        try {
+            $sql = "SELECT trang_thai FROM hanghoa WHERE idhanghoa = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$idhanghoa]);
+            $result = $stmt->fetch(PDO::FETCH_OBJ);
+
+            return $result ? (int)$result->trang_thai : 1;
+        } catch (PDOException $e) {
+            error_log("Error getting product status value: " . $e->getMessage());
+            return 1;
+        }
+    }
+
+    /**
+     * Get products by status
+     * 
+     * @param int $status Status value (1, 2, or 3)
+     * @return array Array of product objects
+     */
+    public function getProductsByStatus($status)
+    {
+        try {
+            // Validate status value
+            if (!in_array($status, [1, 2, 3])) {
+                return [];
+            }
+
+            $sql = "SELECT * FROM hanghoa WHERE trang_thai = ? ORDER BY tenhanghoa ASC";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$status]);
+            $stmt->setFetchMode(PDO::FETCH_OBJ);
+
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            error_log("Error getting products by status: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Get all discontinued products (trang_thai = 2)
+     * 
+     * @return array Array of discontinued product objects
+     */
+    public function getDiscontinuedProducts()
+    {
+        return $this->getProductsByStatus(2);
+    }
+
+    /**
+     * Get all out of stock products (trang_thai = 3)
+     * 
+     * @return array Array of out of stock product objects
+     */
+    public function getOutOfStockProducts()
+    {
+        return $this->getProductsByStatus(3);
+    }
+
+    /**
+     * Get status color CSS class for display
+     * 
+     * @param string $displayStatus Display status string
+     * @return string CSS class name
+     */
+    public function getStatusCssClass($displayStatus)
+    {
+        switch ($displayStatus) {
+            case "Đang bán":
+                return "status-active";
+            case "Ngừng bán":
+                return "status-discontinued";
+            case "Hết hàng":
+                return "status-outofstock";
+            default:
+                return "status-unknown";
+        }
+    }
+
+    /**
+     * Get status color for display
+     * 
+     * @param string $displayStatus Display status string
+     * @return string Color code (hex)
+     */
+    public function getStatusColor($displayStatus)
+    {
+        switch ($displayStatus) {
+            case "Đang bán":
+                return "#27ae60"; // Green
+            case "Ngừng bán":
+                return "#e74c3c"; // Red
+            case "Hết hàng":
+                return "#95a5a6"; // Gray
+            default:
+                return "#34495e"; // Dark gray
+        }
+    }
+
+    /**
+     * Lấy tồn kho của sản phẩm từ bảng tonkho
+     * @param int $idhanghoa - ID hàng hóa
+     * @return int - Số lượng tồn kho (0 nếu không tìm thấy)
+     */
+    public function getTonKho($idhanghoa)
+    {
+        try {
+            $sql = "SELECT soLuong FROM tonkho WHERE idhanghoa = ?";
+            $data = array($idhanghoa);
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->setFetchMode(PDO::FETCH_OBJ);
+            $stmt->execute($data);
+
+            $result = $stmt->fetch();
+
+            // Trả về soLuong nếu tìm thấy, nếu không trả về 0
+            return $result && isset($result->soLuong) ? (int)$result->soLuong : 0;
+        } catch (Exception $e) {
+            // Nếu có lỗi (bảng không tồn tại, etc), trả về 0
+            return 0;
+        }
     }
 }

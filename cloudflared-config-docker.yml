@@ -1,0 +1,7 @@
+tunnel: lequocanh-app-tunnel
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: choose-reducing-pas-civil.trycloudflare.com
+    service: http://nginx:80
+  - service: http_status:404 # default fallback

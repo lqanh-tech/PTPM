@@ -1,301 +1,140 @@
 <?php
-
 /**
- * Trang người dùng được redirect về sau khi thanh toán
- * Hiển thị kết quả thanh toán
+ * MoMo Return Handler - Xử lý redirect từ MoMo
+ * File này chỉ xử lý logic và redirect, không hiển thị HTML
  */
 
-// Sử dụng SessionManager để duy trì session người dùng
+// Start session
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
-require_once 'MoMoPayment.php';
-
-// Khởi động session an toàn
 SessionManager::start();
 
-// Lấy thông tin từ URL parameters
-$partnerCode = $_GET['partnerCode'] ?? '';
+// Lấy thông tin từ URL
 $orderId = $_GET['orderId'] ?? '';
-$requestId = $_GET['requestId'] ?? '';
-$amount = $_GET['amount'] ?? '';
-$orderInfo = $_GET['orderInfo'] ?? '';
-$orderType = $_GET['orderType'] ?? '';
-$transId = $_GET['transId'] ?? '';
 $resultCode = $_GET['resultCode'] ?? '';
 $message = $_GET['message'] ?? '';
-$payType = $_GET['payType'] ?? '';
-$responseTime = $_GET['responseTime'] ?? '';
-$extraData = $_GET['extraData'] ?? '';
-$signature = $_GET['signature'] ?? '';
 
-// Log thông tin return
-error_log('MoMo Return: ' . json_encode($_GET));
+// Log
+error_log('MoMo Return: orderId=' . $orderId . ', resultCode=' . $resultCode);
 
-// Verify signature
-$momoPayment = new MoMoPayment();
-$verifyResult = $momoPayment->verifyCallback($_GET);
-
-// Lấy thông tin giao dịch từ database
-$transaction = null;
-if ($orderId) {
-    $transaction = $momoPayment->getTransaction($orderId);
-}
-
-// Kiểm tra và log thông tin session hiện tại
-error_log('MoMo Return - Session status: ' . (SessionManager::isStarted() ? 'Active' : 'Inactive'));
-error_log('MoMo Return - Session data: ' . json_encode(SessionManager::all()));
-
-// Đảm bảo session được duy trì bằng cách regenerate session ID
-if (SessionManager::isStarted()) {
-    SessionManager::regenerate(false); // Không xóa session cũ để tránh mất dữ liệu
-}
-
-?>
-
-<!DOCTYPE html>
-<html lang="vi">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kết Quả Thanh Toán</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            min-height: 100vh;
-            padding: 20px;
+// Xử lý theo kết quả
+if ($resultCode == '0') {
+    // Thanh toán thành công
+    try {
+        require_once '../administrator/elements_LQA/mod/database.php';
+        $db = Database::getInstance();
+        $conn = $db->getConnection();
+        
+        // Lấy thông tin từ extraData để tìm đơn hàng
+        $extraData = $_GET['extraData'] ?? '';
+        $extraDataDecoded = json_decode(urldecode($extraData), true);
+        
+        error_log("MoMo Return - Extra Data: " . urldecode($extraData));
+        error_log("MoMo Return - Decoded Extra Data: " . print_r($extraDataDecoded, true));
+        
+        // Tìm đơn hàng theo MoMo orderId hoặc order_code từ extraData
+        $order = null;
+        
+        // Thử 1: Tìm theo MoMo orderId
+        $sql = "SELECT id, ma_nguoi_dung FROM don_hang WHERE ma_don_hang_text = ? LIMIT 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$orderId]);
+        $order = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Thử 2: Nếu không tìm thấy, thử tìm theo order_code từ extraData
+        if (!$order && isset($extraDataDecoded['order_code'])) {
+            $originalOrderCode = $extraDataDecoded['order_code'];
+            error_log("MoMo Return - Trying with original order code: $originalOrderCode");
+            
+            $sql = "SELECT id, ma_nguoi_dung FROM don_hang WHERE ma_don_hang_text = ? LIMIT 1";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$originalOrderCode]);
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
         }
-
-        .result-card {
-            max-width: 600px;
-            margin: 0 auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            background: white;
-            overflow: hidden;
+        
+        // Thử 3: Tìm đơn hàng pending mới nhất của user từ extraData
+        if (!$order && isset($extraDataDecoded['user_id'])) {
+            $userId = $extraDataDecoded['user_id'];
+            error_log("MoMo Return - Trying to find pending order for user: $userId");
+            
+            $sql = "SELECT id, ma_nguoi_dung FROM don_hang 
+                    WHERE ma_nguoi_dung = ? 
+                    AND trang_thai_thanh_toan = 'pending' 
+                    AND phuong_thuc_thanh_toan = 'momo'
+                    ORDER BY ngay_tao DESC 
+                    LIMIT 1";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([$userId]);
+            $order = $stmt->fetch(PDO::FETCH_ASSOC);
         }
-
-        .result-header {
-            padding: 30px;
-            text-align: center;
-            color: white;
-        }
-
-        .result-header.success {
-            background: linear-gradient(135deg, #28a745, #20c997);
-        }
-
-        .result-header.failed {
-            background: linear-gradient(135deg, #dc3545, #fd7e14);
-        }
-
-        .result-header.pending {
-            background: linear-gradient(135deg, #ffc107, #fd7e14);
-        }
-
-        .result-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
-        }
-
-        .result-body {
-            padding: 30px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-label {
-            font-weight: 600;
-            color: #666;
-        }
-
-        .info-value {
-            color: #333;
-            text-align: right;
-        }
-
-        .btn-group-custom {
-            gap: 10px;
-        }
-    </style>
-</head>
-
-<body>
-
-    <div class="container">
-        <div class="result-card">
-            <?php if ($resultCode == 0): ?>
-                <!-- Thanh toán thành công -->
-                <div class="result-header success">
-                    <div class="result-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h2>Thanh Toán Thành Công!</h2>
-                    <p class="mb-0">Giao dịch của bạn đã được xử lý thành công</p>
-                </div>
-            <?php elseif ($resultCode == 1006): ?>
-                <!-- Người dùng hủy thanh toán -->
-                <div class="result-header failed">
-                    <div class="result-icon">
-                        <i class="fas fa-times-circle"></i>
-                    </div>
-                    <h2>Thanh Toán Bị Hủy</h2>
-                    <p class="mb-0">Bạn đã hủy giao dịch thanh toán</p>
-                </div>
-            <?php else: ?>
-                <!-- Thanh toán thất bại -->
-                <div class="result-header failed">
-                    <div class="result-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <h2>Thanh Toán Thất Bại</h2>
-                    <p class="mb-0"><?= htmlspecialchars($message) ?></p>
-                </div>
-            <?php endif; ?>
-
-            <div class="result-body">
-                <h5 class="mb-3">Thông Tin Giao Dịch</h5>
-
-                <div class="info-row">
-                    <span class="info-label">Mã đơn hàng:</span>
-                    <span class="info-value"><strong><?= htmlspecialchars($orderId) ?></strong></span>
-                </div>
-
-                <?php if ($transId): ?>
-                    <div class="info-row">
-                        <span class="info-label">Mã giao dịch MoMo:</span>
-                        <span class="info-value"><?= htmlspecialchars($transId) ?></span>
-                    </div>
-                <?php endif; ?>
-
-                <div class="info-row">
-                    <span class="info-label">Số tiền:</span>
-                    <span class="info-value"><strong><?= number_format($amount) ?> VND</strong></span>
-                </div>
-
-                <div class="info-row">
-                    <span class="info-label">Thông tin đơn hàng:</span>
-                    <span class="info-value"><?= htmlspecialchars($orderInfo) ?></span>
-                </div>
-
-                <?php if ($payType): ?>
-                    <div class="info-row">
-                        <span class="info-label">Phương thức thanh toán:</span>
-                        <span class="info-value"><?= htmlspecialchars($payType) ?></span>
-                    </div>
-                <?php endif; ?>
-
-                <div class="info-row">
-                    <span class="info-label">Thời gian:</span>
-                    <span class="info-value"><?= $responseTime ? date('d/m/Y H:i:s', $responseTime / 1000) : date('d/m/Y H:i:s') ?></span>
-                </div>
-
-                <div class="info-row">
-                    <span class="info-label">Trạng thái:</span>
-                    <span class="info-value">
-                        <?php if ($resultCode == 0): ?>
-                            <span class="badge bg-success">Thành công</span>
-                        <?php elseif ($resultCode == 1006): ?>
-                            <span class="badge bg-warning">Đã hủy</span>
-                        <?php else: ?>
-                            <span class="badge bg-danger">Thất bại</span>
-                        <?php endif; ?>
-                    </span>
-                </div>
-
-                <?php if (!$verifyResult['success']): ?>
-                    <div class="alert alert-warning mt-3">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Cảnh báo:</strong> Không thể xác thực chữ ký từ MoMo. Vui lòng liên hệ hỗ trợ.
-                    </div>
-                <?php endif; ?>
-
-                <hr class="my-4">
-
-                <div class="d-flex justify-content-center btn-group-custom">
-                    <?php if ($resultCode == 0): ?>
-                        <a href="../index.php?payment_success=1" class="btn btn-success">
-                            <i class="fas fa-shopping-cart me-2"></i>Tiếp tục mua hàng
-                        </a>
-                    <?php else: ?>
-                        <a href="../index.php" class="btn btn-primary">
-                            <i class="fas fa-redo me-2"></i>Thử lại
-                        </a>
-                    <?php endif; ?>
-
-                    <a href="transactions.php" class="btn btn-outline-secondary">
-                        <i class="fas fa-history me-2"></i>Lịch sử giao dịch
-                    </a>
-                </div>
-
-                <?php if ($resultCode == 0): ?>
-                    <div class="text-center mt-4">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Lưu ý:</strong> Đây là môi trường test. Không có tiền thật được giao dịch.
-                        </div>
-                    </div>
-                <?php endif; ?>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <?php if ($resultCode == 0): ?>
-        <script>
-            // Hiệu ứng confetti cho thanh toán thành công
-            function createConfetti() {
-                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
-                for (let i = 0; i < 50; i++) {
-                    setTimeout(() => {
-                        const confetti = document.createElement('div');
-                        confetti.style.position = 'fixed';
-                        confetti.style.left = Math.random() * 100 + 'vw';
-                        confetti.style.top = '-10px';
-                        confetti.style.width = '10px';
-                        confetti.style.height = '10px';
-                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                        confetti.style.borderRadius = '50%';
-                        confetti.style.pointerEvents = 'none';
-                        confetti.style.zIndex = '9999';
-                        confetti.style.animation = 'fall 3s linear forwards';
-
-                        document.body.appendChild(confetti);
-
-                        setTimeout(() => {
-                            confetti.remove();
-                        }, 3000);
-                    }, i * 100);
-                }
+        
+        if ($order) {
+            $dbOrderId = $order['id'];
+            $userId = $order['ma_nguoi_dung'];
+            
+            error_log("MoMo Return - Found order: $dbOrderId for user: $userId");
+            
+            // Cập nhật trạng thái và lưu MoMo orderId
+            $updateSql = "UPDATE don_hang SET 
+                          trang_thai_thanh_toan = 'paid',
+                          trang_thai = 'approved',
+                          ma_don_hang_text = ?,
+                          ngay_cap_nhat = NOW()
+                          WHERE id = ?";
+            $stmt = $conn->prepare($updateSql);
+            $stmt->execute([$orderId, $dbOrderId]);
+            
+            // Xóa giỏ hàng
+            try {
+                $deleteSql = "DELETE FROM tbl_giohang WHERE user_id = ?";
+                $stmt = $conn->prepare($deleteSql);
+                $stmt->execute([$userId]);
+                error_log("Cart cleared for user: $userId");
+            } catch (Exception $e) {
+                error_log("Failed to clear cart: " . $e->getMessage());
             }
-
-            // CSS animation cho confetti
-            const style = document.createElement('style');
-            style.textContent = `
-    @keyframes fall {
-        to {
-            transform: translateY(100vh) rotate(360deg);
+            
+            error_log("Order processed: $dbOrderId, MoMo orderId: $orderId");
+            
+            // Set session
+            SessionManager::set('payment_success', true);
+            SessionManager::set('order_id', $dbOrderId);
+            
+            // Send notification to user about successful payment and order approval
+            try {
+                require_once '../administrator/elements_LQA/mod/CustomerNotificationManager.php';
+                $notificationManager = new CustomerNotificationManager();
+                
+                // Gửi email đặt hàng thành công
+                $notificationManager->notifyOrderSuccess($dbOrderId, $userId);
+                error_log("Order success notification sent for order: $dbOrderId, user: $userId");
+                
+                // Gửi email xác nhận thanh toán
+                $notificationManager->notifyPaymentConfirmed($dbOrderId, $userId);
+                error_log("Payment confirmation notification sent for order: $dbOrderId, user: $userId");
+                
+                // Gửi email đơn hàng đã được duyệt (vì MoMo tự động duyệt)
+                $notificationManager->notifyOrderApproved($dbOrderId, $userId);
+                error_log("Order approved notification sent for order: $dbOrderId, user: $userId");
+                
+            } catch (Exception $e) {
+                error_log("Failed to send payment notification: " . $e->getMessage());
+            }
+            
+            // Redirect to order success page
+            $redirectUrl = '../administrator/elements_LQA/mgiohang/order_success.php?order_id=' . $dbOrderId;
+            error_log("MoMo Return: Redirecting to success page: $redirectUrl");
+            header('Location: ' . $redirectUrl);
+            exit();
+        } else {
+            error_log("MoMo Return - Order not found for orderId: $orderId");
         }
+    } catch (Exception $e) {
+        error_log("MoMo Return Error: " . $e->getMessage());
+        error_log("MoMo Return Stack Trace: " . $e->getTraceAsString());
     }
-`;
-            document.head.appendChild(style);
+}
 
-            // Chạy confetti khi trang load
-            window.addEventListener('load', createConfetti);
-        </script>
-    <?php endif; ?>
-
-</body>
-
-</html>
+// Nếu thất bại hoặc có lỗi, về giỏ hàng
+error_log("MoMo Return: Payment failed or error occurred, redirecting to cart");
+header('Location: ../administrator/elements_LQA/mgiohang/giohangView.php');
+exit();

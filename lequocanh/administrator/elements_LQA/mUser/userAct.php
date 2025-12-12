@@ -52,6 +52,7 @@ if ($requestAction) {
             $ngaysinh = $_REQUEST['ngaysinh'];
             $dienthoai = $_REQUEST['dienthoai'];
             $diachi = $_REQUEST['diachi'];
+            $email = isset($_REQUEST['email']) ? trim($_REQUEST['email']) : null;
             $userObj = new user();
 
             // Kiểm tra username đã tồn tại chưa
@@ -67,7 +68,7 @@ if ($requestAction) {
                 }
             }
 
-            $kq = $userObj->UserAdd($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai);
+            $kq = $userObj->UserAdd($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $email);
 
             // Ghi nhật ký thêm mới người dùng
             if ($kq && $foundNhatKyHelper) {
@@ -198,6 +199,7 @@ if ($requestAction) {
             $ngaysinh = $_REQUEST['ngaysinh'];
             $diachi = $_REQUEST['diachi'];
             $dienthoai = $_REQUEST['dienthoai'];
+            $email = isset($_REQUEST['email']) ? trim($_REQUEST['email']) : null;
             $verify_password = isset($_REQUEST['verify_password']) ? $_REQUEST['verify_password'] : '';
 
             $userObj = new user();
@@ -234,7 +236,7 @@ if ($requestAction) {
                 exit();
             }
 
-            $result = $userObj->UserUpdate($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $iduser);
+            $result = $userObj->UserUpdate($username, $password, $hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $iduser, $email);
 
             // Ghi nhật ký cập nhật người dùng
             if ($result && $foundNhatKyHelper) {
@@ -433,10 +435,13 @@ if ($requestAction) {
                 }
             }
 
-            // Chỉnh sửa tên cookie
-            $namelogin = str_replace(' ', '-', $namelogin);
-            $namelogin = str_replace('"', '', $namelogin);
-            setcookie($namelogin, $time_login, time() + (86400 * 30), '/'); // 1 tháng
+            // Chỉ set cookie nếu có tên đăng nhập
+            if (!empty($namelogin)) {
+                // Chỉnh sửa tên cookie
+                $namelogin = str_replace(' ', '-', $namelogin);
+                $namelogin = str_replace('"', '', $namelogin);
+                setcookie($namelogin, $time_login, time() + (86400 * 30), '/'); // 1 tháng
+            }
 
             // Xóa session
             unset($_SESSION['USER']);

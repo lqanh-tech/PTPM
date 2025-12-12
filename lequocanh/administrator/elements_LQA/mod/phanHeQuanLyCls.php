@@ -72,33 +72,7 @@ class PhanHeQuanLy
      */
     private function insertDefaultModules()
     {
-        $modules = [
-            ['loaihangview', 'Quản lý loại hàng', 'Quản lý danh mục loại hàng hóa'],
-            ['hanghoaview', 'Quản lý hàng hóa', 'Quản lý thông tin hàng hóa, sản phẩm'],
-            ['dongiaview', 'Quản lý đơn giá', 'Quản lý giá cả sản phẩm'],
-            ['thuonghieuview', 'Quản lý thương hiệu', 'Quản lý thông tin thương hiệu'],
-            ['donvitinhview', 'Quản lý đơn vị tính', 'Quản lý đơn vị tính cho sản phẩm'],
-            ['thuoctinhview', 'Quản lý thuộc tính', 'Quản lý các thuộc tính sản phẩm'],
-            ['thuoctinhhhview', 'Quản lý thuộc tính hàng hóa', 'Quản lý thuộc tính cho từng hàng hóa'],
-            ['adminGiohangView', 'Quản lý giỏ hàng', 'Quản lý giỏ hàng của khách hàng'],
-            ['hinhanhview', 'Quản lý hình ảnh', 'Quản lý hình ảnh sản phẩm'],
-            ['nhacungcapview', 'Quản lý nhà cung cấp', 'Quản lý thông tin nhà cung cấp'],
-            ['mphieunhap', 'Quản lý phiếu nhập', 'Quản lý phiếu nhập hàng'],
-            ['mchitietphieunhap', 'Quản lý chi tiết phiếu nhập', 'Quản lý chi tiết phiếu nhập hàng'],
-            ['mtonkho', 'Quản lý tồn kho', 'Quản lý thông tin tồn kho'],
-            ['orders', 'Quản lý đơn hàng', 'Quản lý đơn đặt hàng của khách'],
-            ['payment_config', 'Cấu hình thanh toán', 'Quản lý cấu hình phương thức thanh toán'],
-            ['baocaoview', 'Báo cáo tổng hợp', 'Xem báo cáo tổng hợp'],
-            ['doanhThuView', 'Báo cáo doanh thu', 'Xem báo cáo doanh thu'],
-            ['sanPhamBanChayView', 'Báo cáo sản phẩm bán chạy', 'Xem báo cáo sản phẩm bán chạy'],
-            ['loiNhuanView', 'Báo cáo lợi nhuận', 'Xem báo cáo lợi nhuận'],
-            ['khachhangview', 'Quản lý khách hàng', 'Quản lý thông tin khách hàng'],
-            ['nhanvienview', 'Quản lý nhân viên', 'Quản lý thông tin nhân viên'],
-            ['roleview', 'Quản lý vai trò', 'Quản lý vai trò người dùng'],
-            ['vaiTroView', 'Quản lý vai trò người dùng', 'Quản lý vai trò cho người dùng'],
-            ['danhSachVaiTroView', 'Danh sách vai trò', 'Xem danh sách vai trò trong hệ thống'],
-            ['nhatKyHoatDongTichHop', 'Thống kê hoạt động nhân viên', 'Xem thống kê và nhật ký hoạt động của nhân viên']
-        ];
+        $modules = $this->getDefaultModulesList();
 
         $sql = "INSERT INTO PhanHeQuanLy (maPhanHe, tenPhanHe, moTa) VALUES (?, ?, ?)";
         $stmt = $this->db->prepare($sql);
@@ -106,6 +80,84 @@ class PhanHeQuanLy
         foreach ($modules as $module) {
             $stmt->execute($module);
         }
+    }
+
+    /**
+     * Danh sách tất cả các module mặc định - đồng bộ với menu left.php
+     */
+    private function getDefaultModulesList()
+    {
+        return [
+            // Quản lý tài khoản & vai trò
+            ['userview', 'Quản lý tài khoản', 'Quản lý tài khoản người dùng trong hệ thống'],
+            ['vaiTroView', 'Quản lý vai trò người dùng', 'Quản lý vai trò cho người dùng'],
+            ['nguoiDungVaiTroView', 'Gán vai trò người dùng', 'Gán vai trò cho người dùng trong hệ thống'],
+            ['danhSachVaiTroView', 'Danh sách vai trò', 'Xem danh sách vai trò trong hệ thống'],
+            ['roleview', 'Quản lý vai trò', 'Quản lý vai trò người dùng'],
+            
+            // Quản lý khách hàng & nhân viên
+            ['khachhangview', 'Quản lý khách hàng', 'Quản lý thông tin khách hàng'],
+            ['nhanvienview', 'Quản lý nhân viên', 'Quản lý thông tin nhân viên'],
+            
+            // Quản lý sản phẩm
+            ['loaihangview', 'Quản lý loại hàng', 'Quản lý danh mục loại hàng hóa'],
+            ['hanghoaview', 'Quản lý hàng hóa', 'Quản lý thông tin hàng hóa, sản phẩm'],
+            ['thuoctinhhhview', 'Quản lý thuộc tính hàng hóa', 'Quản lý thuộc tính cho từng hàng hóa'],
+            ['thuoctinhview', 'Quản lý thuộc tính', 'Quản lý các thuộc tính sản phẩm'],
+            ['dongiaview', 'Quản lý đơn giá', 'Quản lý giá cả sản phẩm'],
+            ['thuonghieuview', 'Quản lý thương hiệu', 'Quản lý thông tin thương hiệu'],
+            ['donvitinhview', 'Quản lý đơn vị tính', 'Quản lý đơn vị tính cho sản phẩm'],
+            ['hinhanhview', 'Quản lý hình ảnh', 'Quản lý hình ảnh sản phẩm'],
+            
+            // Quản lý bán hàng & đơn hàng
+            ['adminGiohangView', 'Quản lý giỏ hàng', 'Quản lý giỏ hàng của khách hàng'],
+            ['don_hang', 'Quản lý đơn hàng', 'Quản lý đơn đặt hàng của khách'],
+            ['orders', 'Quản lý đơn hàng (API)', 'Quản lý đơn đặt hàng qua API'],
+            ['cau_hinh_thanh_toan', 'Cấu hình thanh toán', 'Quản lý cấu hình phương thức thanh toán'],
+            ['payment_config', 'Cấu hình thanh toán (API)', 'Quản lý cấu hình thanh toán qua API'],
+            
+            // Quản lý kho
+            ['nhacungcapview', 'Quản lý nhà cung cấp', 'Quản lý thông tin nhà cung cấp'],
+            ['mphieunhap', 'Quản lý phiếu nhập', 'Quản lý phiếu nhập hàng'],
+            ['mchitietphieunhap', 'Quản lý chi tiết phiếu nhập', 'Quản lý chi tiết phiếu nhập hàng'],
+            ['mtonkho', 'Quản lý tồn kho', 'Quản lý thông tin tồn kho'],
+            
+            // Báo cáo & thống kê
+            ['baocaoview', 'Báo cáo tổng hợp', 'Xem báo cáo tổng hợp'],
+            ['doanhThuView', 'Báo cáo doanh thu', 'Xem báo cáo doanh thu'],
+            ['sanPhamBanChayView', 'Báo cáo sản phẩm bán chạy', 'Xem báo cáo sản phẩm bán chạy'],
+            ['loiNhuanView', 'Báo cáo lợi nhuận', 'Xem báo cáo lợi nhuận'],
+            ['nhatKyHoatDongTichHop', 'Thống kê hoạt động nhân viên', 'Xem thống kê và nhật ký hoạt động của nhân viên'],
+            
+            // Quản lý khuyến mãi & Marketing
+            ['quanLySanPhamDacBiet', 'Quản Lý & Khuyến Mãi SP', 'Quản lý sản phẩm đặc biệt, khuyến mãi, nổi bật'],
+            ['marketing_content', 'Nội dung Marketing', 'Quản lý nội dung marketing, banner, tin tức']
+        ];
+    }
+
+    /**
+     * Đồng bộ các module mới vào database (chạy khi có module mới được thêm vào menu)
+     */
+    public function syncModules()
+    {
+        $modules = $this->getDefaultModulesList();
+        $addedCount = 0;
+
+        $sql = "INSERT IGNORE INTO PhanHeQuanLy (maPhanHe, tenPhanHe, moTa) VALUES (?, ?, ?)";
+        $stmt = $this->db->prepare($sql);
+
+        foreach ($modules as $module) {
+            try {
+                $result = $stmt->execute($module);
+                if ($stmt->rowCount() > 0) {
+                    $addedCount++;
+                }
+            } catch (PDOException $e) {
+                error_log("Lỗi khi thêm module {$module[0]}: " . $e->getMessage());
+            }
+        }
+
+        return $addedCount;
     }
 
     /**

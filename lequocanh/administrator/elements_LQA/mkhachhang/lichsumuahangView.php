@@ -71,7 +71,11 @@ function formatStatus($status)
         case 'pending':
             return '<span class="badge bg-warning">Chờ xử lý</span>';
         case 'approved':
-            return '<span class="badge bg-success">Đã duyệt</span>';
+            return '<span class="badge bg-info">Đang giao hàng</span>';
+        case 'delivered':
+            return '<span class="badge bg-primary">Đã giao hàng</span>';
+        case 'completed':
+            return '<span class="badge bg-success">Hoàn tất</span>';
         case 'cancelled':
             return '<span class="badge bg-danger">Đã hủy</span>';
         default:

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dynamic Color Filter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="lequocanh/public_files/product_filter.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .info {
+            background: #d1ecf1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #17a2b8;
+        }
+        .filter-section {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎨 Test Bộ lọc màu sắc động</h1>
+        
+        <div class="info">
+            <strong>Hướng dẫn:</strong>
+            <ul>
+                <li>Bộ lọc sẽ tự động load màu sắc từ database</li>
+                <li>Chỉ hiển thị màu sắc có sản phẩm</li>
+                <li>Hover vào màu để xem số lượng sản phẩm</li>
+            </ul>
+        </div>
+
+        <div class="filter-section color-filter">
+            <h5><i class="fas fa-palette"></i> Màu sắc</h5>
+            <div class="color-options" id="colorFilterContainer">
+                <div class="loading-colors">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải màu sắc...
+                </div>
+            </div>
+        </div>
+
+        <div id="result" style="margin-top: 30px;"></div>
+    </div>
+
+    <script>
+        // Test load màu sắc
+        async function loadColors() {
+            const container = document.getElementById('colorFilterContainer');
+            const result = document.getElementById('result');
+            
+            try {
+                const response = await fetch('./lequocanh/administrator/elements_LQA/mod/getAvailableColors.php');
+                const data = await response.json();
+                
+                result.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                if (data.success && data.colors.length > 0) {
+                    let html = '';
+                    data.colors.forEach(color => {
+                        html += `
+                            <label class="color-option" title="${color.display} (${color.count} sản phẩm)">
+                                <input type="checkbox" value="${color.en}">
+                                <div class="color-swatch ${color.css_class}"></div>
+                                <i class="fas fa-check checkmark"></i>
+                            </label>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p class="text-muted small">Chưa có màu sắc nào</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = '<p class="text-danger small">Lỗi tải màu sắc: ' + error.message + '</p>';
+                result.innerHTML = `<div style="color: red;">Lỗi: ${error.message}</div>`;
+            }
+        }
+        
+        // Load khi trang sẵn sàng
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadColors);
+        } else {
+            loadColors();
+        }
+    </script>
+</body>
+</html>

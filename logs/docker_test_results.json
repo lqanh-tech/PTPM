@@ -1,0 +1,109 @@
+{
+    "single_test": {
+        "product_id": 45,
+        "product_name": "Samsung Galaxy S21",
+        "related_count": 4,
+        "success": true
+    },
+    "batch_test": {
+        "total_tests": 10,
+        "success_count": 10,
+        "success_rate": 100,
+        "details": [
+            {
+                "id": 66,
+                "name": "Realme 11 Pro+",
+                "brand": 5,
+                "price": "9990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 80,
+                "name": "RedMagic 7S Pro",
+                "brand": 7,
+                "price": "16990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 86,
+                "name": "OnePlus Ace Pro",
+                "brand": 10,
+                "price": "17990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 96,
+                "name": "OPPO A57",
+                "brand": 4,
+                "price": "3990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 127,
+                "name": "Vivo X100 Pro",
+                "brand": 5,
+                "price": "24990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 87,
+                "name": "Nokia G22",
+                "brand": null,
+                "price": "7000000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 58,
+                "name": "Samsung Galaxy Z Fold 5",
+                "brand": 1,
+                "price": "12000000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 83,
+                "name": "Lenovo Legion Y90",
+                "brand": 9,
+                "price": "21990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 114,
+                "name": "Realme C53",
+                "brand": 5,
+                "price": "3990000.00",
+                "related_count": 3,
+                "success": true
+            },
+            {
+                "id": 105,
+                "name": "OnePlus 12",
+                "brand": 10,
+                "price": "24990000.00",
+                "related_count": 3,
+                "success": true
+            }
+        ]
+    },
+    "performance": {
+        "avg_time_ms": 1.23,
+        "memory_mb": 0.98
+    },
+    "summary": {
+        "status": "EXCELLENT",
+        "success_rate": 100,
+        "total_time_ms": 435.16,
+        "total_products": 79,
+        "active_products": 78,
+        "total_brands": 10,
+        "container": "c0eb644f64aa",
+        "timestamp": "2025-12-05 10:59:02"
+    }
+}

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toast Notification Demo</title>
+    
+    <!-- Bootstrap (tùy chọn) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Toast Notification CSS - BẮT BUỘC -->
+    <link rel="stylesheet" href="css_LQA/toast-notification.css">
+    
+    <style>
+        body {
+            padding: 50px;
+            font-family: Arial, sans-serif;
+        }
+        .demo-section {
+            margin: 30px 0;
+        }
+        .btn-demo {
+            margin: 10px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Toast Notification Demo</h1>
+        <p>Nhấn các nút bên dưới để xem các loại thông báo khác nhau</p>
+        
+        <div class="demo-section">
+            <h3>Các loại thông báo cơ bản:</h3>
+            <button class="btn btn-success btn-demo" onclick="Toast.success('Thao tác thành công!')">
+                Success Toast
+            </button>
+            <button class="btn btn-danger btn-demo" onclick="Toast.error('Có lỗi xảy ra!')">
+                Error Toast
+            </button>
+            <button class="btn btn-warning btn-demo" onclick="Toast.warning('Cảnh báo: Vui lòng kiểm tra lại!')">
+                Warning Toast
+            </button>
+            <button class="btn btn-info btn-demo" onclick="Toast.info('Thông tin: Đang xử lý...')">
+                Info Toast
+            </button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Thông báo với thời gian tùy chỉnh:</h3>
+            <button class="btn btn-primary btn-demo" onclick="Toast.success('Hiển thị trong 5 giây', 5000)">
+                5 giây
+            </button>
+            <button class="btn btn-primary btn-demo" onclick="Toast.info('Hiển thị trong 10 giây', 10000)">
+                10 giây
+            </button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Nhiều thông báo cùng lúc:</h3>
+            <button class="btn btn-secondary btn-demo" onclick="showMultiple()">
+                Hiển thị nhiều toast
+            </button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Ví dụ thực tế:</h3>
+            <button class="btn btn-success btn-demo" onclick="simulateAddToCart()">
+                Thêm vào giỏ hàng
+            </button>
+            <button class="btn btn-danger btn-demo" onclick="simulateLoginError()">
+                Lỗi đăng nhập
+            </button>
+            <button class="btn btn-warning btn-demo" onclick="simulateFormValidation()">
+                Lỗi form validation
+            </button>
+        </div>
+        
+        <div class="demo-section">
+            <h3>Code mẫu:</h3>
+            <pre><code>// Thành công
+Toast.success('Đã thêm vào giỏ hàng!');
+
+// Lỗi
+Toast.error('Vui lòng điền đầy đủ thông tin!');
+
+// Cảnh báo
+Toast.warning('Số điện thoại phải có 10 chữ số!');
+
+// Thông tin
+Toast.info('Đang xử lý yêu cầu...');
+
+// Tùy chỉnh thời gian (ms)
+Toast.success('Thành công!', 5000);
+
+// Hoặc dùng hàm chung
+showToast('Thông báo', 'success');</code></pre>
+        </div>
+    </div>
+    
+    <!-- Toast Notification JS - BẮT BUỘC -->
+    <script src="js_LQA/toast-notification.js"></script>
+    
+    <script>
+        // Ví dụ hiển thị nhiều toast
+        function showMultiple() {
+            Toast.info('Đang xử lý...');
+            setTimeout(() => Toast.warning('Vui lòng đợi...'), 500);
+            setTimeout(() => Toast.success('Hoàn thành!'), 1500);
+        }
+        
+        // Mô phỏng thêm vào giỏ hàng
+        function simulateAddToCart() {
+            Toast.info('Đang thêm vào giỏ hàng...');
+            setTimeout(() => {
+                Toast.success('✅ Đã thêm sản phẩm vào giỏ hàng!');
+            }, 1000);
+        }
+        
+        // Mô phỏng lỗi đăng nhập
+        function simulateLoginError() {
+            Toast.error('❌ Tên đăng nhập hoặc mật khẩu không chính xác!');
+        }
+        
+        // Mô phỏng lỗi form validation
+        function simulateFormValidation() {
+            Toast.warning('⚠ Vui lòng điền đầy đủ thông tin bắt buộc!');
+        }
+    </script>
+</body>
+</html>

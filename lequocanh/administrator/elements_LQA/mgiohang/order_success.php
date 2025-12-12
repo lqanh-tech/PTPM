@@ -8,9 +8,18 @@ SessionManager::start();
 
 // Kiểm tra xem có thông báo thành công không
 if (!isset($_SESSION['payment_success']) || !isset($_GET['order_id'])) {
-    // Nếu không có thông báo thành công, chuyển hướng về trang giỏ hàng
-    header('Location: giohangView.php');
-    exit();
+    // Log để debug
+    error_log("Order Success - Missing session or order_id. Session payment_success: " . (isset($_SESSION['payment_success']) ? 'YES' : 'NO') . ", GET order_id: " . (isset($_GET['order_id']) ? $_GET['order_id'] : 'NO'));
+    
+    // Nếu có order_id nhưng không có session, vẫn cho phép xem (có thể là refresh page)
+    if (isset($_GET['order_id']) && is_numeric($_GET['order_id'])) {
+        error_log("Order Success - Allowing access with order_id only: " . $_GET['order_id']);
+        // Tiếp tục xử lý
+    } else {
+        // Nếu không có thông báo thành công, chuyển hướng về trang giỏ hàng
+        header('Location: giohangView.php');
+        exit();
+    }
 }
 
 // Lấy ID đơn hàng
@@ -26,6 +35,15 @@ $orderSql = "SELECT * FROM don_hang WHERE id = ?";
 $orderStmt = $conn->prepare($orderSql);
 $orderStmt->execute([$orderId]);
 $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
+
+// Kiểm tra xem đơn hàng có tồn tại không
+if (!$order) {
+    error_log("Order Success - Order not found: " . $orderId);
+    echo "<script>alert('Không tìm thấy đơn hàng!'); window.location.href='giohangView.php';</script>";
+    exit();
+}
+
+error_log("Order Success - Order loaded successfully: " . $orderId . ", Status: " . $order['trang_thai'] . ", Payment: " . $order['trang_thai_thanh_toan']);
 
 // Xóa thông báo thành công khỏi session
 unset($_SESSION['payment_success']);
@@ -110,7 +128,39 @@ unset($_SESSION['payment_success']);
             <h5>Thông tin đơn hàng:</h5>
             <p><strong>Mã đơn hàng:</strong> #<?php echo $orderId; ?></p>
             <p><strong>Mã tham chiếu:</strong> <?php echo $order['ma_don_hang_text']; ?></p>
-            <p><strong>Tổng tiền:</strong> <?php echo number_format($order['tong_tien'], 0, ',', '.'); ?> đ</p>
+            <?php
+            // Tính toán chi tiết
+            $finalTotal = $order['tong_tien'];
+            $vatAmount = isset($order['thue']) ? $order['thue'] : 0;
+            $shippingFee = isset($order['phi_van_chuyen']) ? $order['phi_van_chuyen'] : 0;
+            $subtotal = $finalTotal - $vatAmount - $shippingFee;
+            ?>
+            <div class="table-responsive mb-3">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td><strong>Tổng tiền hàng:</strong></td>
+                        <td class="text-end"><?php echo number_format($subtotal, 0, ',', '.'); ?> đ</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Thuế VAT (8%):</strong></td>
+                        <td class="text-end"><?php echo number_format($vatAmount, 0, ',', '.'); ?> đ</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Phí vận chuyển:</strong></td>
+                        <td class="text-end">
+                            <?php if ($shippingFee == 0): ?>
+                                <span class="text-success">Miễn phí</span>
+                            <?php else: ?>
+                                <?php echo number_format($shippingFee, 0, ',', '.'); ?> đ
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr class="border-top">
+                        <td><strong class="fs-5">Tổng thanh toán:</strong></td>
+                        <td class="text-end"><strong class="fs-5 text-danger"><?php echo number_format($finalTotal, 0, ',', '.'); ?> đ</strong></td>
+                    </tr>
+                </table>
+            </div>
             <p><strong>Phương thức thanh toán:</strong>
                 <?php
                 switch ($paymentMethod) {
@@ -183,9 +233,19 @@ unset($_SESSION['payment_success']);
 
         <div class="mt-4">
             <a href="<?php echo isset($_SESSION['ADMIN']) ? '../../index.php' : '../../../index.php'; ?>" class="btn btn-primary">Tiếp tục mua hàng</a>
-            <a href="../../index.php?req=don_hang" class="btn btn-success ms-2">Xem đơn hàng của tôi</a>
+            <a href="../../../customer/order_history.php" class="btn btn-success ms-2">Xem đơn hàng của tôi</a>
         </div>
     </div>
+
+    <!-- Widget đánh giá sản phẩm -->
+    <?php if ($paymentStatus == 'paid'): ?>
+    <div class="container mt-4">
+        <?php 
+        $orderId = $orderId; // Pass order ID to widget
+        include __DIR__ . '/../../../components/product_review_widget.php'; 
+        ?>
+    </div>
+    <?php endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -209,6 +269,10 @@ unset($_SESSION['payment_success']);
     </div>
     
     <script>
+    // LƯU Ý: Giỏ hàng đã được xóa trong momo_return.php hoặc payment_confirm.php
+    // Không cần xóa lại ở đây để tránh xóa nhầm các sản phẩm khác trong giỏ
+    console.log('Order success page loaded. Cart items were already removed during payment processing.');
+    
     // Check for order status updates
     let lastStatus = '<?php echo $order['trang_thai']; ?>';
     let lastPaymentStatus = '<?php echo $order['trang_thai_thanh_toan']; ?>';

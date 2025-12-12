@@ -2,8 +2,9 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-if (!isset($_SESSION['ADMIN'])) {
-    header('Location: ./userLogin.php');
+if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
+    // Điều hướng về trang đăng nhập (nằm ở thư mục administrator)
+    header('Location: ../../userLogin.php');
     exit();
 }
 
@@ -12,8 +13,9 @@ ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(0);
 
-require_once './elements_LQA/mod/database.php';
-require_once './elements_LQA/mod/hanghoaCls.php';
+// Sử dụng __DIR__ để định vị đúng đường dẫn file
+require_once __DIR__ . '/../mod/database.php';
+require_once __DIR__ . '/../mod/hanghoaCls.php';
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
@@ -31,20 +33,28 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 $orderId = (int)$_GET['id'];
 
 // Lấy thông tin đơn hàng
-$orderSql = "SELECT * FROM orders WHERE id = ?";
-$orderStmt = $conn->prepare($orderSql);
-$orderStmt->execute([$orderId]);
+// Nếu là user thường, chỉ xem được đơn của mình
+if (isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
+    $orderSql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
+    $orderStmt = $conn->prepare($orderSql);
+    $orderStmt->execute([$orderId, $_SESSION['USER']]);
+} else {
+    $orderSql = "SELECT * FROM don_hang WHERE id = ?";
+    $orderStmt = $conn->prepare($orderSql);
+    $orderStmt->execute([$orderId]);
+}
+
 $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$order) {
-    die('<div class="alert alert-danger">Không tìm thấy đơn hàng.</div>');
+    die('<div class="alert alert-danger">Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn hàng này.</div>');
 }
 
 // Lấy thông tin chi tiết đơn hàng
 $orderItemsSql = "SELECT oi.*, h.tenhanghoa 
-                 FROM order_items oi
-                 JOIN hanghoa h ON oi.product_id = h.idhanghoa
-                 WHERE oi.order_id = ?";
+                 FROM chi_tiet_don_hang oi
+                 JOIN hanghoa h ON oi.ma_san_pham = h.idhanghoa
+                 WHERE oi.ma_don_hang = ?";
 $orderItemsStmt = $conn->prepare($orderItemsSql);
 $orderItemsStmt->execute([$orderId]);
 $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_ASSOC);
@@ -54,42 +64,54 @@ $customerName = "Khách vãng lai";
 $customerPhone = "";
 $customerEmail = "";
 
-if (isset($order['user_id']) && !empty($order['user_id'])) {
+if (isset($order['ma_nguoi_dung']) && !empty($order['ma_nguoi_dung'])) {
     $userSql = "SELECT * FROM user WHERE username = ?";
     $userStmt = $conn->prepare($userSql);
-    $userStmt->execute([$order['user_id']]);
+    $userStmt->execute([$order['ma_nguoi_dung']]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
     if ($user) {
-        $customerName = $user['hoten'] ?? $order['user_id'];
+        $customerName = $user['hoten'] ?? $order['ma_nguoi_dung'];
         $customerPhone = $user['dienthoai'] ?? "";
         $customerEmail = $user['email'] ?? "";
     }
 }
 
-// Lấy thông tin cửa hàng
-$shopName = "Cửa hàng điện thoại";
-$shopAddress = "Địa chỉ cửa hàng";
-$shopPhone = "Số điện thoại cửa hàng";
-$shopEmail = "Email cửa hàng";
+// Lấy thông tin cửa hàng (Hardcoded hoặc lấy từ DB cấu hình nếu có)
+$shopName = "Cửa hàng điện thoại LQA";
+$shopAddress = "123 Đường ABC, Quận Ninh Kiều, TP. Cần Thơ";
+$shopPhone = "0123 456 789";
+$shopEmail = "contact@lqa-store.com";
 
 // Định dạng ngày tháng
-$orderDate = date('d/m/Y H:i', strtotime($order['created_at']));
+$orderDate = date('d/m/Y H:i', strtotime($order['ngay_tao']));
 
-// Tính tổng tiền
-$totalAmount = 0;
+// Tính toán các khoản tiền
+$subtotal = 0;
 foreach ($orderItems as $item) {
-    $totalAmount += $item['price'] * $item['quantity'];
+    $subtotal += $item['gia'] * $item['so_luong'];
 }
+
+$taxAmount = isset($order['thue']) ? floatval($order['thue']) : 0;
+$shippingFee = isset($order['phi_van_chuyen']) ? floatval($order['phi_van_chuyen']) : 0;
+$shippingMethodName = isset($order['shipping_method_name']) ? $order['shipping_method_name'] : '';
+$couponCode = isset($order['coupon_code']) ? $order['coupon_code'] : null;
+$couponDiscount = isset($order['coupon_discount']) ? floatval($order['coupon_discount']) : 0;
 
 // Định dạng trạng thái đơn hàng
 $orderStatus = "";
-switch ($order['status']) {
+switch ($order['trang_thai']) {
     case 'pending':
         $orderStatus = "Chờ xác nhận";
         break;
     case 'approved':
-        $orderStatus = "Đã duyệt";
+        $orderStatus = "Đang giao hàng";
+        break;
+    case 'delivered':
+        $orderStatus = "Đã giao hàng";
+        break;
+    case 'completed':
+        $orderStatus = "Hoàn tất";
         break;
     case 'cancelled':
         $orderStatus = "Đã hủy";
@@ -99,7 +121,20 @@ switch ($order['status']) {
 }
 
 // Định dạng phương thức thanh toán
-$paymentMethod = $order['payment_method'] == 'bank_transfer' ? 'Chuyển khoản ngân hàng' : $order['payment_method'];
+$paymentMethod = "";
+switch ($order['phuong_thuc_thanh_toan']) {
+    case 'bank_transfer':
+        $paymentMethod = "Chuyển khoản ngân hàng";
+        break;
+    case 'cod':
+        $paymentMethod = "Thanh toán khi nhận hàng (COD)";
+        break;
+    case 'momo':
+        $paymentMethod = "Ví MoMo";
+        break;
+    default:
+        $paymentMethod = $order['phuong_thuc_thanh_toan'];
+}
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -110,47 +145,64 @@ $paymentMethod = $order['payment_method'] == 'bank_transfer' ? 'Chuyển khoản
     <title>Hóa đơn #<?php echo $order['id']; ?></title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             margin: 0;
             padding: 20px;
             color: #333;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .invoice-container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px;
             border: 1px solid #ddd;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
         }
 
         .invoice-header {
             text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #ddd;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #333;
         }
 
         .invoice-header h1 {
-            color: #4a4a4a;
+            color: #000;
             margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 24px;
         }
 
-        .invoice-details {
+        .invoice-title {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .invoice-title h2 {
+            font-size: 28px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .invoice-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
-        .invoice-details-col {
+        .invoice-info-col {
             flex: 1;
         }
 
-        .invoice-details-col h3 {
+        .invoice-info-col h3 {
             margin-top: 0;
-            color: #4a4a4a;
+            font-size: 16px;
             border-bottom: 1px solid #eee;
             padding-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .invoice-items {
@@ -161,72 +213,82 @@ $paymentMethod = $order['payment_method'] == 'bank_transfer' ? 'Chuyển khoản
 
         .invoice-items th,
         .invoice-items td {
-            padding: 10px;
+            padding: 12px 8px;
             text-align: left;
             border-bottom: 1px solid #ddd;
         }
 
         .invoice-items th {
-            background-color: #f5f5f5;
-        }
-
-        .invoice-total {
-            text-align: right;
-            margin-top: 20px;
-            padding-top: 10px;
+            background-color: #f9f9f9;
+            font-weight: bold;
             border-top: 1px solid #ddd;
         }
 
-        .invoice-total h3 {
-            margin: 0;
-            color: #4a4a4a;
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .invoice-summary {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .invoice-summary-table {
+            width: 50%;
+            border-collapse: collapse;
+        }
+
+        .invoice-summary-table td {
+            padding: 5px 10px;
+            text-align: right;
+        }
+
+        .invoice-summary-table tr.total td {
+            font-weight: bold;
+            font-size: 18px;
+            border-top: 2px solid #333;
+            padding-top: 10px;
         }
 
         .invoice-footer {
-            margin-top: 30px;
+            margin-top: 50px;
             text-align: center;
-            font-size: 12px;
+            font-style: italic;
             color: #777;
         }
 
         .print-button {
             text-align: center;
-            margin-top: 20px;
+            margin-top: 30px;
         }
 
         .print-button button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
+            padding: 10px 25px;
+            background-color: #007bff;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            transition: background 0.3s;
         }
 
         .print-button button:hover {
-            background-color: #45a049;
+            background-color: #0056b3;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
+        .print-button button.close-btn {
+            background-color: #6c757d;
+            margin-left: 10px;
         }
 
-        .status-pending {
-            background-color: #ffc107;
-        }
-
-        .status-approved {
-            background-color: #28a745;
-        }
-
-        .status-cancelled {
-            background-color: #dc3545;
+        .print-button button.close-btn:hover {
+            background-color: #5a6268;
         }
 
         @media print {
@@ -237,11 +299,15 @@ $paymentMethod = $order['payment_method'] == 'bank_transfer' ? 'Chuyển khoản
             body {
                 padding: 0;
                 margin: 0;
+                background-color: #fff;
             }
 
             .invoice-container {
                 box-shadow: none;
                 border: none;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
             }
         }
     </style>
@@ -253,71 +319,104 @@ $paymentMethod = $order['payment_method'] == 'bank_transfer' ? 'Chuyển khoản
             <h1><?php echo $shopName; ?></h1>
             <p><?php echo $shopAddress; ?></p>
             <p>Điện thoại: <?php echo $shopPhone; ?> | Email: <?php echo $shopEmail; ?></p>
-            <h2>HÓA ĐƠN BÁN HÀNG</h2>
-            <p>Mã đơn hàng: <?php echo $order['order_code']; ?></p>
         </div>
 
-        <div class="invoice-details">
-            <div class="invoice-details-col">
+        <div class="invoice-title">
+            <h2>HÓA ĐƠN BÁN HÀNG</h2>
+            <p>Mã đơn hàng: <strong><?php echo $order['ma_don_hang_text']; ?></strong></p>
+            <p>Ngày đặt: <?php echo $orderDate; ?></p>
+        </div>
+
+        <div class="invoice-info">
+            <div class="invoice-info-col">
                 <h3>Thông tin khách hàng</h3>
-                <p><strong>Tên khách hàng:</strong> <?php echo htmlspecialchars($customerName); ?></p>
+                <p><strong>Khách hàng:</strong> <?php echo htmlspecialchars($customerName); ?></p>
                 <?php if (!empty($customerPhone)): ?>
-                    <p><strong>Số điện thoại:</strong> <?php echo htmlspecialchars($customerPhone); ?></p>
+                    <p><strong>Điện thoại:</strong> <?php echo htmlspecialchars($customerPhone); ?></p>
                 <?php endif; ?>
                 <?php if (!empty($customerEmail)): ?>
                     <p><strong>Email:</strong> <?php echo htmlspecialchars($customerEmail); ?></p>
                 <?php endif; ?>
-                <?php if (isset($order['shipping_address']) && !empty($order['shipping_address'])): ?>
+                <?php if (isset($order['dia_chi_giao_hang']) && !empty($order['dia_chi_giao_hang'])): ?>
+                    <p><strong>Địa chỉ giao hàng:</strong><br><?php echo nl2br(htmlspecialchars($order['dia_chi_giao_hang'])); ?></p>
+                <?php elseif (isset($order['shipping_address']) && !empty($order['shipping_address'])): ?>
                     <p><strong>Địa chỉ giao hàng:</strong><br><?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?></p>
                 <?php endif; ?>
             </div>
 
-            <div class="invoice-details-col">
-                <h3>Thông tin đơn hàng</h3>
-                <p><strong>Ngày đặt hàng:</strong> <?php echo $orderDate; ?></p>
-                <p><strong>Trạng thái:</strong>
-                    <span class="status-badge status-<?php echo $order['status']; ?>"><?php echo $orderStatus; ?></span>
-                </p>
-                <p><strong>Phương thức thanh toán:</strong> <?php echo $paymentMethod; ?></p>
+            <div class="invoice-info-col" style="text-align: right;">
+                <h3>Thông tin thanh toán</h3>
+                <p><strong>Phương thức:</strong> <?php echo $paymentMethod; ?></p>
+                <p><strong>Trạng thái:</strong> <?php echo $orderStatus; ?></p>
+                <?php if (!empty($shippingMethodName)): ?>
+                    <p><strong>Vận chuyển:</strong> <?php echo htmlspecialchars($shippingMethodName); ?></p>
+                <?php endif; ?>
             </div>
         </div>
 
         <table class="invoice-items">
             <thead>
                 <tr>
-                    <th>STT</th>
+                    <th class="text-center" style="width: 50px;">STT</th>
                     <th>Sản phẩm</th>
-                    <th>Đơn giá</th>
-                    <th>Số lượng</th>
-                    <th>Thành tiền</th>
+                    <th class="text-right">Đơn giá</th>
+                    <th class="text-center">SL</th>
+                    <th class="text-right">Thành tiền</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($orderItems as $index => $item): ?>
                     <tr>
-                        <td><?php echo $index + 1; ?></td>
+                        <td class="text-center"><?php echo $index + 1; ?></td>
                         <td><?php echo htmlspecialchars($item['tenhanghoa']); ?></td>
-                        <td><?php echo number_format($item['price'], 0, ',', '.'); ?> ₫</td>
-                        <td><?php echo $item['quantity']; ?></td>
-                        <td><?php echo number_format($item['price'] * $item['quantity'], 0, ',', '.'); ?> ₫</td>
+                        <td class="text-right"><?php echo number_format($item['gia'], 0, ',', '.'); ?> ₫</td>
+                        <td class="text-center"><?php echo $item['so_luong']; ?></td>
+                        <td class="text-right"><?php echo number_format($item['gia'] * $item['so_luong'], 0, ',', '.'); ?> ₫</td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
 
-        <div class="invoice-total">
-            <h3>Tổng tiền: <?php echo number_format($order['total_amount'], 0, ',', '.'); ?> ₫</h3>
+        <div class="invoice-summary">
+            <table class="invoice-summary-table">
+                <tr>
+                    <td>Tạm tính:</td>
+                    <td><?php echo number_format($subtotal, 0, ',', '.'); ?> ₫</td>
+                </tr>
+                <?php if ($taxAmount > 0): ?>
+                <tr>
+                    <td>Thuế VAT (10%):</td>
+                    <td><?php echo number_format($taxAmount, 0, ',', '.'); ?> ₫</td>
+                </tr>
+                <?php endif; ?>
+                <?php if ($shippingFee > 0): ?>
+                <tr>
+                    <td>Phí vận chuyển:</td>
+                    <td><?php echo number_format($shippingFee, 0, ',', '.'); ?> ₫</td>
+                </tr>
+                <?php endif; ?>
+                <?php if ($couponCode && $couponDiscount > 0): ?>
+                <tr style="color: #28a745;">
+                    <td>Mã giảm giá (<?php echo htmlspecialchars($couponCode); ?>):</td>
+                    <td>-<?php echo number_format($couponDiscount, 0, ',', '.'); ?> ₫</td>
+                </tr>
+                <?php endif; ?>
+                <tr class="total">
+                    <td>Tổng cộng:</td>
+                    <td><?php echo number_format($order['tong_tien'], 0, ',', '.'); ?> ₫</td>
+                </tr>
+            </table>
         </div>
 
         <div class="invoice-footer">
-            <p>Cảm ơn quý khách đã mua hàng tại <?php echo $shopName; ?>!</p>
-            <p>Mọi thắc mắc xin vui lòng liên hệ: <?php echo $shopPhone; ?></p>
+            <p>Cảm ơn quý khách đã mua hàng!</p>
+            <p>Hóa đơn này được tạo tự động từ hệ thống.</p>
         </div>
     </div>
 
     <div class="print-button">
         <button onclick="window.print()">In hóa đơn</button>
-        <button onclick="window.close()">Đóng</button>
+        <button class="close-btn" onclick="window.close()">Đóng</button>
     </div>
 </body>
 

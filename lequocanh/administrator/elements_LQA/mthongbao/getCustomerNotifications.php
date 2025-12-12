@@ -119,6 +119,30 @@ try {
                 'unread_count' => $unreadCount
             ];
             break;
+            
+        case 'delete_read':
+            // Xóa tất cả thông báo đã đọc
+            $success = $notificationManager->deleteReadNotifications($userId);
+            $response = [
+                'success' => $success,
+                'message' => $success ? 'Đã xóa thông báo đã đọc' : 'Có lỗi xảy ra'
+            ];
+            break;
+            
+        case 'delete_single':
+            // Xóa một thông báo cụ thể
+            $notificationId = (int)($_POST['notification_id'] ?? 0);
+
+            if ($notificationId > 0) {
+                $success = $notificationManager->deleteNotification($notificationId, $userId);
+                $response = [
+                    'success' => $success,
+                    'message' => $success ? 'Đã xóa thông báo' : 'Có lỗi xảy ra'
+                ];
+            } else {
+                throw new Exception('ID thông báo không hợp lệ');
+            }
+            break;
 
         default:
             throw new Exception('Action không hợp lệ');
@@ -149,7 +173,13 @@ function getNotificationIcon($type)
         case 'order_delivered':
             return 'box-open';
         case 'payment_confirmed':
-            return 'credit-card';
+            return 'money-bill-wave';
+        case 'order_created':
+            return 'shopping-cart';
+        case 'payment_pending':
+            return 'clock';
+        case 'payment_rejected':
+            return 'exclamation-triangle';
         default:
             return 'bell';
     }
@@ -170,7 +200,13 @@ function getNotificationColor($type)
         case 'order_delivered':
             return 'primary';
         case 'payment_confirmed':
+            return 'success';
+        case 'order_created':
+            return 'primary';
+        case 'payment_pending':
             return 'warning';
+        case 'payment_rejected':
+            return 'danger';
         default:
             return 'secondary';
     }

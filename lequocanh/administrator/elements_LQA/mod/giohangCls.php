@@ -165,7 +165,16 @@ class GioHang
         try {
             // Sử dụng LEFT JOIN thay vì INNER JOIN
             // LEFT JOIN sẽ lấy tất cả các mục trong giỏ hàng, ngay cả khi không tìm thấy sản phẩm
-            $sql = "SELECT g.product_id, g.quantity, h.tenhanghoa, h.giathamkhao, h.hinhanh
+            // ƯU TIÊN giakhuyenmai nếu có, nếu không dùng giathamkhao
+            $sql = "SELECT g.product_id, g.quantity, h.tenhanghoa, 
+                   h.giathamkhao,
+                   h.giakhuyenmai,
+                   h.hinhanh,
+                   CASE 
+                       WHEN h.giakhuyenmai IS NOT NULL AND h.giakhuyenmai > 0 AND h.giakhuyenmai < h.giathamkhao 
+                       THEN h.giakhuyenmai 
+                       ELSE h.giathamkhao 
+                   END as gia_hien_tai
                    FROM tbl_giohang g
                    LEFT JOIN hanghoa h ON g.product_id = h.idhanghoa
                    WHERE g.user_id = ?";
@@ -187,11 +196,18 @@ class GioHang
                     error_log("Đã chuyển đổi hinhanh thành số nguyên: " . $hinhanhValue);
                 }
 
+                // Xác định giá hiện tại (ưu tiên giá khuyến mãi)
+                $giaHienTai = $row['gia_hien_tai'] ?? $row['giathamkhao'] ?? 0;
+                $hasDiscount = isset($row['giakhuyenmai']) && $row['giakhuyenmai'] > 0 && $row['giakhuyenmai'] < $row['giathamkhao'];
+
                 // Include cart items even if some fields are NULL
                 $cart[] = [
                     'product_id' => $row['product_id'],
                     'tenhanghoa' => $row['tenhanghoa'] ?? 'Unknown Product',
                     'giathamkhao' => $row['giathamkhao'] ?? 0,
+                    'giakhuyenmai' => $row['giakhuyenmai'] ?? null,
+                    'gia_hien_tai' => $giaHienTai,
+                    'has_discount' => $hasDiscount,
                     'quantity' => $row['quantity'],
                     'hinhanh' => $hinhanhValue,
                     'name' => $row['tenhanghoa'] ?? 'Unknown Product' // Thêm trường name để đảm bảo tương thích
@@ -213,15 +229,21 @@ class GioHang
         // Kiểm tra xem người dùng có thể sử dụng giỏ hàng không
         if (!$this->canUseCart()) {
             error_log("Không thể xóa giỏ hàng: Người dùng không có quyền hoặc chưa đăng nhập");
+            error_log("Session USER: " . (isset($_SESSION['USER']) ? $_SESSION['USER'] : 'NOT SET'));
+            error_log("Session ADMIN: " . (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : 'NOT SET'));
             return false;
         }
 
         $userId = $this->getUserId();
+        error_log("Attempting to clear cart for user: $userId");
 
         try {
             $sql = "DELETE FROM tbl_giohang WHERE user_id = ?";
             $stmt = $this->db->prepare($sql);
             $result = $stmt->execute([$userId]);
+            
+            $rowsDeleted = $stmt->rowCount();
+            error_log("Cart clear result: " . ($result ? 'success' : 'failed') . ", rows deleted: $rowsDeleted");
 
             // Xóa cache khi xóa giỏ hàng
             $this->clearCartCache();
@@ -344,5 +366,16 @@ class GioHang
     private function clearCartCache()
     {
         $this->cart_cache = null;
+    }
+
+    // Alias methods để tương thích với test
+    public function getCartItems()
+    {
+        return $this->getCart();
+    }
+
+    public function removeItem($productId)
+    {
+        return $this->removeFromCart($productId);
     }
 }

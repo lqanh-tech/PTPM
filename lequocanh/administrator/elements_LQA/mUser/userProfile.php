@@ -196,6 +196,18 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                             <div class="info-label"><i class="fas fa-phone"></i> Số điện thoại:</div>
                             <div class="info-value"><?php echo htmlspecialchars($currentUser->dienthoai); ?></div>
                         </div>
+                        <div class="info-item">
+                            <div class="info-label"><i class="fas fa-envelope"></i> Email:</div>
+                            <div class="info-value">
+                                <?php 
+                                if (!empty($currentUser->email)) {
+                                    echo htmlspecialchars($currentUser->email);
+                                } else {
+                                    echo '<span class="text-muted">Chưa cập nhật</span>';
+                                }
+                                ?>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="profile-section">

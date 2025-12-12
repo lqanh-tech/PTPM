@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Color API</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="public_files/product_filter.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test Color API</h1>
+        
+        <div id="status" class="status">
+            <i class="fas fa-spinner fa-spin"></i> Đang test API...
+        </div>
+
+        <h3>API Response:</h3>
+        <pre id="apiResponse">Loading...</pre>
+
+        <h3>Bộ lọc màu:</h3>
+        <div class="filter-section color-filter">
+            <h5><i class="fas fa-palette"></i> Màu sắc</h5>
+            <div class="color-options" id="colorFilterContainer">
+                <div class="loading-colors">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải màu sắc...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const apiResponsePre = document.getElementById('apiResponse');
+            const container = document.getElementById('colorFilterContainer');
+
+            try {
+                // Test API
+                const apiUrl = './administrator/elements_LQA/mod/getAvailableColors.php';
+                console.log('Fetching from:', apiUrl);
+                
+                const response = await fetch(apiUrl);
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Data:', data);
+                
+                // Show API response
+                apiResponsePre.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.success && data.colors.length > 0) {
+                    statusDiv.className = 'status success';
+                    statusDiv.innerHTML = `<i class="fas fa-check-circle"></i> API hoạt động! Tìm thấy ${data.colors.length} màu sắc.`;
+                    
+                    // Render colors
+                    let html = '';
+                    data.colors.forEach(color => {
+                        html += `
+                            <label class="color-option" title="${color.display} (${color.count} sản phẩm)">
+                                <input type="checkbox" value="${color.en}">
+                                <div class="color-swatch ${color.css_class}"></div>
+                                <i class="fas fa-check checkmark"></i>
+                            </label>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } else {
+                    statusDiv.className = 'status error';
+                    statusDiv.innerHTML = '<i class="fas fa-exclamation-circle"></i> API trả về nhưng không có màu sắc.';
+                    container.innerHTML = '<p class="text-muted small">Chưa có màu sắc nào</p>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `<i class="fas fa-times-circle"></i> Lỗi: ${error.message}`;
+                apiResponsePre.textContent = error.toString();
+                container.innerHTML = '<p class="text-danger small">Lỗi tải màu sắc</p>';
+            }
+        }
+
+        // Run test
+        testAPI();
+    </script>
+</body>
+</html>

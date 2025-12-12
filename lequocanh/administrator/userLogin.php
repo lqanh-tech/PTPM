@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css_LQA/toast-notification.css" rel="stylesheet">
     <style>
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -199,6 +200,12 @@
             </div>
 
             <button type="submit" class="btn btn-login">Đăng nhập</button>
+            
+            <div class="forgot-password-link" style="text-align: right; margin-top: 10px;">
+                <a href="forgot_password.php" style="color: #6c757d; font-size: 0.9rem; text-decoration: none;">
+                    <i class="fas fa-key me-1"></i>Quên mật khẩu?
+                </a>
+            </div>
         </form>
 
         <div class="signup-link">
@@ -207,6 +214,7 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="js_LQA/toast-notification.js"></script>
     <script>
         $(document).ready(function() {
             $('#loginForm').on('submit', function(e) {
@@ -230,7 +238,7 @@
 
                 if (!isValid) {
                     e.preventDefault();
-                    alert('Vui lòng điền đầy đủ thông tin đăng nhập');
+                    Toast.error('Vui lòng điền đầy đủ thông tin đăng nhập');
                 } else {
                     // Ghi log thông tin đăng nhập (chỉ để debug)
                     console.log('Đang đăng nhập với username: ' + username);

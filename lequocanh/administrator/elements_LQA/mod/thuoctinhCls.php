@@ -1,14 +1,5 @@
 <?php
-$s = '../../elements_LQA/mod/database.php';
-if (file_exists($s)) {
-    $f = $s;
-} else {
-    $f = './elements_LQA/mod/database.php';
-    if (!file_exists($f)) {
-        $f = './administrator/elements_LQA/mod/database.php';
-    }
-}
-require_once $f;
+require_once __DIR__ . '/database.php';
 
 class ThuocTinh
 {

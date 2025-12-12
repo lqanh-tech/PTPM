@@ -2,8 +2,14 @@
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
-if (!isset($_SESSION['ADMIN'])) {
-    header('Location: ./userLogin.php');
+
+// Check access rights using PhanQuyen system
+require_once './elements_LQA/mod/phanquyenCls.php';
+$phanQuyen = new PhanQuyen();
+$username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
+
+if (!$phanQuyen->checkAccess('cau_hinh_thanh_toan', $username)) {
+    echo '<div class="alert alert-danger m-3">Bạn không có quyền truy cập chức năng này.</div>';
     exit();
 }
 

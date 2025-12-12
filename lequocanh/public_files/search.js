@@ -104,6 +104,21 @@ $(document).ready(function () {
             const name = item.name || 'Sản phẩm không tên';
             const price = item.price || 'Liên hệ';
             const image = item.image || 'administrator/elements_LQA/img_LQA/no-image.png';
+            const hasDiscount = item.has_discount || false;
+            const originalPrice = item.original_price || '';
+
+            // Tạo HTML cho giá (có hoặc không có khuyến mãi)
+            let priceHtml = '';
+            if (hasDiscount && originalPrice) {
+              // Có khuyến mãi: hiển thị giá KM + giá gốc gạch ngang
+              priceHtml = `
+                <div class="search-item-price" style="color: #dc3545; font-weight: bold;">${price}</div>
+                <div class="search-item-original-price" style="color: #999; font-size: 12px; text-decoration: line-through;">${originalPrice}</div>
+              `;
+            } else {
+              // Không khuyến mãi: chỉ hiển thị giá
+              priceHtml = `<div class="search-item-price">${price}</div>`;
+            }
 
             const resultItem = `
                             <a href="index.php?reqHanghoa=${id}" class="search-item">
@@ -112,7 +127,7 @@ $(document).ready(function () {
                                 </div>
                                 <div class="search-item-info">
                                     <div class="search-item-name">${name}</div>
-                                    <div class="search-item-price">${price}</div>
+                                    ${priceHtml}
                                 </div>
                             </a>
                         `;

@@ -153,8 +153,28 @@ $notifications = $thongbao->getUserNotifications($userId);
                     <!-- Danh sách sản phẩm sẽ được thêm bằng JavaScript -->
                 </tbody>
             </table>
-            <div class="order-detail-total">
-                Tổng tiền: <span id="order-total"></span>
+            
+            <!-- Chi tiết thanh toán -->
+            <div class="order-payment-details">
+                <div class="payment-row">
+                    <span>Tạm tính:</span>
+                    <span id="order-subtotal"></span>
+                </div>
+                <div class="payment-row">
+                    <span>Thuế VAT (10%):</span>
+                    <span id="order-tax"></span>
+                </div>
+                <div class="payment-row">
+                    <span>Phí vận chuyển:</span>
+                    <span id="order-shipping"></span>
+                </div>
+                <div class="payment-row payment-status-row">
+                    <span>Trạng thái thanh toán:</span>
+                    <span id="order-payment-status" class="payment-status-badge"></span>
+                </div>
+                <div class="order-detail-total">
+                    Tổng cộng: <span id="order-total"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -381,9 +401,50 @@ $notifications = $thongbao->getUserNotifications($userId);
     text-align: right;
     font-size: 18px;
     font-weight: 600;
-    margin-top: 20px;
+    margin-top: 10px;
     padding-top: 15px;
-    border-top: 1px solid #eee;
+    border-top: 2px solid #333;
+    color: #dc3545;
+}
+
+.order-payment-details {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+}
+
+.payment-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.payment-row:last-of-type {
+    border-bottom: none;
+}
+
+.payment-status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.payment-status-badge.paid {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.payment-status-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.payment-status-badge.failed {
+    background-color: #f8d7da;
+    color: #721c24;
 }
 </style>
 
@@ -604,7 +665,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('order-address').textContent = order.shipping_address || 'Không có thông tin';
                     document.getElementById('order-status').textContent = order.status_text;
                     document.getElementById('order-status').className = `order-status ${order.status_class}`;
+                    
+                    // Hiển thị chi tiết thanh toán
+                    document.getElementById('order-subtotal').textContent = new Intl.NumberFormat('vi-VN').format(order.subtotal || 0) + ' đ';
+                    document.getElementById('order-tax').textContent = new Intl.NumberFormat('vi-VN').format(order.tax_amount || 0) + ' đ';
+                    document.getElementById('order-shipping').textContent = new Intl.NumberFormat('vi-VN').format(order.shipping_fee || 0) + ' đ';
                     document.getElementById('order-total').textContent = new Intl.NumberFormat('vi-VN').format(order.total_amount) + ' đ';
+                    
+                    // Hiển thị trạng thái thanh toán
+                    const paymentStatusEl = document.getElementById('order-payment-status');
+                    paymentStatusEl.textContent = order.payment_status_text || 'Chờ thanh toán';
+                    paymentStatusEl.className = `payment-status-badge ${order.payment_status || 'pending'}`;
 
                     // Cập nhật danh sách sản phẩm
                     let itemsHtml = '';

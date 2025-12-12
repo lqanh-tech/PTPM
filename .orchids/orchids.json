@@ -1,0 +1,7 @@
+{
+  "projectId": "6484305e-3813-46a3-a425-85f2312e50fc",
+  "createdAt": 1765431109254,
+  "startupCommands": [
+    "docker-compose up -d"
+  ]
+}

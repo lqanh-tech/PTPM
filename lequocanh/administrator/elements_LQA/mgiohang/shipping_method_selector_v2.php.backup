@@ -1,0 +1,444 @@
+<?php
+/**
+ * Shipping Method Selector V2 - TÍNH PHÍ ĐỘNG
+ * Sử dụng calculate_shipping_fee() function
+ */
+
+require_once __DIR__ . '/../mod/database.php';
+
+$db = Database::getInstance()->getConnection();
+
+// Lấy thông tin đơn hàng từ session
+$cartWeight = $_SESSION['cart_weight'] ?? 1.0; // Tổng trọng lượng giỏ hàng
+$cartValue = $_SESSION['cart_total'] ?? 0; // Tổng giá trị giỏ hàng
+$provinceId = $_SESSION['province_id'] ?? 1; // Tỉnh đã chọn
+$districtId = $_SESSION['district_id'] ?? 1; // Quận đã chọn
+
+// Lấy danh sách phương thức từ view
+$stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees WHERE is_active = 1 ORDER BY sort_order DESC");
+$shippingMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// DEBUG: Log count
+error_log("SHIPPING DEBUG: Total methods from VIEW: " . count($shippingMethods));
+foreach ($shippingMethods as $idx => $m) {
+    error_log("  [$idx] ID:" . $m['id'] . " Code:" . $m['code'] . " Name:" . $m['name']);
+}
+
+// Tính phí cho từng phương thức
+foreach ($shippingMethods as &$method) {
+    // Gọi function tính phí
+    $stmt = $db->prepare("SELECT calculate_shipping_fee(?, ?, ?, ?, ?) as fee");
+    $stmt->execute([$method['id'], $provinceId, $districtId, $cartWeight, $cartValue]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $method['calculated_fee'] = $result['fee'] ?? 0;
+    
+    // Lấy thông tin chi tiết phí
+    $stmt = $db->prepare("
+        SELECT base_fee, fee_per_kg, min_order_free_ship
+        FROM shipping_fees
+        WHERE shipping_method_id = ? AND is_active = 1
+        ORDER BY priority DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$method['id']]);
+    $feeDetail = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    $method['base_fee'] = $feeDetail['base_fee'] ?? 0;
+    $method['fee_per_kg'] = $feeDetail['fee_per_kg'] ?? 0;
+    $method['min_free_ship'] = $feeDetail['min_order_free_ship'] ?? 0;
+    $method['is_free'] = ($method['calculated_fee'] == 0);
+}
+?>
+
+<!-- Phương thức vận chuyển V2 -->
+<div class="card mb-4" id="shipping-method-section">
+    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <h5 class="mb-0"><i class="fas fa-shipping-fast me-2"></i>Phương thức vận chuyển</h5>
+    </div>
+    <div class="card-body">
+        <div class="shipping-methods-container">
+            <?php foreach ($shippingMethods as $index => $method): ?>
+            <!-- DEBUG: Rendering method #<?php echo $index; ?> - Code: <?php echo $method['code']; ?> - Name: <?php echo $method['name']; ?> -->
+            <div class="shipping-method-card <?php echo $index === 0 ? 'selected' : ''; ?>" 
+                 data-method="<?php echo htmlspecialchars($method['code']); ?>"
+                 data-fee="<?php echo $method['calculated_fee']; ?>"
+                 data-method-id="<?php echo $method['id']; ?>">
+                
+                <!-- Radio button -->
+                <div class="method-radio">
+                    <input type="radio" 
+                           name="shipping_method" 
+                           id="shipping_<?php echo $method['code']; ?>" 
+                           value="<?php echo htmlspecialchars($method['code']); ?>"
+                           <?php echo $index === 0 ? 'checked' : ''; ?>>
+                </div>
+                
+                <!-- Icon -->
+                <div class="method-icon" style="background: <?php 
+                    echo $method['code'] === 'express' ? 'linear-gradient(135deg, #fd7e14, #dc3545)' : 
+                        ($method['code'] === 'pickup' ? 'linear-gradient(135deg, #28a745, #20c997)' : 
+                        ($method['code'] === 'ghn' ? 'linear-gradient(135deg, #ff6600, #ff9900)' : 
+                        'linear-gradient(135deg, #007bff, #0056b3)'));
+                ?>;">
+                    <i class="fas fa-truck"></i>
+                </div>
+                
+                <!-- Info -->
+                <div class="method-info">
+                    <div class="method-name"><?php echo htmlspecialchars($method['name']); ?></div>
+                    <div class="method-desc"><?php echo htmlspecialchars($method['description'] ?? ''); ?></div>
+                    <div class="method-time">
+                        <i class="far fa-clock"></i> 
+                        <?php echo htmlspecialchars($method['delivery_time'] ?? ''); ?>
+                        <?php if ($method['delivery_time'] && !stripos($method['delivery_time'], 'làm việc')): ?>
+                        <small class="text-muted">(ngày làm việc)</small>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- Fee -->
+                <div class="method-fee">
+                    <?php if ($method['is_free']): ?>
+                        <div class="fee-amount free">Miễn phí</div>
+                        <?php if ($method['min_free_ship'] > 0): ?>
+                        <div class="fee-condition">
+                            <i class="fas fa-gift"></i> Đơn ≥ <?php echo number_format($method['min_free_ship'], 0, ',', '.'); ?>₫
+                        </div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <div class="fee-amount"><?php echo number_format($method['calculated_fee'], 0, ',', '.'); ?>₫</div>
+                        <?php if ($method['min_free_ship'] > 0): ?>
+                        <div class="fee-condition">
+                            Miễn phí từ <?php echo number_format($method['min_free_ship'], 0, ',', '.'); ?>₫
+                        </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Chi tiết tính phí (collapse) -->
+                <div class="fee-details" style="display: none;">
+                    <div class="fee-breakdown">
+                        <div class="breakdown-title">
+                            <i class="fas fa-receipt"></i> Chi tiết tính phí:
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Phí cơ bản:</span>
+                            <strong><?php echo number_format($method['base_fee'], 0, ',', '.'); ?>₫</strong>
+                        </div>
+                        <div class="breakdown-row">
+                            <span>Phí theo trọng lượng:</span>
+                            <strong><?php echo number_format($cartWeight * $method['fee_per_kg'], 0, ',', '.'); ?>₫</strong>
+                            <small>(<?php echo $cartWeight; ?>kg × <?php echo number_format($method['fee_per_kg'], 0, ',', '.'); ?>₫)</small>
+                        </div>
+                        <div class="breakdown-divider"></div>
+                        <div class="breakdown-row">
+                            <span>Tổng phí:</span>
+                            <strong><?php echo number_format($method['base_fee'] + ($cartWeight * $method['fee_per_kg']), 0, ',', '.'); ?>₫</strong>
+                        </div>
+                        <?php if ($method['is_free'] && $method['min_free_ship'] > 0): ?>
+                        <div class="breakdown-discount">
+                            <i class="fas fa-gift"></i> Miễn phí vì đơn hàng <?php echo number_format($cartValue, 0, ',', '.'); ?>₫ ≥ <?php echo number_format($method['min_free_ship'], 0, ',', '.'); ?>₫
+                        </div>
+                        <?php endif; ?>
+                        <div class="breakdown-final">
+                            <span>Phí cuối cùng:</span>
+                            <strong class="final-fee"><?php echo $method['is_free'] ? 'Miễn phí' : number_format($method['calculated_fee'], 0, ',', '.') . '₫'; ?></strong>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Toggle chi tiết -->
+                <button type="button" class="btn-toggle-details" onclick="toggleFeeDetails(this)">
+                    <i class="fas fa-chevron-down"></i> Chi tiết
+                </button>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        
+        <!-- Hidden inputs -->
+        <input type="hidden" id="selected_shipping_method" name="selected_shipping_method" value="<?php echo $shippingMethods[0]['code'] ?? 'standard'; ?>">
+        <input type="hidden" id="selected_shipping_fee" name="selected_shipping_fee" value="<?php echo $shippingMethods[0]['calculated_fee'] ?? 0; ?>">
+    </div>
+</div>
+
+<style>
+.shipping-methods-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.shipping-method-card {
+    position: relative;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    gap: 15px;
+    align-items: start;
+}
+
+.shipping-method-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.shipping-method-card.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+.method-radio input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.method-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.method-icon i {
+    font-size: 24px;
+    color: white;
+}
+
+.method-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.method-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.method-desc {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.method-time {
+    font-size: 13px;
+    color: #95a5a6;
+}
+
+.method-time i {
+    margin-right: 5px;
+}
+
+.method-fee {
+    text-align: right;
+    min-width: 120px;
+}
+
+.fee-amount {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.fee-amount.free {
+    color: #28a745;
+}
+
+.fee-condition {
+    font-size: 12px;
+    color: #28a745;
+    margin-top: 5px;
+}
+
+.fee-details {
+    grid-column: 1 / -1;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 2px dashed #dee2e6;
+}
+
+.fee-breakdown {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.breakdown-title {
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.breakdown-row small {
+    color: #6c757d;
+    margin-left: 5px;
+}
+
+.breakdown-divider {
+    border-top: 1px solid #dee2e6;
+    margin: 10px 0;
+}
+
+.breakdown-discount {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+    font-size: 13px;
+}
+
+.breakdown-final {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.breakdown-final .final-fee {
+    font-size: 18px;
+}
+
+.btn-toggle-details {
+    grid-column: 1 / -1;
+    background: none;
+    border: none;
+    color: #667eea;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 5px;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.btn-toggle-details:hover {
+    color: #5568d3;
+}
+
+.btn-toggle-details i {
+    transition: transform 0.3s;
+}
+
+.btn-toggle-details.active i {
+    transform: rotate(180deg);
+}
+
+@media (max-width: 768px) {
+    .shipping-method-card {
+        grid-template-columns: auto 1fr;
+        gap: 10px;
+    }
+    
+    .method-icon {
+        grid-row: 1 / 3;
+    }
+    
+    .method-fee {
+        grid-column: 2;
+        text-align: left;
+        margin-top: 10px;
+    }
+}
+</style>
+
+<script>
+function toggleFeeDetails(btn) {
+    const card = btn.closest('.shipping-method-card');
+    const details = card.querySelector('.fee-details');
+    
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fas fa-chevron-up"></i> Ẩn chi tiết';
+    } else {
+        details.style.display = 'none';
+        btn.classList.remove('active');
+        btn.innerHTML = '<i class="fas fa-chevron-down"></i> Chi tiết';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.shipping-method-card');
+    
+    cards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Không trigger nếu click vào button toggle
+            if (e.target.closest('.btn-toggle-details')) return;
+            
+            // Remove selected từ tất cả
+            cards.forEach(c => {
+                c.classList.remove('selected');
+                c.querySelector('input[type="radio"]').checked = false;
+            });
+            
+            // Add selected vào card được click
+            this.classList.add('selected');
+            this.querySelector('input[type="radio"]').checked = true;
+            
+            // Update hidden inputs
+            const methodCode = this.dataset.method;
+            const methodFee = parseFloat(this.dataset.fee) || 0;
+            
+            document.getElementById('selected_shipping_method').value = methodCode;
+            document.getElementById('selected_shipping_fee').value = methodFee;
+            
+            // Update tổng tiền
+            updateTotalAmount(methodFee);
+            
+            // Trigger event
+            document.dispatchEvent(new CustomEvent('shippingMethodChanged', {
+                detail: { method: methodCode, fee: methodFee }
+            }));
+        });
+    });
+    
+    // Initialize với phương thức đầu tiên
+    const firstCard = document.querySelector('.shipping-method-card.selected');
+    if (firstCard) {
+        const initialFee = parseFloat(firstCard.dataset.fee) || 0;
+        setTimeout(() => updateTotalAmount(initialFee), 100);
+    }
+});
+
+function updateTotalAmount(shippingFee) {
+    // Update shipping fee display
+    const shippingFeeDisplay = document.getElementById('shipping-fee-value');
+    if (shippingFeeDisplay) {
+        if (shippingFee === 0) {
+            shippingFeeDisplay.innerHTML = '<span class="text-success">Miễn phí</span>';
+        } else {
+            shippingFeeDisplay.textContent = new Intl.NumberFormat('vi-VN').format(shippingFee) + ' ₫';
+        }
+    }
+    
+    // Update final total
+    const subtotal = parseFloat(document.getElementById('subtotal-value')?.textContent.replace(/[^\d]/g, '') || 0);
+    const vat = parseFloat(document.getElementById('vat-value')?.textContent.replace(/[^\d]/g, '') || 0);
+    const total = subtotal + vat + shippingFee;
+    
+    const finalTotalDisplay = document.getElementById('final-total-value');
+    if (finalTotalDisplay) {
+        finalTotalDisplay.textContent = new Intl.NumberFormat('vi-VN').format(total) + ' ₫';
+    }
+}
+</script>

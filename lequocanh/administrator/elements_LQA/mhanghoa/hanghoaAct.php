@@ -152,6 +152,7 @@ if (isset($_REQUEST['reqact'])) {
             $idDonViTinh = isset($_REQUEST['idDonViTinh']) ? $_REQUEST['idDonViTinh'] : '';
             $idNhanVien = isset($_REQUEST['idNhanVien']) ? $_REQUEST['idNhanVien'] : '';
             $ghichu = isset($_REQUEST['ghichu']) ? $_REQUEST['ghichu'] : '';
+            $trang_thai = isset($_REQUEST['trang_thai']) ? (int)$_REQUEST['trang_thai'] : 1;
 
             // Debug log si se solicita
             $debug_log = isset($_REQUEST['debug_log']) && $_REQUEST['debug_log'] === 'true';
@@ -160,6 +161,7 @@ if (isset($_REQUEST['reqact'])) {
                 $log_data = date('Y-m-d H:i:s') . " - Hanghoa Update request:\n";
                 $log_data .= "idhanghoa: $idhanghoa\n";
                 $log_data .= "tenhanghoa: $tenhanghoa\n";
+                $log_data .= "trang_thai: $trang_thai\n";
                 $log_data .= "POST: " . print_r($_POST, true) . "\n";
                 $log_data .= "GET: " . print_r($_GET, true) . "\n";
                 $log_data .= "REQUEST: " . print_r($_REQUEST, true) . "\n";
@@ -168,43 +170,54 @@ if (isset($_REQUEST['reqact'])) {
             }
 
             try {
-                $result = $hanghoa->HanghoaUpdate($tenhanghoa, $id_hinhanh, $mota, $giathamkhao, $idloaihang, $idThuongHieu, $idDonViTinh, $idNhanVien, $idhanghoa, $ghichu);
+                // Cập nhật thông tin sản phẩm
+                $productUpdateResult = $hanghoa->HanghoaUpdate($tenhanghoa, $id_hinhanh, $mota, $giathamkhao, $idloaihang, $idThuongHieu, $idDonViTinh, $idNhanVien, $idhanghoa, $ghichu);
 
                 if ($debug_log) {
-                    $log_data = date('Y-m-d H:i:s') . " - Update result: " . ($result ? "Success" : "Failed") . "\n";
+                    $log_data = date('Y-m-d H:i:s') . " - Product update result: " . ($productUpdateResult ? "Success (rows: $productUpdateResult)" : "No rows affected") . "\n";
+                    file_put_contents(__DIR__ . '/debug_log.txt', $log_data, FILE_APPEND);
+                }
+
+                // Cập nhật trạng thái sản phẩm (LUÔN cập nhật, không phụ thuộc vào kết quả product update)
+                $statusUpdateResult = $hanghoa->updateProductStatus($idhanghoa, $trang_thai);
+
+                if ($debug_log) {
+                    $log_data = date('Y-m-d H:i:s') . " - Status update result: " . ($statusUpdateResult ? "Success" : "Failed") . "\n";
+                    file_put_contents(__DIR__ . '/debug_log.txt', $log_data, FILE_APPEND);
+                }
+
+                // Coi như thành công nếu product update thành công HOẶC status update thành công
+                $finalResult = $productUpdateResult > 0 || $statusUpdateResult;
+
+                if ($debug_log) {
+                    $log_data = date('Y-m-d H:i:s') . " - Final result: " . ($finalResult ? "Success" : "Failed") . "\n";
                     file_put_contents(__DIR__ . '/debug_log.txt', $log_data, FILE_APPEND);
                 }
 
                 // Ghi nhật ký cập nhật hàng hóa
-                if ($result && $foundNhatKyHelper && !empty($username)) {
+                if ($finalResult && $foundNhatKyHelper && !empty($username)) {
                     ghiNhatKyCapNhat($username, 'hàng hóa', $idhanghoa, "Cập nhật hàng hóa: $tenhanghoa");
                 }
 
-                // Verificar si la solicitud es AJAX
-                if (isset($_POST['ajax']) || isset($_GET['ajax'])) {
-                    echo json_encode([
-                        'success' => $result ? true : false,
-                        'message' => $result ? 'Cập nhật hàng hóa thành công!' : 'Cập nhật thất bại!'
-                    ]);
-                    exit;
-                } else {
-                    header('location: ../../index.php?req=hanghoaview&result=' . ($result ? 'ok' : 'notok'));
-                }
+                // Luôn trả JSON để JS xử lý
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => $finalResult ? true : false,
+                    'message' => $finalResult ? 'Cập nhật hàng hóa thành công!' : 'Cập nhật thất bại!'
+                ]);
+                exit;
             } catch (Exception $e) {
                 if ($debug_log) {
                     $log_data = date('Y-m-d H:i:s') . " - Exception: " . $e->getMessage() . "\n";
                     file_put_contents(__DIR__ . '/debug_log.txt', $log_data, FILE_APPEND);
                 }
 
-                if (isset($_POST['ajax']) || isset($_GET['ajax'])) {
-                    echo json_encode([
-                        'success' => false,
-                        'message' => 'Lỗi: ' . $e->getMessage()
-                    ]);
-                    exit;
-                } else {
-                    header('location: ../../index.php?req=hanghoaview&result=notok&error=' . urlencode($e->getMessage()));
-                }
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Lỗi: ' . $e->getMessage()
+                ]);
+                exit;
             }
             break;
 

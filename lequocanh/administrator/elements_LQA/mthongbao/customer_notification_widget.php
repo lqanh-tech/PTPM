@@ -127,27 +127,80 @@ $notifications = $notificationManager->getUserNotifications($userId, 5); // Get 
     color: #999;
 }
 
-.notification-footer {
-    padding: 10px;
-    text-align: center;
-    border-top: 1px solid #eee;
-}
-
-.notification-footer a {
-    color: #007bff;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.notification-footer a:hover {
-    text-decoration: underline;
-}
-
 .no-notifications {
     padding: 30px;
     text-align: center;
     color: #999;
 }
+
+.notification-header-actions {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.notification-header-actions a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.notification-header-actions a:hover {
+    text-decoration: underline;
+}
+
+.delete-read {
+    color: #dc3545 !important;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.btn-view-order {
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #007bff;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 12px;
+    text-align: center;
+    display: block;
+}
+
+.btn-view-order:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.bg-success { background-color: #28a745; }
+.bg-danger { background-color: #dc3545; }
+.bg-warning { background-color: #ffc107; color: #333; }
+.bg-info { background-color: #17a2b8; }
+.bg-primary { background-color: #007bff; }
+.bg-secondary { background-color: #6c757d; }
 </style>
 
 <div class="notification-widget">
@@ -161,9 +214,12 @@ $notifications = $notificationManager->getUserNotifications($userId, 5); // Get 
     <div id="notificationDropdown" class="notification-dropdown">
         <div class="notification-header">
             <h5>Thông báo</h5>
-            <?php if ($unreadCount > 0): ?>
-                <a href="#" class="mark-all-read" onclick="markAllAsRead(); return false;">Đánh dấu tất cả đã đọc</a>
-            <?php endif; ?>
+            <div class="notification-header-actions">
+                <?php if ($unreadCount > 0): ?>
+                    <a href="#" class="mark-all-read" onclick="markAllAsRead(); return false;">Đánh dấu tất cả đã đọc</a>
+                <?php endif; ?>
+                <a href="#" class="delete-read" onclick="deleteReadNotifications(); return false;">Xóa thông báo đã đọc</a>
+            </div>
         </div>
         
         <div class="notification-list">
@@ -173,37 +229,88 @@ $notifications = $notificationManager->getUserNotifications($userId, 5); // Get 
                     <p>Không có thông báo nào</p>
                 </div>
             <?php else: ?>
-                <?php foreach ($notifications as $notification): ?>
+                <?php foreach ($notifications as $notification): 
+                    $iconClass = getNotificationIconClass($notification['type']);
+                    $colorClass = getNotificationColorClass($notification['type']);
+                ?>
                     <div class="notification-item <?php echo !$notification['is_read'] ? 'unread' : ''; ?>" 
-                         onclick="markAsRead(<?php echo $notification['id']; ?>)">
-                        <div class="notification-title"><?php echo htmlspecialchars($notification['title']); ?></div>
-                        <div class="notification-message"><?php echo htmlspecialchars($notification['message']); ?></div>
-                        <div class="notification-time">
-                            <?php 
-                            $time = strtotime($notification['created_at']);
-                            $timeDiff = time() - $time;
-                            
-                            if ($timeDiff < 60) {
-                                echo 'Vừa xong';
-                            } elseif ($timeDiff < 3600) {
-                                echo floor($timeDiff / 60) . ' phút trước';
-                            } elseif ($timeDiff < 86400) {
-                                echo floor($timeDiff / 3600) . ' giờ trước';
-                            } else {
-                                echo date('d/m/Y H:i', $time);
-                            }
-                            ?>
+                         data-id="<?php echo $notification['id']; ?>"
+                         data-order-id="<?php echo $notification['order_id'] ?? ''; ?>">
+                        <div class="notification-icon <?php echo $colorClass; ?>">
+                            <i class="fas fa-<?php echo $iconClass; ?>"></i>
                         </div>
+                        <div class="notification-content">
+                            <div class="notification-title"><?php echo htmlspecialchars($notification['title']); ?></div>
+                            <div class="notification-message"><?php echo htmlspecialchars($notification['message']); ?></div>
+                            <div class="notification-time">
+                                <?php 
+                                $time = strtotime($notification['created_at']);
+                                $timeDiff = time() - $time;
+                                
+                                if ($timeDiff < 60) {
+                                    echo 'Vừa xong';
+                                } elseif ($timeDiff < 3600) {
+                                    echo floor($timeDiff / 60) . ' phút trước';
+                                } elseif ($timeDiff < 86400) {
+                                    echo floor($timeDiff / 3600) . ' giờ trước';
+                                } else {
+                                    echo date('d/m/Y H:i', $time);
+                                }
+                                ?>
+                            </div>
+                        </div>
+                        <?php if ($notification['order_id']): ?>
+                            <?php if ($notification['type'] == 'order_approved'): ?>
+                                <a href="/lequocanh/customer/order_invoice.php?order_id=<?php echo $notification['order_id']; ?>" 
+                                   class="btn-view-order"
+                                   onclick="markAsRead(<?php echo $notification['id']; ?>)">
+                                    <i class="fas fa-file-invoice"></i> Xem hóa đơn & Đánh giá
+                                </a>
+                            <?php else: ?>
+                                <a href="/lequocanh/customer/order_invoice.php?order_id=<?php echo $notification['order_id']; ?>" 
+                                   class="btn-view-order"
+                                   onclick="markAsRead(<?php echo $notification['id']; ?>)">
+                                    <i class="fas fa-eye"></i> Xem chi tiết đơn hàng
+                                </a>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
         </div>
-        
-        <div class="notification-footer">
-            <a href="index.php?req=notifications">Xem tất cả thông báo</a>
-        </div>
     </div>
 </div>
+
+<?php
+// Helper functions for notification icons and colors
+function getNotificationIconClass($type) {
+    switch ($type) {
+        case 'order_approved': return 'check-circle';
+        case 'order_cancelled': return 'times-circle';
+        case 'order_shipped': return 'truck';
+        case 'order_delivered': return 'box-open';
+        case 'payment_confirmed': return 'money-bill-wave';
+        case 'order_created': return 'shopping-cart';
+        case 'payment_pending': return 'clock';
+        case 'payment_rejected': return 'exclamation-triangle';
+        default: return 'bell';
+    }
+}
+
+function getNotificationColorClass($type) {
+    switch ($type) {
+        case 'order_approved':
+        case 'payment_confirmed': return 'bg-success';
+        case 'order_cancelled':
+        case 'payment_rejected': return 'bg-danger';
+        case 'order_shipped': return 'bg-info';
+        case 'order_delivered':
+        case 'order_created': return 'bg-primary';
+        case 'payment_pending': return 'bg-warning';
+        default: return 'bg-secondary';
+    }
+}
+?>
 
 <script>
 function toggleNotifications() {
@@ -220,7 +327,8 @@ document.addEventListener('click', function(event) {
 });
 
 function markAsRead(notificationId) {
-    fetch('elements_LQA/mthongbao/mark_notification_read.php', {
+    // Gửi request đánh dấu đã đọc nhưng không reload trang
+    fetch('/lequocanh/administrator/elements_LQA/mthongbao/mark_notification_read.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -229,16 +337,16 @@ function markAsRead(notificationId) {
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            // Reload to update notification count
-            location.reload();
-        }
+        console.log('Notification marked as read:', data);
     })
     .catch(error => console.error('Error:', error));
+    
+    // Không return false để link vẫn hoạt động
+    return true;
 }
 
 function markAllAsRead() {
-    fetch('elements_LQA/mthongbao/mark_all_notifications_read.php', {
+    fetch('/lequocanh/administrator/elements_LQA/mthongbao/mark_all_notifications_read.php', {
         method: 'POST'
     })
     .then(response => response.json())
@@ -251,8 +359,55 @@ function markAllAsRead() {
     .catch(error => console.error('Error:', error));
 }
 
+function deleteReadNotifications() {
+    if (!confirm('Bạn có chắc chắn muốn xóa tất cả thông báo đã đọc?')) {
+        return;
+    }
+    
+    fetch('/lequocanh/administrator/elements_LQA/mthongbao/getCustomerNotifications.php?action=delete_read', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Function này không còn cần thiết vì đã chuyển sang dùng link trực tiếp
+
 // Auto-refresh notifications every 30 seconds
 setInterval(function() {
-    // You can implement AJAX refresh here if needed
+    refreshNotificationCount();
 }, 30000);
+
+function refreshNotificationCount() {
+    fetch('/lequocanh/administrator/elements_LQA/mthongbao/getCustomerNotifications.php?action=count')
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const countEl = document.querySelector('.notification-count');
+            if (data.unread_count > 0) {
+                if (countEl) {
+                    countEl.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                    countEl.style.display = 'flex';
+                } else {
+                    // Tạo badge mới nếu chưa có
+                    const bell = document.querySelector('.notification-bell');
+                    if (bell) {
+                        const newBadge = document.createElement('span');
+                        newBadge.className = 'notification-count';
+                        newBadge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                        bell.appendChild(newBadge);
+                    }
+                }
+            } else if (countEl) {
+                countEl.style.display = 'none';
+            }
+        }
+    })
+    .catch(error => console.error('Error refreshing notification count:', error));
+}
 </script>

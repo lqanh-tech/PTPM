@@ -4,6 +4,7 @@
 require_once './elements_LQA/mod/hanghoaCls.php';
 require_once './elements_LQA/mod/thuoctinhCls.php';
 require_once './elements_LQA/mod/thuoctinhhhCls.php';
+require_once './elements_LQA/mod/csrfProtection.php';
 
 // Lấy danh sách hàng hóa
 $hangHoaObj = new HangHoa();
@@ -22,6 +23,12 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
     <h3>Thêm thuộc tính hàng hóa mới</h3>
     <form name="newthuoctinhhh" id="formaddthuoctinhhh" method="post"
         action='./elements_LQA/mthuoctinhhh/thuoctinhhhAct.php?reqact=addnew'>
+        <?php
+        // Add CSRF protection
+        if (class_exists('CSRFProtection')) {
+            echo CSRFProtection::getHiddenField();
+        }
+        ?>
         <table>
             <tr>
                 <td>Chọn hàng hóa:</td>
@@ -52,7 +59,13 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
             </tr>
             <tr>
                 <td>Tên Thuộc Tính HH</td>
-                <td><input type="text" name="tenThuocTinhHH" required /></td>
+                <td>
+                    <input type="text" name="tenThuocTinhHH" id="tenThuocTinhHH" required />
+                    <!-- Color picker sẽ hiển thị khi chọn thuộc tính màu sắc -->
+                    <div id="colorPickerContainer" style="display: none; margin-top: 10px;">
+                        <div class="color-picker-grid"></div>
+                    </div>
+                </td>
             </tr>
             <tr>
                 <td>Ghi Chú</td>
@@ -72,49 +85,52 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
         Tổng số thuộc tính hàng hóa: <b><?php echo count($list_lh_thuoctinhhh); ?></b>
     </div>
 
-    <table class="content-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>ID Hàng Hóa</th>
-                <th>ID Thuộc Tính</th>
-                <th>Tên Thuộc Tính HH</th>
-                <th>Ghi Chú</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if (!empty($list_lh_thuoctinhhh)) {
-                foreach ($list_lh_thuoctinhhh as $u) { ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($u->idThuocTinhHH); ?></td>
-                        <td><?php echo htmlspecialchars($u->idhanghoa); ?></td>
-                        <td><?php echo htmlspecialchars($u->idThuocTinh); ?></td>
-                        <td class="tenthuoctinhhh"><?php echo htmlspecialchars($u->tenThuocTinhHH); ?></td>
-                        <td><?php echo htmlspecialchars($u->ghiChu ?? ""); ?></td>
-                        <td align="center">
-                            <?php if (isset($_SESSION['ADMIN'])) { ?>
-                                <a href="./elements_LQA/mthuoctinhhh/thuoctinhhhAct.php?reqact=deletethuoctinhhh&idThuocTinhHH=<?php echo htmlspecialchars($u->idThuocTinhHH); ?>"
-                                    onclick="return confirm('Bạn có chắc muốn xóa không?');">
+    <!-- Scrollable Table Container -->
+    <div class="table-scroll-container">
+        <table class="content-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>ID Hàng Hóa</th>
+                    <th>ID Thuộc Tính</th>
+                    <th>Tên Thuộc Tính HH</th>
+                    <th>Ghi Chú</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($list_lh_thuoctinhhh)) {
+                    foreach ($list_lh_thuoctinhhh as $u) { ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($u->idThuocTinhHH); ?></td>
+                            <td><?php echo htmlspecialchars($u->idhanghoa); ?></td>
+                            <td><?php echo htmlspecialchars($u->idThuocTinh); ?></td>
+                            <td class="tenthuoctinhhh"><?php echo htmlspecialchars($u->tenThuocTinhHH); ?></td>
+                            <td><?php echo htmlspecialchars($u->ghiChu ?? ""); ?></td>
+                            <td align="center">
+                                <?php if (isset($_SESSION['ADMIN'])) { ?>
+                                    <a href="./elements_LQA/mthuoctinhhh/thuoctinhhhAct.php?reqact=deletethuoctinhhh&idThuocTinhHH=<?php echo htmlspecialchars($u->idThuocTinhHH); ?>"
+                                        onclick="return confirm('Bạn có chắc muốn xóa không?');">
+                                        <img src="./elements_LQA/img_LQA/Delete.png" class="iconimg">
+                                    </a>
+                                <?php } else { ?>
                                     <img src="./elements_LQA/img_LQA/Delete.png" class="iconimg">
-                                </a>
-                            <?php } else { ?>
-                                <img src="./elements_LQA/img_LQA/Delete.png" class="iconimg">
-                            <?php } ?>
-                            <img src="./elements_LQA/img_LQA/Update.png"
-                                class="iconimg generic-update-btn"
-                                data-module="mthuoctinhhh"
-                                data-update-url="./elements_LQA/mthuoctinhhh/thuoctinhhhUpdate.php"
-                                data-id-param="idThuocTinhHH"
-                                data-title="Cập nhật Thuộc tính hàng hóa"
-                                data-id="<?php echo htmlspecialchars($u->idThuocTinhHH); ?>"
-                                alt="Update">
-                        </td>
-                    </tr>
-            <?php }
-            } ?>
-        </tbody>
-    </table>
+                                <?php } ?>
+                                <img src="./elements_LQA/img_LQA/Update.png"
+                                    class="iconimg generic-update-btn"
+                                    data-module="mthuoctinhhh"
+                                    data-update-url="./elements_LQA/mthuoctinhhh/thuoctinhhhUpdate.php"
+                                    data-id-param="idThuocTinhHH"
+                                    data-title="Cập nhật Thuộc tính hàng hóa"
+                                    data-id="<?php echo htmlspecialchars($u->idThuocTinhHH); ?>"
+                                    alt="Update">
+                            </td>
+                        </tr>
+                <?php }
+                } ?>
+            </tbody>
+        </table>
+    </div><!-- End table-scroll-container -->
 </div>
 
 <!-- Nút quay lại đầu trang -->
@@ -124,6 +140,139 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
 </div>
 
 <style>
+    /* Scrollable Table Container */
+    .table-scroll-container {
+        max-height: 60vh;
+        min-height: 300px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 15px;
+        background: #fff;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb {
+        background: #007bff;
+        border-radius: 5px;
+    }
+    
+    .table-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #0056b3;
+    }
+    
+    .table-scroll-container .content-table {
+        margin-bottom: 0;
+        width: 100%;
+    }
+    
+    .table-scroll-container .content-table thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+    
+    .table-scroll-container .content-table thead th {
+        background: #343a40;
+        color: #fff;
+        padding: 12px 10px;
+        font-weight: 600;
+        border-bottom: 2px solid #007bff;
+    }
+
+    /* Color Picker Styles */
+    .color-picker-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+
+    .color-picker-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+        border: 2px solid transparent;
+    }
+
+    .color-picker-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-color: #007bff;
+    }
+
+    .color-picker-item.selected {
+        border-color: #007bff;
+        background: #e7f3ff;
+    }
+
+    .color-picker-swatch {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .color-picker-item.selected .color-picker-swatch {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    .color-picker-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #495057;
+        text-align: center;
+    }
+
+    .color-picker-item.selected .color-picker-label {
+        color: #007bff;
+        font-weight: 600;
+    }
+
+    .color-picker-checkmark {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        color: #007bff;
+        font-size: 16px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .color-picker-item.selected .color-picker-checkmark {
+        opacity: 1;
+    }
+
+    .color-picker-item {
+        position: relative;
+    }
+
+    #tenThuocTinhHH.color-mode {
+        background: #e7f3ff;
+        border-color: #007bff;
+    }
+
     .back-to-top-button {
         position: fixed;
         bottom: 30px;
@@ -191,6 +340,135 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Color Picker Logic
+        const thuocTinhSelect = document.getElementById('idThuocTinh');
+        const tenThuocTinhInput = document.getElementById('tenThuocTinhHH');
+        const colorPickerContainer = document.getElementById('colorPickerContainer');
+        const colorPickerGrid = colorPickerContainer.querySelector('.color-picker-grid');
+
+        // Danh sách màu chuẩn
+        const standardColors = [{
+                vi: 'Đỏ',
+                en: 'red',
+                hex: '#dc3545'
+            },
+            {
+                vi: 'Xanh dương',
+                en: 'blue',
+                hex: '#007bff'
+            },
+            {
+                vi: 'Xanh lá',
+                en: 'green',
+                hex: '#28a745'
+            },
+            {
+                vi: 'Vàng',
+                en: 'yellow',
+                hex: '#ffc107'
+            },
+            {
+                vi: 'Cam',
+                en: 'orange',
+                hex: '#fd7e14'
+            },
+            {
+                vi: 'Tím',
+                en: 'purple',
+                hex: '#6f42c1'
+            },
+            {
+                vi: 'Hồng',
+                en: 'pink',
+                hex: '#e83e8c'
+            },
+            {
+                vi: 'Đen',
+                en: 'black',
+                hex: '#212529'
+            },
+            {
+                vi: 'Trắng',
+                en: 'white',
+                hex: '#ffffff'
+            },
+            {
+                vi: 'Xám',
+                en: 'gray',
+                hex: '#6c757d'
+            },
+            {
+                vi: 'Nâu',
+                en: 'brown',
+                hex: '#8b4513'
+            },
+            {
+                vi: 'Bạc',
+                en: 'silver',
+                hex: '#c0c0c0'
+            }
+        ];
+
+        // Render color picker
+        function renderColorPicker() {
+            colorPickerGrid.innerHTML = '';
+            standardColors.forEach(color => {
+                const item = document.createElement('div');
+                item.className = 'color-picker-item';
+                item.dataset.colorVi = color.vi;
+                item.dataset.colorEn = color.en;
+
+                const borderStyle = color.en === 'white' ? 'border: 2px solid #dee2e6;' : '';
+
+                item.innerHTML = `
+                    <div class="color-picker-swatch" style="background-color: ${color.hex}; ${borderStyle}"></div>
+                    <div class="color-picker-label">${color.vi}</div>
+                    <i class="fas fa-check color-picker-checkmark"></i>
+                `;
+
+                item.addEventListener('click', function() {
+                    // Remove selected from all
+                    document.querySelectorAll('.color-picker-item').forEach(i => i.classList.remove(
+                        'selected'));
+
+                    // Add selected to this
+                    this.classList.add('selected');
+
+                    // Update input value
+                    tenThuocTinhInput.value = color.vi;
+                    tenThuocTinhInput.classList.add('color-mode');
+                });
+
+                colorPickerGrid.appendChild(item);
+            });
+        }
+
+        // Check if selected attribute is "Màu sắc"
+        function checkColorAttribute() {
+            const selectedOption = thuocTinhSelect.options[thuocTinhSelect.selectedIndex];
+            const attributeName = selectedOption.text.toLowerCase();
+
+            if (attributeName.includes('màu') || attributeName.includes('color')) {
+                // Show color picker
+                colorPickerContainer.style.display = 'block';
+                tenThuocTinhInput.placeholder = 'Chọn màu từ bảng màu bên dưới';
+                tenThuocTinhInput.classList.add('color-mode');
+                renderColorPicker();
+            } else {
+                // Hide color picker
+                colorPickerContainer.style.display = 'none';
+                tenThuocTinhInput.placeholder = '';
+                tenThuocTinhInput.classList.remove('color-mode');
+            }
+        }
+
+        // Listen to attribute selection change
+        thuocTinhSelect.addEventListener('change', checkColorAttribute);
+
+        // Check on page load
+        checkColorAttribute();
+
+        // Back to top button
         const backToTopButton = document.getElementById('back-to-top');
 
         // Kiểm tra vị trí cuộn khi trang tải

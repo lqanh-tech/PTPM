@@ -11,6 +11,7 @@ require_once '../../elements_LQA/mod/mtonkhoCls.php';
 require_once '../../elements_LQA/mod/database.php';
 
 $giohang = new GioHang();
+$hanghoa = new hanghoa();
 
 // Kiểm tra xem người dùng có thể sử dụng giỏ hàng không
 if (!$giohang->canUseCart()) {
@@ -69,13 +70,23 @@ foreach ($selectedProducts as $product) {
     // Lấy thông tin sản phẩm
     $productInfo = $hanghoa->HanghoaGetbyId($productId);
 
-    // Kiểm tra tồn kho
-    $tonkhoInfo = $tonkho->getTonKhoByIdHangHoa($productId);
-
     if (!$productInfo) {
         // Nếu không tìm thấy sản phẩm, bỏ qua
         continue;
     }
+
+    // Kiểm tra trạng thái sản phẩm (trang_thai)
+    $productStatus = $hanghoa->getProductStatusValue($productId);
+    if ($productStatus != 1) {
+        // Sản phẩm không còn khả dụng (ngừng bán hoặc hết hàng)
+        $statusText = ($productStatus == 2) ? 'ngừng bán' : 'hết hàng';
+        $_SESSION['checkout_error'] = 'Sản phẩm "' . $productInfo->tenhanghoa . '" đã ' . $statusText . '. Vui lòng cập nhật giỏ hàng của bạn.';
+        header('Location: giohangView.php');
+        exit();
+    }
+
+    // Kiểm tra tồn kho
+    $tonkhoInfo = $tonkho->getTonKhoByIdHangHoa($productId);
 
     if (!$tonkhoInfo || $tonkhoInfo->soLuong < $quantity) {
         // Nếu không đủ hàng, hiển thị thông báo lỗi
@@ -106,9 +117,23 @@ foreach ($selectedProducts as $product) {
     ];
 }
 
+// Tính toán thuế VAT (10%)
+$vatRate = 0.10; // 10% VAT
+$vatAmount = $totalAmount * $vatRate;
+
+// Phí vận chuyển tạm tính (sẽ được cập nhật khi chọn địa chỉ)
+$shippingFee = 0;
+
+// Tổng tiền cuối cùng
+$finalTotal = $totalAmount + $vatAmount + $shippingFee;
+
 // Lưu thông tin đơn hàng vào session để sử dụng sau khi thanh toán
 $_SESSION['order_details'] = $orderDetails;
-$_SESSION['total_amount'] = $totalAmount;
+$_SESSION['subtotal'] = $totalAmount; // Tổng tiền hàng (chưa thuế, phí)
+$_SESSION['vat_rate'] = $vatRate;
+$_SESSION['vat_amount'] = $vatAmount;
+$_SESSION['shipping_fee'] = $shippingFee;
+$_SESSION['total_amount'] = $finalTotal;
 
 // Lấy thông tin cấu hình thanh toán từ cơ sở dữ liệu
 $db = Database::getInstance();
@@ -221,6 +246,12 @@ $transferContent = $orderCode;
             background-color: #e9ecef;
             border-radius: 10px;
         }
+
+        .shipping-result.error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
     </style>
 </head>
 
@@ -242,6 +273,12 @@ $transferContent = $orderCode;
                 </div>
             </div>
         </div>
+
+        <!-- Phương thức vận chuyển V2 - TÍNH PHÍ ĐỘNG -->
+        <?php include 'shipping_method_selector_v2.php'; ?>
+
+        <!-- Mã giảm giá (Coupon) -->
+        <?php include 'coupon_input_component.php'; ?>
 
         <!-- Thông tin đơn hàng -->
         <div class="card mb-4">
@@ -277,8 +314,33 @@ $transferContent = $orderCode;
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" class="text-end"><strong>Tổng tiền:</strong></td>
-                            <td><strong><?php echo number_format($totalAmount, 0, ',', '.'); ?> ₫</strong></td>
+                            <td colspan="3" class="text-end">Tạm tính:</td>
+                            <td id="subtotal-display"><?php echo number_format($totalAmount, 0, ',', '.'); ?> ₫</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end">Thuế VAT (10%):</td>
+                            <td id="vat-display"><?php echo number_format($vatAmount, 0, ',', '.'); ?> ₫</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end">
+                                Phí vận chuyển:
+                                <small class="text-muted d-block" id="shipping-status">Xem phương thức vận chuyển</small>
+                            </td>
+                            <td id="shipping-display">
+                                <span id="shipping-fee-value">0 ₫</span>
+                            </td>
+                        </tr>
+                        <tr id="coupon-discount-row" style="display: <?php echo (isset($_SESSION['coupon_discount']) && $_SESSION['coupon_discount'] > 0) ? 'table-row' : 'none'; ?>;">
+                            <td colspan="3" class="text-end text-success">
+                                <i class="fas fa-ticket-alt me-1"></i>Giảm giá (Coupon):
+                            </td>
+                            <td class="text-success" id="coupon-discount-display">
+                                -<?php echo number_format($_SESSION['coupon_discount'] ?? 0, 0, ',', '.'); ?> ₫
+                            </td>
+                        </tr>
+                        <tr class="table-active">
+                            <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                            <td><strong class="text-danger fs-5" id="final-total-display"><?php echo number_format($finalTotal - ($_SESSION['coupon_discount'] ?? 0), 0, ',', '.'); ?> ₫</strong></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -456,6 +518,52 @@ $transferContent = $orderCode;
 
             let selectedPaymentMethod = 'bank-transfer'; // Mặc định
 
+            // Biến lưu trữ phí vận chuyển - expose ra window để shipping_method_selector có thể truy cập
+            window.currentShippingFee = 0;
+            window.currentVatAmount = <?php echo $vatAmount; ?>;
+            window.currentSubtotal = <?php echo $totalAmount; ?>;
+            
+            // Alias cho backward compatibility
+            let currentShippingFee = window.currentShippingFee;
+            let currentVatAmount = window.currentVatAmount;
+            let currentSubtotal = window.currentSubtotal;
+
+            // Lắng nghe event khi thay đổi phương thức vận chuyển
+            document.addEventListener('shippingMethodChanged', function(e) {
+                const { method, fee } = e.detail;
+                console.log('Shipping method changed:', method, 'Fee:', fee);
+                
+                // Cập nhật biến global
+                window.currentShippingFee = fee;
+                currentShippingFee = fee;
+                
+                // Cập nhật tổng tiền
+                window.updateFinalTotal();
+            });
+
+            // Hàm cập nhật tổng tiền cuối cùng - expose ra window
+            window.updateFinalTotal = function() {
+                const couponDiscount = window.currentCouponDiscount || 0;
+                const finalTotal = window.currentSubtotal + window.currentVatAmount + window.currentShippingFee - couponDiscount;
+                document.getElementById('final-total-display').textContent = 
+                    new Intl.NumberFormat('vi-VN').format(finalTotal) + ' ₫';
+                
+                // Cập nhật hiển thị coupon discount
+                const couponRow = document.getElementById('coupon-discount-row');
+                const couponDisplay = document.getElementById('coupon-discount-display');
+                if (couponRow && couponDisplay) {
+                    if (couponDiscount > 0) {
+                        couponRow.style.display = 'table-row';
+                        couponDisplay.textContent = '-' + new Intl.NumberFormat('vi-VN').format(couponDiscount) + ' ₫';
+                    } else {
+                        couponRow.style.display = 'none';
+                    }
+                }
+            };
+            
+            // Alias cho backward compatibility
+            const updateFinalTotal = window.updateFinalTotal;
+
             // Xử lý chuyển đổi phương thức thanh toán
             momoPaymentMethod.addEventListener('click', function() {
                 console.log('🚀 MoMo payment method clicked!');
@@ -556,14 +664,38 @@ $transferContent = $orderCode;
                 console.log('🚀 processMoMoPayment called!');
                 console.log('Shipping address:', shippingAddress);
                 console.log('Order code:', '<?php echo $orderCode; ?>');
-                console.log('Amount:', '<?php echo $totalAmount; ?>');
+                
+                // Tính tổng tiền thực tế bao gồm thuế, phí vận chuyển và coupon
+                const subtotal = <?php echo $totalAmount; ?>; // Tạm tính
+                const vatAmount = <?php echo $vatAmount; ?>; // Thuế VAT
+                const shippingFee = window.currentShippingFee || 0; // Phí vận chuyển đã chọn
+                const couponDiscount = window.currentCouponDiscount || 0; // Giảm giá coupon
+                const finalAmount = subtotal + vatAmount + shippingFee - couponDiscount;
+                
+                // Lấy thông tin coupon
+                const couponCode = document.getElementById('coupon_code_hidden')?.value || '';
+                
+                console.log('Subtotal:', subtotal);
+                console.log('VAT:', vatAmount);
+                console.log('Shipping Fee:', shippingFee);
+                console.log('Coupon Discount:', couponDiscount);
+                console.log('Coupon Code:', couponCode);
+                console.log('Final Amount:', finalAmount);
 
                 // Tạo form data cho MoMo
                 const formData = new FormData();
                 formData.append('payment_method', 'momo');
                 formData.append('order_code', '<?php echo $orderCode; ?>');
                 formData.append('shipping_address', shippingAddress);
-                formData.append('amount', '<?php echo $totalAmount; ?>');
+                formData.append('amount', finalAmount); // Gửi tổng tiền thực tế
+                formData.append('subtotal', subtotal);
+                formData.append('vat_amount', vatAmount);
+                formData.append('shipping_fee', shippingFee);
+                formData.append('coupon_code', couponCode);
+                formData.append('coupon_discount', couponDiscount);
+                formData.append('shipping_method', document.getElementById('selected_shipping_method')?.value || 'standard');
+                // QUAN TRỌNG: Gửi danh sách sản phẩm đã chọn để chỉ xử lý những sản phẩm này
+                formData.append('selected_products', '<?php echo addslashes(json_encode($orderDetails)); ?>');
 
                 // Debug: Log URL được gọi
                 const currentUrl = window.location.origin;
@@ -571,7 +703,7 @@ $transferContent = $orderCode;
                 console.log('🌐 Current URL:', currentUrl);
                 console.log('🔗 Relative API Path:', relativePath);
                 console.log('🔗 Full URL:', window.location.href);
-                
+
                 // Gửi request đến MoMo payment handler (sử dụng đường dẫn tương đối)
                 fetch('./momo_payment.php', {
                         method: 'POST',
@@ -583,9 +715,20 @@ $transferContent = $orderCode;
 
                         if (data.success && data.payUrl) {
                             // Lưu thông tin đơn hàng vào session trước khi chuyển
+                            const subtotal = <?php echo $totalAmount; ?>;
+                            const vatAmount = <?php echo $vatAmount; ?>;
+                            const shippingFee = window.currentShippingFee || 0;
+                            const couponDiscount = window.currentCouponDiscount || 0;
+                            // QUAN TRỌNG: Phải trừ coupon discount!
+                            const finalAmount = subtotal + vatAmount + shippingFee - couponDiscount;
+                            
                             sessionStorage.setItem('pendingOrder', JSON.stringify({
                                 orderId: data.orderId,
-                                amount: '<?php echo $totalAmount; ?>',
+                                amount: finalAmount,
+                                subtotal: subtotal,
+                                vat: vatAmount,
+                                shipping_fee: shippingFee,
+                                coupon_discount: couponDiscount,
                                 shipping_address: shippingAddress
                             }));
 
@@ -608,12 +751,37 @@ $transferContent = $orderCode;
             }
 
             function processBankTransferPayment(shippingAddress) {
-                // Tạo form data cho chuyển khoản
+                console.log('🏦 processBankTransferPayment called!');
+                console.log('Shipping address:', shippingAddress);
+                
+                // Tính tổng tiền thực tế bao gồm thuế, phí vận chuyển và coupon
+                const subtotal = <?php echo $totalAmount; ?>; // Tạm tính
+                const vatAmount = <?php echo $vatAmount; ?>; // Thuế VAT
+                const shippingFee = window.currentShippingFee || 0; // Phí vận chuyển đã chọn
+                const couponDiscount = window.currentCouponDiscount || 0; // Giảm giá coupon
+                const finalAmount = subtotal + vatAmount + shippingFee - couponDiscount;
+                
+                // Lấy thông tin coupon
+                const couponCode = document.getElementById('coupon_code_hidden')?.value || '';
+                
+                console.log('Bank Transfer - Subtotal:', subtotal);
+                console.log('Bank Transfer - VAT:', vatAmount);
+                console.log('Bank Transfer - Shipping Fee:', shippingFee);
+                console.log('Bank Transfer - Coupon Discount:', couponDiscount);
+                console.log('Bank Transfer - Final Amount:', finalAmount);
+                
+                // Tạo form data cho chuyển khoản - GỬI ĐẦY ĐỦ THÔNG TIN
                 const formData = new FormData();
+                formData.append('payment_method', 'bank_transfer');
                 formData.append('order_code', '<?php echo $orderCode; ?>');
                 formData.append('shipping_address', shippingAddress);
+                formData.append('shipping_fee', shippingFee);
+                formData.append('coupon_code', couponCode);
+                formData.append('coupon_discount', couponDiscount);
+                formData.append('selected_shipping_method', document.getElementById('selected_shipping_method')?.value || 'standard');
+                formData.append('selected_shipping_fee', shippingFee);
 
-                // Gửi request bằng fetch API (logic cũ)
+                // Gửi request bằng fetch API
                 fetch('payment_confirm.php', {
                         method: 'POST',
                         body: formData
@@ -651,12 +819,21 @@ $transferContent = $orderCode;
                 // Hiển thị thông báo đang xử lý
                 confirmPaymentBtn.disabled = true;
                 processingPayment.style.display = 'block';
+                
+                // Lấy thông tin coupon
+                const couponCode = document.getElementById('coupon_code_hidden')?.value || '';
+                const couponDiscount = window.currentCouponDiscount || 0;
+                const shippingFee = window.currentShippingFee || 0;
 
                 // Tạo form data cho COD
                 const formData = new FormData();
                 formData.append('payment_method', 'cod');
                 formData.append('order_code', '<?php echo $orderCode; ?>');
                 formData.append('shipping_address', shippingAddress);
+                formData.append('coupon_code', couponCode);
+                formData.append('coupon_discount', couponDiscount);
+                formData.append('selected_shipping_method', document.getElementById('selected_shipping_method')?.value || 'standard');
+                formData.append('selected_shipping_fee', shippingFee);
 
                 // Gửi request
                 fetch('payment_confirm.php', {

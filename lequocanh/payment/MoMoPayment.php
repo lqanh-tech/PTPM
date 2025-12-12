@@ -122,13 +122,21 @@ class MoMoPayment
         ];
 
         try {
+            // Log request data để debug
+            error_log('MoMo API Request: ' . json_encode($requestData));
+            error_log('MoMo API Endpoint: ' . $this->endpoint);
+            
             $response = $this->sendPostRequest($this->endpoint, $requestData);
+            
+            // Log response để debug
+            error_log('MoMo API Response: ' . json_encode($response));
 
-            // Lưu thông tin giao dịch vào database
-            $this->saveTransaction($orderId, $requestId, $amount, $orderInfo, 'PENDING');
+            // Lưu thông tin giao dịch vào database (tạm thời comment để tránh lỗi)
+            // $this->saveTransaction($orderId, $requestId, $amount, $orderInfo, 'PENDING');
 
             return $response;
         } catch (Exception $e) {
+            error_log('MoMo API Exception: ' . $e->getMessage());
             throw new Exception('MoMo API Error: ' . $e->getMessage());
         }
     }

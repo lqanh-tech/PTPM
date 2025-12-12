@@ -210,13 +210,104 @@ if ($checkTableStmt->rowCount() == 0) {
     // Kiểm tra xem bảng chi_tiet_don_hang có tồn tại không
     $noOrderItemsTable = ($checkOrderItemsTableStmt->rowCount() == 0);
 
-    // Xử lý hành động
-    if (isset($_GET['action']) && isset($_GET['id'])) {
-        $action = $_GET['action'];
-        $orderId = (int)$_GET['id'];
+// Kiểm tra và cập nhật cấu trúc bảng don_hang cho tính năng đổi trả
+try {
+    // Kiểm tra cột trang_thai_doi_tra
+    $checkCol = $conn->query("SHOW COLUMNS FROM don_hang LIKE 'trang_thai_doi_tra'");
+    if ($checkCol->rowCount() == 0) {
+        $conn->exec("ALTER TABLE don_hang ADD COLUMN trang_thai_doi_tra ENUM('none', 'requested', 'approved', 'rejected') DEFAULT 'none'");
+    }
 
-        switch ($action) {
-            case 'approve':
+    // Kiểm tra cột ly_do_doi_tra
+    $checkCol = $conn->query("SHOW COLUMNS FROM don_hang LIKE 'ly_do_doi_tra'");
+    if ($checkCol->rowCount() == 0) {
+        $conn->exec("ALTER TABLE don_hang ADD COLUMN ly_do_doi_tra TEXT");
+    }
+
+    // Kiểm tra cột ngay_yeu_cau_doi_tra
+    $checkCol = $conn->query("SHOW COLUMNS FROM don_hang LIKE 'ngay_yeu_cau_doi_tra'");
+    if ($checkCol->rowCount() == 0) {
+        $conn->exec("ALTER TABLE don_hang ADD COLUMN ngay_yeu_cau_doi_tra DATETIME");
+    }
+    
+    // Cập nhật ENUM trang_thai để thêm 'returned' nếu chưa có
+    // Lưu ý: Việc thay đổi ENUM có thể phức tạp tùy thuộc vào dữ liệu hiện có, 
+    // ở đây ta giả định là có thể thêm vào cuối.
+    // Để an toàn, ta sẽ xử lý logic 'returned' dựa trên trang_thai_doi_tra = 'approved' 
+    // và có thể giữ trang_thai là 'approved' hoặc cập nhật nếu ENUM cho phép.
+    // Tuy nhiên, để hiển thị đúng, ta sẽ thêm logic hiển thị.
+} catch (PDOException $e) {
+    // Log lỗi nhưng không chặn luồng chính
+    error_log("Error updating DB schema for returns: " . $e->getMessage());
+}
+
+// Xử lý hành động
+if (isset($_GET['action']) && isset($_GET['id'])) {
+    $action = $_GET['action'];
+    $orderId = (int)$_GET['id'];
+    
+    switch ($action) {
+        case 'request_return':
+            if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['reason'])) {
+                $reason = $_POST['reason'];
+                $sql = "UPDATE don_hang SET trang_thai_doi_tra = 'requested', ly_do_doi_tra = ?, ngay_yeu_cau_doi_tra = NOW() WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                if ($stmt->execute([$reason, $orderId])) {
+                    $_SESSION['order_message'] = 'Đã gửi yêu cầu đổi/trả hàng thành công.';
+                } else {
+                    $_SESSION['order_error'] = 'Lỗi khi gửi yêu cầu.';
+                }
+            }
+            header('Location: index.php?req=don_hang&action=view&id=' . $orderId);
+            exit();
+            break;
+
+        case 'approve_return':
+            if (isset($_SESSION['ADMIN'])) {
+                // 1. Cập nhật trạng thái đổi trả
+                $sql = "UPDATE don_hang SET trang_thai_doi_tra = 'approved' WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                
+                if ($stmt->execute([$orderId])) {
+                    // 2. Hoàn kho
+                    require_once './elements_LQA/mod/mtonkhoCls.php';
+                    $tonkho = new MTonKho();
+                    
+                    // Lấy chi tiết đơn hàng để biết số lượng cần hoàn
+                    $itemsSql = "SELECT ma_san_pham, so_luong FROM chi_tiet_don_hang WHERE ma_don_hang = ?";
+                    $itemsStmt = $conn->prepare($itemsSql);
+                    $itemsStmt->execute([$orderId]);
+                    $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
+                    
+                    foreach ($items as $item) {
+                        // Cộng lại số lượng vào kho
+                        $tonkho->updateSoLuong($item['ma_san_pham'], $item['so_luong'], true);
+                    }
+                    
+                    $_SESSION['order_message'] = 'Đã duyệt yêu cầu đổi trả và hoàn kho thành công.';
+                } else {
+                    $_SESSION['order_error'] = 'Lỗi khi duyệt yêu cầu.';
+                }
+            }
+            header('Location: index.php?req=don_hang&action=view&id=' . $orderId);
+            exit();
+            break;
+
+        case 'reject_return':
+            if (isset($_SESSION['ADMIN'])) {
+                $sql = "UPDATE don_hang SET trang_thai_doi_tra = 'rejected' WHERE id = ?";
+                $stmt = $conn->prepare($sql);
+                if ($stmt->execute([$orderId])) {
+                    $_SESSION['order_message'] = 'Đã từ chối yêu cầu đổi trả.';
+                } else {
+                    $_SESSION['order_error'] = 'Lỗi khi từ chối yêu cầu.';
+                }
+            }
+            header('Location: index.php?req=don_hang&action=view&id=' . $orderId);
+            exit();
+            break;
+
+        case 'approve':
                 // Kiểm tra xem cột approved_read có tồn tại không
                 $checkApprovedReadColumnSql = "SHOW COLUMNS FROM don_hang LIKE 'approved_read'";
                 $checkApprovedReadColumnStmt = $conn->prepare($checkApprovedReadColumnSql);
@@ -327,6 +418,52 @@ if ($checkTableStmt->rowCount() == 0) {
                     $_SESSION['order_message'] = 'Đơn hàng #' . $orderId . ' đã được hủy.';
                 }
                 break;
+                
+            case 'confirm_delivery':
+                // Admin xác nhận đã giao hàng (COD)
+                $orderInfoSql = "SELECT * FROM don_hang WHERE id = ?";
+                $orderInfoStmt = $conn->prepare($orderInfoSql);
+                $orderInfoStmt->execute([$orderId]);
+                $orderInfo = $orderInfoStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($orderInfo && $orderInfo['trang_thai'] == 'approved') {
+                    $updateOrderSql = "UPDATE don_hang SET trang_thai = 'delivered', ngay_giao_hang = NOW(), ngay_cap_nhat = NOW() WHERE id = ?";
+                    $updateOrderStmt = $conn->prepare($updateOrderSql);
+                    $updateOrderStmt->execute([$orderId]);
+                    
+                    // Gửi thông báo cho khách
+                    $notificationManager = new CustomerNotificationManager();
+                    $title = "📦 Đơn hàng #{$orderId} đã được giao";
+                    $message = "Đơn hàng #{$orderInfo['ma_don_hang_text']} đã được giao. Vui lòng xác nhận đã nhận hàng.";
+                    $notificationManager->createNotification($orderInfo['ma_nguoi_dung'], $title, $message, 'order_delivered', $orderId);
+                    
+                    $_SESSION['order_message'] = 'Đã xác nhận giao hàng cho đơn #' . $orderId;
+                } else {
+                    $_SESSION['order_error'] = 'Không thể xác nhận giao hàng cho đơn này.';
+                }
+                break;
+                
+            case 'complete_order':
+                // Admin xác nhận hoàn tất đơn hàng (COD đã thanh toán)
+                $orderInfoSql = "SELECT * FROM don_hang WHERE id = ?";
+                $orderInfoStmt = $conn->prepare($orderInfoSql);
+                $orderInfoStmt->execute([$orderId]);
+                $orderInfo = $orderInfoStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($orderInfo && in_array($orderInfo['trang_thai'], ['approved', 'delivered'])) {
+                    $updateOrderSql = "UPDATE don_hang SET trang_thai = 'completed', trang_thai_thanh_toan = 'paid', ngay_nhan_hang = NOW(), ngay_cap_nhat = NOW() WHERE id = ?";
+                    $updateOrderStmt = $conn->prepare($updateOrderSql);
+                    $updateOrderStmt->execute([$orderId]);
+                    
+                    // Gửi thông báo cho khách
+                    $notificationManager = new CustomerNotificationManager();
+                    $notificationManager->notifyOrderSuccess($orderId, $orderInfo['ma_nguoi_dung']);
+                    
+                    $_SESSION['order_message'] = 'Đã hoàn tất đơn hàng #' . $orderId;
+                } else {
+                    $_SESSION['order_error'] = 'Không thể hoàn tất đơn này.';
+                }
+                break;
 
             case 'view':
                 // Lấy thông tin chi tiết đơn hàng
@@ -341,9 +478,9 @@ if ($checkTableStmt->rowCount() == 0) {
                     $orderStmt = $conn->prepare($orderSql);
                     $orderStmt->execute([$orderId]);
                 }
-                $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($order) {
+                $orderDetail = $orderStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($orderDetail) {
                     // Kiểm tra xem bảng chi_tiet_don_hang có tồn tại không
                     if (!$noOrderItemsTable) {
                         try {
@@ -364,7 +501,7 @@ if ($checkTableStmt->rowCount() == 0) {
                     }
 
                     // Nếu người dùng đang xem đơn hàng của họ, đánh dấu là đã đọc
-                    if (isset($_SESSION['USER']) && isset($order['ma_nguoi_dung']) && $_SESSION['USER'] === $order['ma_nguoi_dung']) {
+                    if (isset($_SESSION['USER']) && isset($orderDetail['ma_nguoi_dung']) && $_SESSION['USER'] === $orderDetail['ma_nguoi_dung']) {
                         // Kiểm tra xem các cột đánh dấu đã đọc có tồn tại không
                         $checkColumns = [
                             'pending_read' => "SHOW COLUMNS FROM don_hang LIKE 'pending_read'",
@@ -384,7 +521,7 @@ if ($checkTableStmt->rowCount() == 0) {
 
                         // Nếu các cột đánh dấu đã đọc tồn tại, cập nhật trạng thái đã đọc
                         if ($hasReadColumns) {
-                            $trang_thai = $order['trang_thai'];
+                            $trang_thai = $orderDetail['trang_thai'];
                             $field = '';
 
                             switch ($trang_thai) {
@@ -443,7 +580,7 @@ if ($checkTableStmt->rowCount() == 0) {
         $columnsStmt->execute();
         $columns = $columnsStmt->fetchAll(PDO::FETCH_COLUMN);
 
-        error_log("Các cột trong bảng don_hang: " . implode(", ", $columns));
+        // error_log("Các cột trong bảng don_hang: " . implode(", ", $columns));
 
         // Xây dựng truy vấn dựa trên các cột có sẵn
         $selectColumns = "id, ma_don_hang_text, ma_nguoi_dung";
@@ -490,13 +627,13 @@ if ($checkTableStmt->rowCount() == 0) {
         // Nếu là admin, hiển thị tất cả đơn hàng
         if (isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
             $don_hangSql = "SELECT $selectColumns FROM don_hang WHERE ma_nguoi_dung = ? ORDER BY ngay_tao DESC";
-            error_log("SQL query (user): " . $don_hangSql);
+            // error_log("SQL query (user): " . $don_hangSql);
 
             $don_hangStmt = $conn->prepare($don_hangSql);
             $don_hangStmt->execute([$_SESSION['USER']]);
         } else {
             $don_hangSql = "SELECT $selectColumns FROM don_hang ORDER BY ngay_tao DESC";
-            error_log("SQL query (admin): " . $don_hangSql);
+            // error_log("SQL query (admin): " . $don_hangSql);
 
             $don_hangStmt = $conn->prepare($don_hangSql);
             $don_hangStmt->execute();
@@ -506,11 +643,11 @@ if ($checkTableStmt->rowCount() == 0) {
 
         // Nếu có cột ma_nguoi_dung và bảng user tồn tại, thực hiện JOIN riêng để lấy thông tin người dùng
         if ($hasUserIdColumn && $hasUserTable && count($don_hang) > 0) {
-            foreach ($don_hang as $key => $order) {
-                if (!empty($order['ma_nguoi_dung'])) {
+            foreach ($don_hang as $key => $orderItem) {
+                if (!empty($orderItem['ma_nguoi_dung'])) {
                     $userSql = "SELECT hoten FROM user WHERE username = ?";
                     $userStmt = $conn->prepare($userSql);
-                    $userStmt->execute([$order['ma_nguoi_dung']]);
+                    $userStmt->execute([$orderItem['ma_nguoi_dung']]);
                     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
                     if ($user) {
                         $don_hang[$key]['hoten'] = $user['hoten'];
@@ -554,23 +691,29 @@ if ($checkTableStmt->rowCount() == 0) {
     <!-- Chi tiết đơn hàng -->
     <div class="card mb-4">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Chi tiết đơn hàng #<?php echo $order['id']; ?></h5>
+            <h5 class="mb-0">Chi tiết đơn hàng #<?php echo $orderDetail['id']; ?></h5>
             <a href="./index.php?req=don_hang" class="btn btn-light btn-sm">Quay lại</a>
         </div>
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-md-6">
                     <h6>Thông tin đơn hàng</h6>
-                    <p><strong>Mã đơn hàng:</strong> <?php echo $order['ma_don_hang_text']; ?></p>
-                    <p><strong>Ngày đặt:</strong> <?php echo date('d/m/Y H:i', strtotime($order['ngay_tao'])); ?></p>
+                    <p><strong>Mã đơn hàng:</strong> <?php echo $orderDetail['ma_don_hang_text']; ?></p>
+                    <p><strong>Ngày đặt:</strong> <?php echo date('d/m/Y H:i', strtotime($orderDetail['ngay_tao'])); ?></p>
                     <p><strong>Trạng thái:</strong>
                         <?php
-                        switch ($order['trang_thai']) {
+                        switch ($orderDetail['trang_thai']) {
                             case 'pending':
                                 echo '<span class="badge badge-warning">Chờ xác nhận</span>';
                                 break;
                             case 'approved':
-                                echo '<span class="badge badge-success">Đã duyệt</span>';
+                                echo '<span class="badge badge-info">Đã duyệt - Đang giao</span>';
+                                break;
+                            case 'delivered':
+                                echo '<span class="badge badge-primary">Đã giao hàng</span>';
+                                break;
+                            case 'completed':
+                                echo '<span class="badge badge-success">Hoàn tất</span>';
                                 break;
                             case 'cancelled':
                                 echo '<span class="badge badge-danger">Đã hủy</span>';
@@ -582,7 +725,7 @@ if ($checkTableStmt->rowCount() == 0) {
                     </p>
                     <p><strong>Phương thức thanh toán:</strong>
                         <?php
-                        $paymentMethod = isset($order['phuong_thuc_thanh_toan']) ? $order['phuong_thuc_thanh_toan'] : 'N/A';
+                        $paymentMethod = isset($orderDetail['phuong_thuc_thanh_toan']) ? $orderDetail['phuong_thuc_thanh_toan'] : 'N/A';
                         switch ($paymentMethod) {
                             case 'cod':
                                 echo '<span class="badge badge-info">COD (Thanh toán khi nhận hàng)</span>';
@@ -598,21 +741,43 @@ if ($checkTableStmt->rowCount() == 0) {
                         }
                         ?>
                     </p>
+                    
+                    <!-- Hiển thị trạng thái đổi trả -->
+                    <?php if (isset($orderDetail['trang_thai_doi_tra']) && $orderDetail['trang_thai_doi_tra'] != 'none'): ?>
+                    <p><strong>Yêu cầu đổi/trả:</strong>
+                        <?php
+                        switch ($orderDetail['trang_thai_doi_tra']) {
+                            case 'requested':
+                                echo '<span class="badge badge-warning">Đang yêu cầu</span>';
+                                break;
+                            case 'approved':
+                                echo '<span class="badge badge-success">Đã chấp nhận</span>';
+                                break;
+                            case 'rejected':
+                                echo '<span class="badge badge-danger">Đã từ chối</span>';
+                                break;
+                        }
+                        ?>
+                    </p>
+                    <?php if (!empty($orderDetail['ly_do_doi_tra'])): ?>
+                        <p><strong>Lý do:</strong> <?php echo htmlspecialchars($orderDetail['ly_do_doi_tra']); ?></p>
+                    <?php endif; ?>
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-6">
                     <h6>Thông tin khách hàng</h6>
-                    <?php if (isset($order['ma_nguoi_dung']) && !empty($order['ma_nguoi_dung'])): ?>
-                        <p><strong>Tài khoản:</strong> <?php echo $order['ma_nguoi_dung']; ?></p>
+                    <?php if (isset($orderDetail['ma_nguoi_dung']) && !empty($orderDetail['ma_nguoi_dung'])): ?>
+                        <p><strong>Tài khoản:</strong> <?php echo $orderDetail['ma_nguoi_dung']; ?></p>
                     <?php else: ?>
                         <p><strong>Khách hàng:</strong> Khách vãng lai</p>
                     <?php endif; ?>
 
                     <!-- Hiển thị địa chỉ giao hàng -->
-                    <?php if (isset($order['shipping_address']) && !empty($order['shipping_address'])): ?>
+                    <?php if (isset($orderDetail['shipping_address']) && !empty($orderDetail['shipping_address'])): ?>
                         <div class="mt-3">
                             <p><strong>Địa chỉ giao hàng:</strong></p>
                             <div class="p-2 bg-light rounded">
-                                <?php echo nl2br(htmlspecialchars($order['shipping_address'])); ?>
+                                <?php echo nl2br(htmlspecialchars($orderDetail['shipping_address'])); ?>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -640,21 +805,111 @@ if ($checkTableStmt->rowCount() == 0) {
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
+                    <?php
+                    // Tính tổng tiền hàng (subtotal)
+                    $subtotal = 0;
+                    foreach ($orderItems as $item) {
+                        $subtotal += $item['gia'] * $item['so_luong'];
+                    }
+                    
+                    // Lấy thông tin thuế và phí vận chuyển từ database
+                    $taxAmount = isset($orderDetail['thue']) ? floatval($orderDetail['thue']) : 0;
+                    $shippingFee = isset($orderDetail['phi_van_chuyen']) ? floatval($orderDetail['phi_van_chuyen']) : 0;
+                    
+                    // Lấy thông tin phương thức vận chuyển
+                    $shippingMethodName = isset($orderDetail['shipping_method_name']) ? $orderDetail['shipping_method_name'] : '';
+                    $estimatedDelivery = isset($orderDetail['estimated_delivery']) ? $orderDetail['estimated_delivery'] : '';
+                    
+                    // Kiểm tra xem có dữ liệu thuế/phí vận chuyển không
+                    $hasDetailedBreakdown = ($taxAmount > 0 || $shippingFee > 0);
+                    ?>
                     <tr>
-                        <td colspan="3" class="text-end"><strong>Tổng tiền:</strong></td>
-                        <td><strong><?php echo number_format($order['tong_tien'], 0, ',', '.'); ?> ₫</strong></td>
+                        <td colspan="3" class="text-end">Tạm tính:</td>
+                        <td><?php echo number_format($subtotal, 0, ',', '.'); ?> ₫</td>
+                    </tr>
+                    <?php if ($hasDetailedBreakdown): ?>
+                        <?php if ($taxAmount > 0): ?>
+                        <tr>
+                            <td colspan="3" class="text-end">Thuế VAT (10%):</td>
+                            <td><?php echo number_format($taxAmount, 0, ',', '.'); ?> ₫</td>
+                        </tr>
+                        <?php endif; ?>
+                        <?php if ($shippingFee > 0): ?>
+                        <tr>
+                            <td colspan="3" class="text-end">
+                                Phí vận chuyển:
+                                <?php if (!empty($shippingMethodName)): ?>
+                                    <br><small class="text-muted">(<?php echo htmlspecialchars($shippingMethodName); ?>)</small>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php echo number_format($shippingFee, 0, ',', '.'); ?> ₫
+                                <?php if (!empty($estimatedDelivery)): ?>
+                                    <br><small class="text-success">Dự kiến: <?php echo htmlspecialchars($estimatedDelivery); ?></small>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="3" class="text-end">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle"></i> 
+                                    Đơn hàng cũ - chưa có chi tiết thuế/phí vận chuyển
+                                </small>
+                            </td>
+                            <td></td>
+                        </tr>
+                    <?php endif; ?>
+                    
+                    <?php 
+                    // Hiển thị thông tin coupon nếu có
+                    $couponCode = isset($orderDetail['coupon_code']) ? $orderDetail['coupon_code'] : null;
+                    $couponDiscount = isset($orderDetail['coupon_discount']) ? floatval($orderDetail['coupon_discount']) : 0;
+                    if ($couponCode && $couponDiscount > 0): 
+                    ?>
+                    <tr class="table-success">
+                        <td colspan="3" class="text-end">
+                            <i class="fas fa-ticket-alt me-1 text-success"></i>
+                            Mã giảm giá: <strong><?php echo htmlspecialchars($couponCode); ?></strong>
+                        </td>
+                        <td class="text-success">
+                            -<?php echo number_format($couponDiscount, 0, ',', '.'); ?> ₫
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                    
+                    <tr class="table-active">
+                        <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
+                        <td><strong class="text-danger"><?php echo number_format($orderDetail['tong_tien'], 0, ',', '.'); ?> ₫</strong></td>
                     </tr>
                 </tfoot>
             </table>
 
             <div class="mt-4">
-                <?php if ($order['trang_thai'] == 'pending'): ?>
-                    <a href="./index.php?req=don_hang&action=approve&id=<?php echo $order['id']; ?>" class="btn btn-success" onclick="return confirm('Xác nhận duyệt đơn hàng này?');">Duyệt đơn hàng</a>
-                    <a href="./index.php?req=don_hang&action=cancel&id=<?php echo $order['id']; ?>" class="btn btn-danger" onclick="return confirm('Xác nhận hủy đơn hàng này? Số lượng tồn kho sẽ được hoàn trả.');">Hủy đơn hàng</a>
+                <?php if ($orderDetail['trang_thai'] == 'pending'): ?>
+                    <a href="./index.php?req=don_hang&action=approve&id=<?php echo $orderDetail['id']; ?>" class="btn btn-success" onclick="return confirm('Xác nhận duyệt đơn hàng này?');">Duyệt đơn hàng</a>
+                    <a href="./index.php?req=don_hang&action=cancel&id=<?php echo $orderDetail['id']; ?>" class="btn btn-danger" onclick="return confirm('Xác nhận hủy đơn hàng này? Số lượng tồn kho sẽ được hoàn trả.');">Hủy đơn hàng</a>
+                <?php endif; ?>
+
+                <!-- Nút Yêu cầu đổi trả cho User -->
+                <?php 
+                $returnStatus = isset($orderDetail['trang_thai_doi_tra']) ? $orderDetail['trang_thai_doi_tra'] : 'none';
+                if (!isset($_SESSION['ADMIN']) && $orderDetail['trang_thai'] == 'approved' && $returnStatus == 'none'): 
+                ?>
+                    <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#returnRequestModal">
+                        Yêu cầu đổi/trả hàng
+                    </button>
+                <?php endif; ?>
+
+                <!-- Nút Duyệt/Từ chối đổi trả cho Admin -->
+                <?php if (isset($_SESSION['ADMIN']) && $returnStatus == 'requested'): ?>
+                    <a href="./index.php?req=don_hang&action=approve_return&id=<?php echo $orderDetail['id']; ?>" class="btn btn-success" onclick="return confirm('Xác nhận DUYỆT yêu cầu đổi trả? Hàng hóa sẽ được hoàn lại kho.');">Duyệt đổi trả</a>
+                    <a href="./index.php?req=don_hang&action=reject_return&id=<?php echo $orderDetail['id']; ?>" class="btn btn-danger" onclick="return confirm('Xác nhận TỪ CHỐI yêu cầu đổi trả?');">Từ chối đổi trả</a>
                 <?php endif; ?>
 
                 <!-- Nút in hóa đơn -->
-                <a href="print_invoice.php?id=<?php echo $order['id']; ?>" class="btn btn-primary" target="_blank">
+                <a href="./elements_LQA/madmin/print_invoice.php?id=<?php echo $orderDetail['id']; ?>" class="btn btn-primary" target="_blank">
                     <i class="fas fa-print"></i> In hóa đơn
                 </a>
             </div>
@@ -688,13 +943,13 @@ if ($checkTableStmt->rowCount() == 0) {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($don_hang as $order): ?>
+                            <?php foreach ($don_hang as $orderItem): ?>
                                 <tr>
-                                    <td><?php echo $order['id']; ?></td>
-                                    <td><?php echo $order['ma_don_hang_text']; ?></td>
+                                    <td><?php echo $orderItem['id']; ?></td>
+                                    <td><?php echo $orderItem['ma_don_hang_text']; ?></td>
                                     <td><?php
-                                        if (isset($order['ma_nguoi_dung']) && !empty($order['ma_nguoi_dung'])) {
-                                            echo isset($order['hoten']) && !empty($order['hoten']) ? $order['hoten'] : $order['ma_nguoi_dung'];
+                                        if (isset($orderItem['ma_nguoi_dung']) && !empty($orderItem['ma_nguoi_dung'])) {
+                                            echo isset($orderItem['hoten']) && !empty($orderItem['hoten']) ? $orderItem['hoten'] : $orderItem['ma_nguoi_dung'];
                                         } else {
                                             echo 'Khách vãng lai';
                                         }
@@ -702,10 +957,10 @@ if ($checkTableStmt->rowCount() == 0) {
                                     <td>
                                         <?php
                                         $address = '';
-                                        if (isset($order['dia_chi_giao_hang']) && !empty($order['dia_chi_giao_hang'])) {
-                                            $address = $order['dia_chi_giao_hang'];
-                                        } elseif (isset($order['shipping_address']) && !empty($order['shipping_address'])) {
-                                            $address = $order['shipping_address'];
+                                        if (isset($orderItem['dia_chi_giao_hang']) && !empty($orderItem['dia_chi_giao_hang'])) {
+                                            $address = $orderItem['dia_chi_giao_hang'];
+                                        } elseif (isset($orderItem['shipping_address']) && !empty($orderItem['shipping_address'])) {
+                                            $address = $orderItem['shipping_address'];
                                         }
 
                                         if (!empty($address)): ?>
@@ -721,10 +976,10 @@ if ($checkTableStmt->rowCount() == 0) {
                                             <span class="text-muted">Không có</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo number_format($order['tong_tien'], 0, ',', '.'); ?> ₫</td>
+                                    <td><?php echo number_format($orderItem['tong_tien'], 0, ',', '.'); ?> ₫</td>
                                     <td>
                                         <?php
-                                        $paymentMethod = isset($order['phuong_thuc_thanh_toan']) ? $order['phuong_thuc_thanh_toan'] : 'N/A';
+                                        $paymentMethod = isset($orderItem['phuong_thuc_thanh_toan']) ? $orderItem['phuong_thuc_thanh_toan'] : 'N/A';
                                         switch ($paymentMethod) {
                                             case 'cod':
                                                 echo '<span class="badge badge-info">COD</span>';
@@ -742,12 +997,18 @@ if ($checkTableStmt->rowCount() == 0) {
                                     </td>
                                     <td>
                                         <?php
-                                        switch ($order['trang_thai']) {
+                                        switch ($orderItem['trang_thai']) {
                                             case 'pending':
                                                 echo '<span class="badge badge-warning">Chờ xác nhận</span>';
                                                 break;
                                             case 'approved':
-                                                echo '<span class="badge badge-success">Đã duyệt</span>';
+                                                echo '<span class="badge badge-info">Đã duyệt</span>';
+                                                break;
+                                            case 'delivered':
+                                                echo '<span class="badge badge-primary">Đã giao</span>';
+                                                break;
+                                            case 'completed':
+                                                echo '<span class="badge badge-success">Hoàn tất</span>';
                                                 break;
                                             case 'cancelled':
                                                 echo '<span class="badge badge-danger">Đã hủy</span>';
@@ -755,17 +1016,33 @@ if ($checkTableStmt->rowCount() == 0) {
                                             default:
                                                 echo '<span class="badge badge-secondary">Không xác định</span>';
                                         }
+                                        
+                                        // Hiển thị trạng thái thanh toán COD
+                                        if ($orderItem['phuong_thuc_thanh_toan'] == 'cod') {
+                                            if ($orderItem['trang_thai_thanh_toan'] == 'paid') {
+                                                echo ' <span class="badge badge-success">Đã TT</span>';
+                                            } else {
+                                                echo ' <span class="badge badge-secondary">Chưa TT</span>';
+                                            }
+                                        }
                                         ?>
                                     </td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($order['ngay_tao'])); ?></td>
+                                    <td><?php echo date('d/m/Y H:i', strtotime($orderItem['ngay_tao'])); ?></td>
                                     <td>
-                                        <a href="./index.php?req=don_hang&action=view&id=<?php echo $order['id']; ?>" class="btn btn-info btn-sm">Xem</a>
-                                        <a href="print_invoice.php?id=<?php echo $order['id']; ?>" class="btn btn-primary btn-sm" target="_blank">
+                                        <a href="./index.php?req=don_hang&action=view&id=<?php echo $orderItem['id']; ?>" class="btn btn-info btn-sm">Xem</a>
+                                        <a href="./elements_LQA/madmin/print_invoice.php?id=<?php echo $orderItem['id']; ?>" class="btn btn-primary btn-sm" target="_blank">
                                             <i class="fas fa-print"></i> In
                                         </a>
-                                        <?php if (isset($_SESSION['ADMIN']) && $order['trang_thai'] == 'pending'): ?>
-                                            <a href="./index.php?req=don_hang&action=approve&id=<?php echo $order['id']; ?>" class="btn btn-success btn-sm" onclick="return confirm('Xác nhận duyệt đơn hàng này?');">Duyệt</a>
-                                            <a href="./index.php?req=don_hang&action=cancel&id=<?php echo $order['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Xác nhận hủy đơn hàng này? Số lượng tồn kho sẽ được hoàn trả.');">Hủy</a>
+                                        <?php if (isset($_SESSION['ADMIN']) && $orderItem['trang_thai'] == 'pending'): ?>
+                                            <a href="./index.php?req=don_hang&action=approve&id=<?php echo $orderItem['id']; ?>" class="btn btn-success btn-sm" onclick="return confirm('Xác nhận duyệt đơn hàng này?');">Duyệt</a>
+                                            <a href="./index.php?req=don_hang&action=cancel&id=<?php echo $orderItem['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('Xác nhận hủy đơn hàng này? Số lượng tồn kho sẽ được hoàn trả.');">Hủy</a>
+                                        <?php endif; ?>
+                                        <?php if (isset($_SESSION['ADMIN']) && $orderItem['trang_thai'] == 'approved' && $orderItem['phuong_thuc_thanh_toan'] == 'cod'): ?>
+                                            <a href="./index.php?req=don_hang&action=confirm_delivery&id=<?php echo $orderItem['id']; ?>" class="btn btn-primary btn-sm" onclick="return confirm('Xác nhận đã giao hàng?');">Đã giao</a>
+                                            <a href="./index.php?req=don_hang&action=complete_order&id=<?php echo $orderItem['id']; ?>" class="btn btn-success btn-sm" onclick="return confirm('Xác nhận hoàn tất đơn hàng?');">Hoàn tất</a>
+                                        <?php endif; ?>
+                                        <?php if (isset($_SESSION['ADMIN']) && $orderItem['trang_thai'] == 'delivered'): ?>
+                                            <a href="./index.php?req=don_hang&action=complete_order&id=<?php echo $orderItem['id']; ?>" class="btn btn-success btn-sm" onclick="return confirm('Xác nhận hoàn tất đơn hàng?');">Hoàn tất</a>
                                         <?php endif; ?>
                                     </td>
                                 </tr>
@@ -777,3 +1054,36 @@ if ($checkTableStmt->rowCount() == 0) {
         </div>
     </div>
 <?php endif; ?>
+
+<!-- Modal Yêu cầu đổi trả -->
+<div class="modal fade" id="returnRequestModal" tabindex="-1" role="dialog" aria-labelledby="returnRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="returnRequestModalLabel">Yêu cầu đổi/trả hàng</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="./index.php?req=don_hang&action=request_return&id=<?php echo isset($orderDetail['id']) ? $orderDetail['id'] : ''; ?>" method="POST">
+          <div class="modal-body">
+            <div class="form-group">
+                <label for="returnReason">Lý do đổi/trả:</label>
+                <textarea class="form-control" id="returnReason" name="reason" rows="3" required placeholder="Vui lòng nhập lý do chi tiết..."></textarea>
+            </div>
+            <div class="alert alert-warning">
+                <small>Lưu ý: Yêu cầu của bạn sẽ được Ban quản trị xem xét. Nếu được chấp nhận, bạn sẽ nhận được hướng dẫn gửi trả hàng.</small>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+            <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Thêm Bootstrap JS nếu chưa có (cần cho Modal) -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>

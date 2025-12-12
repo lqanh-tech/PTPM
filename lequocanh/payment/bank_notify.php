@@ -100,13 +100,22 @@ try {
                     if ($approveResult['success']) {
                         error_log("Auto approved order #{$order['id']} after bank payment");
                         
-                        // Gửi thông báo duyệt đơn hàng
+                        // Gửi thông báo đặt hàng thành công và duyệt đơn hàng
                         require_once '../administrator/elements_LQA/mod/CustomerNotificationManager.php';
                         $notificationManager = new CustomerNotificationManager();
                         
                         if ($order['ma_nguoi_dung']) {
+                            // Gửi email đặt hàng thành công
+                            $notificationManager->notifyOrderSuccess($order['id'], $order['ma_nguoi_dung']);
+                            error_log("Order success notification sent for order: {$order['id']}");
+                            
+                            // Gửi email xác nhận thanh toán
                             $notificationManager->notifyPaymentConfirmed($order['id'], $order['ma_nguoi_dung']);
+                            error_log("Payment confirmed notification sent for order: {$order['id']}");
+                            
+                            // Gửi email đơn hàng đã được duyệt
                             $notificationManager->notifyOrderApproved($order['id'], $order['ma_nguoi_dung']);
+                            error_log("Order approved notification sent for order: {$order['id']}");
                         }
                     } else {
                         error_log("Failed to auto approve order #{$order['id']}: " . $approveResult['message']);

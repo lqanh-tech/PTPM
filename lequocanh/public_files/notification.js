@@ -180,23 +180,28 @@ document.addEventListener("DOMContentLoaded", function () {
           markNotificationAsRead(notification.id);
         });
       }
+      
+      // Thêm sự kiện cho nút xem chi tiết đơn hàng ngay trong vòng lặp
+      const viewOrderBtn = notificationItem.querySelector(".view-order-detail-btn");
+      if (viewOrderBtn) {
+        viewOrderBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          showOrderDetail(notification.order_id);
+        });
+      }
     });
 
-    // Thêm sự kiện cho các nút đánh dấu đã đọc
-    setupMarkReadButtons();
+    // Thêm sự kiện cho các nút header (đánh dấu tất cả đã đọc, xóa thông báo đã đọc)
+    setupHeaderButtons();
   }
 
-  // Hàm thiết lập sự kiện cho các nút đánh dấu đã đọc và xem chi tiết
-  function setupMarkReadButtons() {
-    const markReadButtons = document.querySelectorAll(".mark-read-btn");
-    markReadButtons.forEach((button) => {
-      button.addEventListener("click", function (e) {
-        e.stopPropagation();
-        const notificationId = this.dataset.id;
-        markNotificationAsRead(notificationId);
-      });
-    });
-
+  // Biến để theo dõi xem header buttons đã được setup chưa
+  let headerButtonsInitialized = false;
+  
+  // Hàm thiết lập sự kiện cho các nút header (chỉ chạy 1 lần)
+  function setupHeaderButtons() {
+    if (headerButtonsInitialized) return;
+    
     // Nút đánh dấu tất cả đã đọc
     const markAllReadButton = document.querySelector(".mark-all-read");
     if (markAllReadButton) {
@@ -213,39 +218,18 @@ document.addEventListener("DOMContentLoaded", function () {
     if (deleteReadNotificationsButton) {
       deleteReadNotificationsButton.addEventListener("click", function (e) {
         e.stopPropagation();
-        if (confirm("Bạn có chắc chắn muốn xóa tất cả thông báo đã đọc?")) {
-          deleteReadNotifications();
-        }
+        e.preventDefault();
+        
+        // Sử dụng setTimeout để tránh block UI từ confirm
+        setTimeout(() => {
+          if (confirm("Bạn có chắc chắn muốn xóa tất cả thông báo đã đọc?")) {
+            deleteReadNotifications();
+          }
+        }, 10);
       });
     }
-
-    // Nút xóa thông báo cụ thể
-    const deleteNotificationButtons = document.querySelectorAll(
-      ".delete-notification-btn"
-    );
-    deleteNotificationButtons.forEach((button) => {
-      button.addEventListener("click", function (e) {
-        e.stopPropagation();
-        const notificationItem = this.closest(".notification-item");
-        const orderId = this.dataset.id;
-
-        if (confirm("Bạn có chắc chắn muốn xóa thông báo này?")) {
-          deleteNotification(orderId, notificationItem);
-        }
-      });
-    });
-
-    // Nút xem chi tiết đơn hàng
-    const viewOrderDetailButtons = document.querySelectorAll(
-      ".view-order-detail-btn"
-    );
-    viewOrderDetailButtons.forEach((button) => {
-      button.addEventListener("click", function (e) {
-        e.stopPropagation();
-        const orderId = this.dataset.id;
-        showOrderDetail(orderId);
-      });
-    });
+    
+    headerButtonsInitialized = true;
   }
 
   // Hàm hiển thị chi tiết đơn hàng
@@ -290,8 +274,43 @@ document.addEventListener("DOMContentLoaded", function () {
           document.getElementById(
             "order-status"
           ).className = `order-status ${order.status_class}`;
+          // Hiển thị chi tiết thanh toán nếu có các element
+          const subtotalEl = document.getElementById("order-subtotal");
+          const taxEl = document.getElementById("order-tax");
+          const shippingEl = document.getElementById("order-shipping");
+          const paymentStatusEl = document.getElementById("order-payment-status");
+          
+          if (subtotalEl) {
+            subtotalEl.textContent = new Intl.NumberFormat("vi-VN").format(order.subtotal || 0) + " đ";
+          }
+          if (taxEl) {
+            taxEl.textContent = new Intl.NumberFormat("vi-VN").format(order.tax_amount || 0) + " đ";
+          }
+          if (shippingEl) {
+            shippingEl.textContent = new Intl.NumberFormat("vi-VN").format(order.shipping_fee || 0) + " đ";
+          }
+          if (paymentStatusEl) {
+            paymentStatusEl.textContent = order.payment_status_text || "Chờ thanh toán";
+            paymentStatusEl.className = `payment-status-badge ${order.payment_status || "pending"}`;
+          }
+          
           document.getElementById("order-total").textContent =
             new Intl.NumberFormat("vi-VN").format(order.total_amount) + " đ";
+
+          // Hiển thị phương thức vận chuyển nếu có element
+          const shippingMethodEl = document.getElementById("order-shipping-method");
+          if (shippingMethodEl) {
+            shippingMethodEl.textContent = order.shipping_method_name || "Không xác định";
+          }
+          
+          // Hiển thị thời gian giao hàng dự kiến nếu có
+          const estimatedDeliveryEl = document.getElementById("order-estimated-delivery");
+          if (estimatedDeliveryEl && order.estimated_delivery) {
+            estimatedDeliveryEl.textContent = order.estimated_delivery;
+            estimatedDeliveryEl.parentElement.style.display = "block";
+          } else if (estimatedDeliveryEl) {
+            estimatedDeliveryEl.parentElement.style.display = "none";
+          }
 
           // Cập nhật danh sách sản phẩm
           let itemsHtml = "";
@@ -304,16 +323,15 @@ document.addEventListener("DOMContentLoaded", function () {
                         `;
           } else {
             order.items.forEach((item) => {
-              const imagePath = item.product_image
-                ? `./administrator/images_LQA/${item.product_image}`
-                : "./administrator/images_LQA/no-image.png";
+              // Sử dụng đường dẫn hình ảnh đã được xử lý từ server
+              const imagePath = item.product_image || "./administrator/elements_LQA/img_LQA/no-image.png";
 
               itemsHtml += `
                                 <tr>
                                     <td>
                                         <img src="${imagePath}" alt="${
                 item.product_name
-              }" class="product-image">
+              }" class="product-image" onerror="this.src='./administrator/elements_LQA/img_LQA/no-image.png'">
                                     </td>
                                     <td class="product-name">${
                                       item.product_name
@@ -332,8 +350,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
           orderItems.innerHTML = itemsHtml;
 
-          // Cập nhật số lượng thông báo chưa đọc
-          updateNotifications();
+          // Chỉ cập nhật badge số lượng thông báo chưa đọc - KHÔNG re-render danh sách
+          updateBadgeCount();
         } else {
           // Hiển thị thông báo lỗi
           orderItems.innerHTML = `
@@ -376,7 +394,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // Cập nhật giao diện
+          // Cập nhật giao diện cục bộ - KHÔNG re-render toàn bộ danh sách
           const notificationItem = document.querySelector(
             `.notification-item[data-id="${notificationId}"]`
           );
@@ -393,12 +411,36 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           }
 
-          // Cập nhật số lượng thông báo chưa đọc
-          updateNotifications();
+          // Chỉ cập nhật badge số lượng thông báo chưa đọc
+          updateBadgeCount();
         }
       })
       .catch((error) => {
         console.error("Lỗi:", error);
+      });
+  }
+  
+  // Hàm chỉ cập nhật badge số lượng thông báo chưa đọc
+  function updateBadgeCount() {
+    fetch(
+      `./administrator/elements_LQA/mthongbao/getCustomerNotifications.php?action=count`,
+      {
+        credentials: "same-origin",
+      }
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success && notificationBadge) {
+          if (data.unread_count > 0) {
+            notificationBadge.textContent = data.unread_count;
+            notificationBadge.style.display = "block";
+          } else {
+            notificationBadge.style.display = "none";
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Lỗi cập nhật badge:", error);
       });
   }
 
@@ -414,7 +456,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .then((response) => response.json())
       .then((data) => {
         if (data.success) {
-          // Cập nhật giao diện
+          // Cập nhật giao diện cục bộ - KHÔNG re-render toàn bộ danh sách
           document
             .querySelectorAll(".notification-item.unread")
             .forEach((item) => {
@@ -431,8 +473,8 @@ document.addEventListener("DOMContentLoaded", function () {
               badge.remove();
             });
 
-          // Cập nhật số lượng thông báo chưa đọc
-          updateNotifications();
+          // Chỉ cập nhật badge số lượng thông báo chưa đọc
+          updateBadgeCount();
         }
       })
       .catch((error) => {
@@ -442,18 +484,22 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Hàm xóa tất cả thông báo đã đọc
   function deleteReadNotifications() {
-    fetch("./administrator/elements_LQA/mthongbao/getNotifications.php", {
+    fetch("./administrator/elements_LQA/mthongbao/getCustomerNotifications.php?action=delete_read", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: "delete_read_notifications=1",
+      credentials: "same-origin",
     })
       .then((response) => response.json())
       .then((data) => {
+        console.log("Delete read notifications response:", data);
         if (data.success) {
           // Cập nhật giao diện bằng cách tải lại danh sách thông báo
           updateNotifications();
+          // Sử dụng setTimeout để tránh block UI
+          setTimeout(() => {
+            console.log("Đã xóa tất cả thông báo đã đọc!");
+          }, 100);
+        } else {
+          console.error("Có lỗi xảy ra: " + (data.error || data.message || "Không xác định"));
         }
       })
       .catch((error) => {
@@ -462,16 +508,18 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   // Hàm xóa một thông báo cụ thể
-  function deleteNotification(orderId, notificationItem) {
-    fetch("./administrator/elements_LQA/mthongbao/getNotifications.php", {
+  function deleteNotification(notificationId, notificationItem) {
+    const formData = new FormData();
+    formData.append("notification_id", notificationId);
+    
+    fetch("./administrator/elements_LQA/mthongbao/getCustomerNotifications.php?action=delete_single", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `delete_notification=1&order_id=${orderId}`,
+      body: formData,
+      credentials: "same-origin",
     })
       .then((response) => response.json())
       .then((data) => {
+        console.log("Delete notification response:", data);
         if (data.success) {
           // Xóa thông báo khỏi giao diện
           if (notificationItem) {
@@ -489,8 +537,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     `;
           }
 
-          // Cập nhật số lượng thông báo chưa đọc
-          updateNotifications();
+          // Chỉ cập nhật badge số lượng thông báo chưa đọc
+          updateBadgeCount();
+        } else {
+          console.error("Có lỗi xảy ra: " + (data.error || data.message || "Không xác định"));
         }
       })
       .catch((error) => {

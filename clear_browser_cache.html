@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache & Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: #f5f5f5; padding: 40px 0; }
+        .container { max-width: 800px; }
+        .card { border-radius: 15px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+        .btn-clear { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .test-item { padding: 15px; margin: 10px 0; border-left: 4px solid #007bff; background: #f8f9fa; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-body p-5">
+                <h2 class="mb-4"><i class="fas fa-sync-alt"></i> Clear Cache & Test</h2>
+                
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Vấn đề: Nút "Xem tất cả" vẫn chuyển đến trang admin</h5>
+                    <p class="mb-0">Nguyên nhân: Browser cache đang lưu file JavaScript cũ</p>
+                </div>
+                
+                <div class="test-item">
+                    <h5>✅ Đã sửa trong code:</h5>
+                    <ul>
+                        <li>Link footer: <code>/lequocanh/customer/order_history.php</code></li>
+                        <li>Link thông báo: <code>/lequocanh/customer/order_invoice.php</code></li>
+                        <li>Thêm widget đánh giá vào <code>orderDetailView.php</code></li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-info mt-4">
+                    <h5><i class="fas fa-info-circle"></i> Cách clear cache:</h5>
+                    <ol>
+                        <li><strong>Chrome/Edge:</strong> Ctrl + Shift + Delete → Chọn "Cached images and files" → Clear</li>
+                        <li><strong>Firefox:</strong> Ctrl + Shift + Delete → Chọn "Cache" → Clear Now</li>
+                        <li><strong>Hoặc:</strong> Ctrl + F5 (Hard Refresh)</li>
+                    </ol>
+                </div>
+                
+                <div class="mt-4">
+                    <button class="btn btn-clear btn-lg w-100" onclick="clearCacheAndReload()">
+                        <i class="fas fa-sync-alt"></i> Clear Cache & Reload
+                    </button>
+                </div>
+                
+                <div class="mt-4">
+                    <h5>🧪 Test sau khi clear cache:</h5>
+                    <div class="test-item">
+                        <strong>Test 1:</strong> Click icon chuông → Click "Xem lịch sử đơn hàng"<br>
+                        ✅ Phải chuyển đến: <code>/lequocanh/customer/order_history.php</code><br>
+                        ❌ KHÔNG được: Trang admin
+                    </div>
+                    
+                    <div class="test-item">
+                        <strong>Test 2:</strong> Click "Xem hóa đơn & Đánh giá" trong thông báo<br>
+                        ✅ Phải thấy: Widget đánh giá ở cuối trang<br>
+                        ✅ Có thể: Chọn sao và viết nhận xét
+                    </div>
+                    
+                    <div class="test-item">
+                        <strong>Test 3:</strong> Vào trang chi tiết đơn hàng (đã duyệt)<br>
+                        ✅ Phải thấy: Widget đánh giá ở cuối trang<br>
+                        ✅ Chỉ hiển thị: Khi đơn hàng đã duyệt
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="/lequocanh/index.php" class="btn btn-primary">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a href="/lequocanh/customer/order_history.php" class="btn btn-success">
+                        <i class="fas fa-history"></i> Lịch sử đơn hàng
+                    </a>
+                    <a href="/test_notification_fixes.php" class="btn btn-info">
+                        <i class="fas fa-vial"></i> Run Tests
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+    function clearCacheAndReload() {
+        // Clear localStorage
+        localStorage.clear();
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        // Add timestamp to force reload
+        const timestamp = new Date().getTime();
+        
+        // Reload with cache bypass
+        window.location.href = window.location.href.split('?')[0] + '?t=' + timestamp;
+        
+        // Force hard reload
+        setTimeout(() => {
+            location.reload(true);
+        }, 100);
+    }
+    
+    // Auto-detect if cache might be causing issues
+    window.addEventListener('load', function() {
+        const lastClear = localStorage.getItem('lastCacheClear');
+        const now = new Date().getTime();
+        
+        if (!lastClear || (now - lastClear) > 3600000) { // 1 hour
+            console.warn('⚠️ Cache might be outdated. Consider clearing cache.');
+        }
+    });
+    </script>
+</body>
+</html>

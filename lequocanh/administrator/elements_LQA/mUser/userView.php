@@ -191,6 +191,10 @@
                     <td><input type="tel" name="dienthoai" pattern="[0-9]{10}" required /></td>
                 </tr>
                 <tr>
+                    <td>Email:</td>
+                    <td><input type="email" name="email" placeholder="Email (không bắt buộc)" /></td>
+                </tr>
+                <tr>
                     <td colspan="2" class="form-actions">
                         <button type="submit" class="btn btn-primary">Tạo mới</button>
                         <button type="reset" class="btn btn-secondary">Làm lại</button>
@@ -302,7 +306,7 @@
             Tổng số người dùng: <b><?php echo $l; ?></b>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-scroll-container">
             <table class="content-table">
                 <thead>
                     <tr>
@@ -314,6 +318,7 @@
                         <th>Ngày sinh</th>
                         <th>Địa chỉ</th>
                         <th>Điện thoại</th>
+                        <th>Email</th>
                         <th>Trạng thái</th>
                         <th>Chức năng</th>
                     </tr>
@@ -341,6 +346,7 @@
                                 <td><?php echo $u->ngaysinh; ?></td>
                                 <td><?php echo $u->diachi; ?></td>
                                 <td><?php echo $u->dienthoai; ?></td>
+                                <td><?php echo !empty($u->email) ? htmlspecialchars($u->email) : '<span style="color: #999;">Chưa có</span>'; ?></td>
                                 <td align="center">
                                     <?php if (isset($_SESSION['ADMIN'])) { ?>
                                         <a href='./elements_LQA/mUser/userAct.php?reqact=setlock&iduser=<?php echo $u->iduser; ?>&setlock=<?php echo $u->setlock; ?>'
@@ -381,8 +387,60 @@
                     ?>
                 </tbody>
             </table>
-        </div>
+        </div><!-- End table-scroll-container -->
     </div>
+
+    <style>
+        /* Scrollable Table Container */
+        .table-scroll-container {
+            max-height: 60vh;
+            min-height: 300px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 15px;
+            background: #fff;
+        }
+        
+        .table-scroll-container::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .table-scroll-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+        
+        .table-scroll-container::-webkit-scrollbar-thumb {
+            background: #007bff;
+            border-radius: 5px;
+        }
+        
+        .table-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #0056b3;
+        }
+        
+        .table-scroll-container .content-table {
+            margin-bottom: 0;
+            width: 100%;
+        }
+        
+        .table-scroll-container .content-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table-scroll-container .content-table thead th {
+            background: #343a40;
+            color: #fff;
+            padding: 12px 10px;
+            font-weight: 600;
+            border-bottom: 2px solid #007bff;
+        }
+    </style>
 
     <?php if (isset($_GET['result'])): ?>
         <?php

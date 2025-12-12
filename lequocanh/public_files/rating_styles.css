@@ -1,0 +1,192 @@
+/* ===================================
+   RATING FILTER & DISPLAY STYLES
+   For product rating filter and rating display on cards
+   =================================== */
+
+/* Rating Filter Section */
+.rating-filter .rating-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.rating-option {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.25s ease;
+    border: 1px solid transparent;
+    background-color: #fff;
+}
+
+.rating-option:hover {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    transform: translateX(2px);
+}
+
+.rating-option input[type="radio"] {
+    margin-right: 12px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #ffc107;
+}
+
+.rating-option input[type="radio"]:checked + .star-display {
+    color: #ffc107;
+    font-weight: 600;
+}
+
+.rating-option input[type="radio"]:checked ~ .text-muted {
+    color: #495057 !important;
+    font-weight: 500;
+}
+
+.star-display {
+    display: flex;
+    gap: 3px;
+    font-size: 15px;
+    color: #ffc107;
+    margin-right: 10px;
+}
+
+.star-display i {
+    transition: transform 0.2s;
+}
+
+.rating-option:hover .star-display i {
+    transform: scale(1.1);
+}
+
+/* Product Rating Display on Cards */
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    margin: 10px 0;
+    padding: 6px 0;
+}
+
+.product-rating .fa-star,
+.product-rating .fa-star-half-alt,
+.product-rating .far.fa-star {
+    color: #ffc107;
+    font-size: 14px;
+}
+
+.product-rating .rating-value {
+    font-weight: 600;
+    color: #333;
+    margin-left: 4px;
+    font-size: 15px;
+}
+
+.product-rating .text-muted {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Product Code Display */
+.product-code {
+    font-size: 11px;
+    color: #6c757d;
+    font-family: 'Courier New', monospace;
+    margin-top: 6px;
+    padding: 4px 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* Filter Tag for Active Rating */
+.filter-tag[data-type="rating"] {
+    background-color: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #856404;
+}
+
+.filter-tag[data-type="rating"]:hover {
+    background-color: #ffc107;
+    color: #fff;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .product-rating {
+        font-size: 12px;
+        gap: 4px;
+    }
+    
+    .product-rating .fa-star,
+    .product-rating .fa-star-half-alt,
+    .product-rating .far.fa-star {
+        font-size: 12px;
+    }
+    
+    .product-rating .rating-value {
+        font-size: 13px;
+    }
+    
+    .star-display {
+        font-size: 13px;
+        gap: 2px;
+    }
+    
+    .rating-option {
+        padding: 8px 10px;
+    }
+    
+    .product-code {
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+}
+
+/* Empty state for products without reviews */
+.product-rating.no-reviews {
+    opacity: 0.5;
+    font-style: italic;
+}
+
+.product-rating.no-reviews::after {
+    content: "Chưa có đánh giá";
+    font-size: 11px;
+    color: #999;
+    margin-left: 8px;
+}
+
+/* Highlight high-rated products */
+.product-rating.high-rating .rating-value {
+    color: #28a745;
+    font-weight: 700;
+}
+
+.product-rating.high-rating .fa-star {
+    color: #ffd700;
+    filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+}
+
+/* Loading animation for ratings */
+@keyframes pulse-rating {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.product-rating.loading {
+    animation: pulse-rating 1.5s ease-in-out infinite;
+}
+
+/* Filter section heading with icon */
+.filter-section.rating-filter h5 i {
+    color: #ffc107;
+    margin-right: 8px;
+}

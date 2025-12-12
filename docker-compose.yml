@@ -1,18 +1,28 @@
-version: '3.8'
+# Docker Compose Configuration
+# Port mapping strategy: Use very high ports (>20000) to avoid ALL Windows conflicts
+# Windows dynamically reserves ports, especially in ranges:
+# - 2939-3138, 8030-8529, 13000-14944
+# SAFEST: Use ports 20000+ (never reserved by Windows)
 
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8080:80"
+    # Remove port mapping since nginx will handle external requests
+    # Requests to web service will go through nginx reverse proxy
+    # Remove port mapping since nginx will handle external requests
+    # Requests to web service will go through nginx reverse proxy
     volumes:
       - .:/var/www/html
       - ./logs:/var/www/html/logs
     environment:
       - APP_ENV=development
       - DB_HOST=mysql
+      - DB_DATABASE=sales_management
+      - DB_USERNAME=app_user
+      - DB_PASSWORD=app_password
+      - DB_PORT=3306
     depends_on:
       - mysql
       - redis
@@ -20,24 +30,23 @@ services:
       - app-network
 
   mysql:
-    image: mysql:latest
+    image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: sales_management
       MYSQL_USER: app_user
       MYSQL_PASSWORD: app_password
     ports:
-      - "3306:3306"
+      - "23306:3306"  # High port - safe
     volumes:
-      - ./DB:/var/lib/mysql
-      # - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
     networks:
       - app-network
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "26379:6379"  # Very high port
     volumes:
       - redis_data:/data
     networks:
@@ -46,11 +55,13 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - "20080:80"   # Very safe high port
+      - "20443:443"  # Very safe high port
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - .:/var/www/html
+      - ./ssl-cert.pem:/etc/nginx/ssl/cert.pem
+      - ./ssl-key.pem:/etc/nginx/ssl/key.pem
     depends_on:
       - web
     networks:
@@ -59,7 +70,7 @@ services:
   monitoring:
     image: prom/prometheus
     ports:
-      - "9090:9090"
+      - "29090:9090"  # Very high port
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -68,7 +79,7 @@ services:
   grafana:
     image: grafana/grafana
     ports:
-      - "3000:3000"
+      - "23000:3000"  # Very high port
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -79,7 +90,7 @@ services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     ports:
-      - "8888:80"
+      - "28888:80"  # Very high port
     environment:
       - PMA_HOST=mysql
       - PMA_PORT=3306

@@ -42,6 +42,7 @@ $idloaihang = $_POST['idloaihang'] ?? '';
 $idThuongHieu = $_POST['idThuongHieu'] ?? '';
 $idDonViTinh = $_POST['idDonViTinh'] ?? '';
 $idNhanVien = $_POST['idNhanVien'] ?? '';
+$trang_thai = $_POST['trang_thai'] ?? 1;  // Lấy trạng thái sản phẩm, mặc định là 1 (Đang bán)
 
 // Ghi log
 file_put_contents($log_file, "Processing data:\n", FILE_APPEND);
@@ -54,6 +55,7 @@ file_put_contents($log_file, "idloaihang: $idloaihang\n", FILE_APPEND);
 file_put_contents($log_file, "idThuongHieu: $idThuongHieu\n", FILE_APPEND);
 file_put_contents($log_file, "idDonViTinh: $idDonViTinh\n", FILE_APPEND);
 file_put_contents($log_file, "idNhanVien: $idNhanVien\n", FILE_APPEND);
+file_put_contents($log_file, "trang_thai: $trang_thai\n", FILE_APPEND);
 
 // Thực hiện cập nhật
 try {
@@ -71,6 +73,12 @@ try {
     );
 
     file_put_contents($log_file, "Update result: " . ($result ? "Success" : "Failed") . "\n", FILE_APPEND);
+
+    // Cập nhật trạng thái sản phẩm nếu được thay đổi
+    if ($trang_thai) {
+        $statusResult = $hanghoa->updateProductStatus($idhanghoa, $trang_thai);
+        file_put_contents($log_file, "Status update result: " . ($statusResult ? "Success" : "Failed") . "\n", FILE_APPEND);
+    }
 
     if ($result) {
         echo json_encode([

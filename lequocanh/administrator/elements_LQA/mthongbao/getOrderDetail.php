@@ -100,15 +100,92 @@ try {
     $orderItemsStmt->execute([$orderId]);
     $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Lấy thông tin thuế và phí vận chuyển
+    $taxAmount = isset($order['thue']) ? floatval($order['thue']) : 0;
+    $shippingFee = isset($order['phi_van_chuyen']) ? floatval($order['phi_van_chuyen']) : 0;
+    $paymentStatus = isset($order['trang_thai_thanh_toan']) ? $order['trang_thai_thanh_toan'] : 'pending';
+    $shippingMethod = isset($order['shipping_method']) ? $order['shipping_method'] : '';
+    $shippingMethodName = isset($order['shipping_method_name']) ? $order['shipping_method_name'] : '';
+    $estimatedDelivery = isset($order['estimated_delivery']) ? $order['estimated_delivery'] : '';
+    
+    // Tính tổng tiền hàng (subtotal) = tổng tiền - thuế - phí vận chuyển
+    $subtotal = floatval($order['tong_tien']) - $taxAmount - $shippingFee;
+    if ($subtotal < 0) $subtotal = floatval($order['tong_tien']); // Fallback nếu dữ liệu cũ
+    
+    // Format phương thức thanh toán
+    $paymentMethodText = '';
+    switch ($order['phuong_thuc_thanh_toan']) {
+        case 'bank_transfer':
+            $paymentMethodText = 'Chuyển khoản ngân hàng';
+            break;
+        case 'momo':
+            $paymentMethodText = 'Ví MoMo';
+            break;
+        case 'cod':
+            $paymentMethodText = 'Thanh toán khi nhận hàng (COD)';
+            break;
+        default:
+            $paymentMethodText = $order['phuong_thuc_thanh_toan'];
+    }
+    
+    // Format trạng thái thanh toán
+    $paymentStatusText = '';
+    switch ($paymentStatus) {
+        case 'paid':
+            $paymentStatusText = 'Đã thanh toán';
+            break;
+        case 'pending':
+            $paymentStatusText = 'Chờ thanh toán';
+            break;
+        case 'failed':
+            $paymentStatusText = 'Thanh toán thất bại';
+            break;
+        default:
+            $paymentStatusText = $paymentStatus;
+    }
+    
+    // Format phương thức vận chuyển
+    $shippingMethodText = '';
+    if (!empty($shippingMethodName)) {
+        $shippingMethodText = $shippingMethodName;
+    } else if (!empty($shippingMethod)) {
+        switch ($shippingMethod) {
+            case 'standard':
+                $shippingMethodText = 'Giao hàng tiêu chuẩn';
+                break;
+            case 'express':
+                $shippingMethodText = 'Giao hàng nhanh';
+                break;
+            case 'ghn':
+                $shippingMethodText = 'Giao hàng nhanh (GHN)';
+                break;
+            case 'pickup':
+                $shippingMethodText = 'Nhận tại cửa hàng';
+                break;
+            default:
+                $shippingMethodText = $shippingMethod;
+        }
+    } else {
+        $shippingMethodText = 'Không xác định';
+    }
+    
     // Định dạng lại thông tin đơn hàng - sử dụng field tiếng Việt
     $formattedOrder = [
         'id' => $order['id'],
         'order_code' => $order['ma_don_hang_text'],
         'total_amount' => $order['tong_tien'],
+        'subtotal' => $subtotal,
+        'tax_amount' => $taxAmount,
+        'shipping_fee' => $shippingFee,
+        'shipping_method' => $shippingMethod,
+        'shipping_method_name' => $shippingMethodText,
+        'estimated_delivery' => $estimatedDelivery,
         'status' => $order['trang_thai'],
         'status_text' => getStatusText($order['trang_thai']),
         'status_class' => getStatusClass($order['trang_thai']),
-        'payment_method' => $order['phuong_thuc_thanh_toan'] == 'bank_transfer' ? 'Chuyển khoản ngân hàng' : $order['phuong_thuc_thanh_toan'],
+        'payment_method' => $paymentMethodText,
+        'payment_status' => $paymentStatus,
+        'payment_status_text' => $paymentStatusText,
         'created_at' => date('d/m/Y H:i', strtotime($order['ngay_tao'])),
         'updated_at' => isset($order['ngay_cap_nhat']) ? date('d/m/Y H:i', strtotime($order['ngay_cap_nhat'])) : '',
         'shipping_address' => $order['dia_chi_giao_hang'] ?? '',
@@ -117,11 +194,21 @@ try {
     
     // Định dạng lại thông tin sản phẩm - sử dụng field tiếng Việt
     foreach ($orderItems as $item) {
+        // Xử lý đường dẫn hình ảnh - sử dụng displayImage.php
+        $imageId = $item['hinhanh'];
+        $imagePath = '';
+        if (!empty($imageId) && $imageId > 0) {
+            $imagePath = './administrator/elements_LQA/mhanghoa/displayImage.php?id=' . $imageId;
+        } else {
+            $imagePath = './administrator/elements_LQA/img_LQA/no-image.png';
+        }
+        
         $formattedOrder['items'][] = [
             'id' => $item['id'],
             'product_id' => $item['ma_san_pham'],
             'product_name' => $item['tenhanghoa'],
-            'product_image' => $item['hinhanh'],
+            'product_image' => $imagePath,
+            'product_image_id' => $imageId,
             'quantity' => $item['so_luong'],
             'price' => $item['gia'],
             'total' => $item['gia'] * $item['so_luong']

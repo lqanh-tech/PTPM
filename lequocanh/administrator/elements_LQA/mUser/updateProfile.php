@@ -72,6 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $ngaysinh = isset($_POST['ngaysinh']) ? $_POST['ngaysinh'] : '';
     $diachi = isset($_POST['diachi']) ? trim($_POST['diachi']) : '';
     $dienthoai = isset($_POST['dienthoai']) ? trim($_POST['dienthoai']) : '';
+    $email = isset($_POST['email']) ? trim($_POST['email']) : null;
 
     // Validate dữ liệu
     $isValid = true;
@@ -91,14 +92,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else if (!preg_match("/^[0-9]{10,11}$/", $dienthoai)) {
         $error_message = "Số điện thoại không hợp lệ";
         $isValid = false;
+    } else if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = "Email không hợp lệ";
+        $isValid = false;
     }
 
     // Cập nhật thông tin nếu dữ liệu hợp lệ
     if ($isValid) {
         try {
-            $sql = "UPDATE user SET hoten = ?, gioitinh = ?, ngaysinh = ?, diachi = ?, dienthoai = ? WHERE iduser = ?";
+            $sql = "UPDATE user SET hoten = ?, gioitinh = ?, ngaysinh = ?, diachi = ?, dienthoai = ?, email = ? WHERE iduser = ?";
             $stmt = $db->prepare($sql);
-            $result = $stmt->execute([$hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $currentUser->iduser]);
+            $result = $stmt->execute([$hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $email, $currentUser->iduser]);
 
             if ($result) {
                 $success_message = "Cập nhật thông tin thành công";
@@ -317,6 +321,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="form-group">
                 <label for="dienthoai">Số điện thoại:</label>
                 <input type="tel" id="dienthoai" name="dienthoai" value="<?php echo htmlspecialchars($currentUser->dienthoai); ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="<?php echo isset($currentUser->email) ? htmlspecialchars($currentUser->email) : ''; ?>" placeholder="Nhập email để nhận thông báo đơn hàng">
+                <small style="color: #666; font-size: 14px;">Email sẽ được dùng để gửi thông báo khi thanh toán thành công</small>
             </div>
 
             <div class="form-actions">

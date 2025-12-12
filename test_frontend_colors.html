@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Frontend Colors</title>
+</head>
+<body>
+    <h1>Test Color Filter</h1>
+    <p>Mở Console (F12) để xem logs</p>
+    
+    <div id="colorFilterContainer">
+        <div class="loading-colors">Loading...</div>
+    </div>
+
+    <script>
+        console.log("=== TEST COLOR FILTER ===");
+        
+        // Test 1: Check container
+        const container = document.getElementById("colorFilterContainer");
+        console.log("1. Container found:", container !== null);
+        
+        // Test 2: Fetch API
+        async function testAPI() {
+            try {
+                const url = "./lequocanh/administrator/elements_LQA/mod/getAvailableColors.php";
+                console.log("2. Fetching from:", url);
+                
+                const response = await fetch(url);
+                console.log("3. Response status:", response.status);
+                console.log("4. Response OK:", response.ok);
+                
+                const text = await response.text();
+                console.log("5. Response text:", text);
+                
+                const data = JSON.parse(text);
+                console.log("6. Parsed data:", data);
+                
+                if (data.success) {
+                    console.log("✅ API SUCCESS!");
+                    console.log("   Colors found:", data.colors.length);
+                    data.colors.forEach((c, i) => {
+                        console.log(`   ${i+1}. ${c.display} (${c.en}) - ${c.count} sản phẩm`);
+                    });
+                } else {
+                    console.error("❌ API returned success=false");
+                }
+            } catch (error) {
+                console.error("❌ Error:", error);
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

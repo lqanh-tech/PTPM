@@ -60,7 +60,7 @@ if ($signature == $partnerSignature) {
 
         if ($resultCode == 0) {
             // Payment successful - Kiểm tra xem đơn hàng đã tồn tại chưa
-            $checkOrderSql = "SELECT id FROM don_hang WHERE ma_don_hang_text = ?";
+            $checkOrderSql = "SELECT id, ma_nguoi_dung FROM don_hang WHERE ma_don_hang_text = ?";
             $checkStmt = $db->prepare($checkOrderSql);
             $checkStmt->execute([$orderId]);
             $existingOrder = $checkStmt->fetch(PDO::FETCH_ASSOC);
@@ -69,12 +69,23 @@ if ($signature == $partnerSignature) {
                 // Cập nhật đơn hàng đã tồn tại
                 $updateSql = "UPDATE don_hang SET
                              trang_thai_thanh_toan = 'paid',
+                             trang_thai = 'approved',
                              phuong_thuc_thanh_toan = 'momo',
                              ngay_cap_nhat = NOW()
                              WHERE ma_don_hang_text = ?";
 
                 $stmt = $db->prepare($updateSql);
                 $result = $stmt->execute([$orderId]);
+                
+                // GỬI THÔNG BÁO ĐẾN KHÁCH HÀNG
+                try {
+                    require_once __DIR__ . '/../mod/CustomerNotificationManager.php';
+                    $notificationManager = new CustomerNotificationManager();
+                    $notificationManager->notifyPaymentConfirmed($existingOrder['id'], $existingOrder['ma_nguoi_dung']);
+                    error_log("MoMo IPN - Notification sent for order " . $existingOrder['id']);
+                } catch (Exception $notifError) {
+                    error_log("MoMo IPN - Error sending notification: " . $notifError->getMessage());
+                }
             } else {
                 // Tạo đơn hàng mới từ session hoặc extraData
                 $extraData = json_decode(base64_decode($_POST['extraData'] ?? ''), true);

@@ -1,0 +1,14 @@
+# Prevent directory listing
+Options -Indexes
+
+# Disable PHP execution
+<FilesMatch "\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Only allow image and document files
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf|doc|docx|xls|xlsx)$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>

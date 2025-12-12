@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Test Phase 2 - Shipping Fee Configuration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); 
+        }
+        h1 { 
+            color: #2c3e50; 
+            border-bottom: 4px solid #3498db; 
+            padding-bottom: 15px; 
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+        h2 { 
+            color: #34495e; 
+            margin: 30px 0 15px 0; 
+            padding: 10px;
+            background: #ecf0f1;
+            border-left: 5px solid #3498db;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+        }
+        .test-result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .test-pass {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        .test-fail {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        .test-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+        }
+        .test-info {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            color: #0c5460;
+        }
+        .icon {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+            text-align: center;
+        }
+        .summary h2 {
+            color: white;
+            background: transparent;
+            border: none;
+            margin: 0 0 20px 0;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: bold;
+            display: block;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <h1>đŸ§ª TEST PHASE 2: Cáº¥u hĂ¬nh PhĂ­ Váº­n Chuyá»ƒn</h1>
+        <p style='color: #7f8c8d; margin-bottom: 30px;'>
+            <strong>Má»¥c tiĂªu:</strong> Kiá»ƒm tra há»‡ thá»‘ng cáº¥u hĂ¬nh phĂ­ váº­n chuyá»ƒn linh hoáº¡t
+PHP Warning:  Undefined array key "delivery_time" in /var/www/html/test_phase2_shipping.php on line 196
+PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /var/www/html/test_phase2_shipping.php on line 196
+PHP Warning:  Undefined array key "price_multiplier" in /var/www/html/test_phase2_shipping.php on line 197
+PHP Warning:  Undefined array key "delivery_time" in /var/www/html/test_phase2_shipping.php on line 196
+PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /var/www/html/test_phase2_shipping.php on line 196
+PHP Warning:  Undefined array key "price_multiplier" in /var/www/html/test_phase2_shipping.php on line 197
+PHP Warning:  Undefined array key "delivery_time" in /var/www/html/test_phase2_shipping.php on line 196
+PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /var/www/html/test_phase2_shipping.php on line 196
+PHP Warning:  Undefined array key "price_multiplier" in /var/www/html/test_phase2_shipping.php on line 197
+PHP Warning:  Undefined array key "delivery_time" in /var/www/html/test_phase2_shipping.php on line 196
+PHP Deprecated:  htmlspecialchars(): Passing null to parameter #1 ($string) of type string is deprecated in /var/www/html/test_phase2_shipping.php on line 196
+PHP Warning:  Undefined array key "price_multiplier" in /var/www/html/test_phase2_shipping.php on line 197
+        </p><h2>đŸ“‹ TEST 1: Kiá»ƒm tra báº£ng shipping_methods</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Báº£ng shipping_methods</strong><br>ÄĂ£ tá»“n táº¡i trong database</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Dá»¯ liá»‡u phÆ°Æ¡ng thá»©c váº­n chuyá»ƒn</strong><br>CĂ³ 4 phÆ°Æ¡ng thá»©c</div></div><table><tr><th>MĂ£</th><th>TĂªn</th><th>Thá»i gian giao</th><th>Há»‡ sá»‘ giĂ¡</th><th>Tráº¡ng thĂ¡i</th></tr><tr><td><code>standard</code></td><td>Giao hĂ ng tiĂªu chuáº©n</td><td></td><td>x</td><td>âœ… Hoáº¡t Ä‘á»™ng</td></tr><tr><td><code>express</code></td><td>Giao hĂ ng nhanh</td><td></td><td>x</td><td>âœ… Hoáº¡t Ä‘á»™ng</td></tr><tr><td><code>pickup</code></td><td>Láº¥y táº¡i cá»­a hĂ ng</td><td></td><td>x</td><td>âœ… Hoáº¡t Ä‘á»™ng</td></tr><tr><td><code>ghn</code></td><td>Giao HĂ ng Nhanh (GHN)</td><td></td><td>x</td><td>âœ… Hoáº¡t Ä‘á»™ng</td></tr></table></div><h2>đŸ’° TEST 2: Kiá»ƒm tra báº£ng shipping_fees</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Báº£ng shipping_fees</strong><br>ÄĂ£ tá»“n táº¡i trong database</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Cáº¥u trĂºc báº£ng</strong><br>CĂ³ Ä‘áº§y Ä‘á»§ cĂ¡c cá»™t cáº§n thiáº¿t</div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Dá»¯ liá»‡u cáº¥u hĂ¬nh phĂ­</strong><br>CĂ³ 4 cáº¥u hĂ¬nh</div></div><table><tr><th>TĂªn</th><th>PhĂ­ cÆ¡ báº£n</th><th>PhĂ­/kg</th><th>Miá»…n phĂ­ tá»«</th><th>Æ¯u tiĂªn</th></tr><tr><td>PhĂ­ cÆ¡ báº£n ná»™i thĂ nh</td><td>30.000â‚«</td><td>0â‚«</td><td>500.000â‚«</td><td>10</td></tr><tr><td>PhĂ­ cÆ¡ báº£n ngoáº¡i thĂ nh</td><td>50.000â‚«</td><td>0â‚«</td><td>1.000.000â‚«</td><td>5</td></tr><tr><td>PhĂ­ theo trá»ng lÆ°á»£ng 1-5kg</td><td>30.000â‚«</td><td>10.000â‚«</td><td>-</td><td>8</td></tr><tr><td>PhĂ­ theo trá»ng lÆ°á»£ng &gt;5kg</td><td>30.000â‚«</td><td>8.000â‚«</td><td>-</td><td>7</td></tr></table></div><h2>â™ï¸ TEST 3: Kiá»ƒm tra Module Quáº£n lĂ½</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Module Admin</strong><br>File tá»“n táº¡i: <code>lequocanh/administrator/elements_LQA/madmin/shipping_config.php</code></div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Chá»©c nÄƒng Module</strong><br>CĂ³ Ä‘áº§y Ä‘á»§ CRUD operations</div></div></div><h2>đŸ”Œ TEST 4: Kiá»ƒm tra API tĂ­nh phĂ­</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>API Calculate Shipping</strong><br>File tá»“n táº¡i: <code>lequocanh/administrator/elements_LQA/mgiohang/calculate_shipping_api.php</code></div></div><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>Ná»™i dung API</strong><br>CĂ³ logic tĂ­nh phĂ­ vĂ  tráº£ vá» JSON</div></div></div><h2>đŸ›’ TEST 5: Kiá»ƒm tra tĂ­ch há»£p Checkout</h2><div class='test-section'><div class='test-result test-pass'><span class='icon'>âœ…</span><div><strong>TĂ­ch há»£p Checkout</strong><br>ÄĂ£ tĂ­ch há»£p API tĂ­nh phĂ­ vĂ o checkout</div></div></div><h2>đŸ‘ï¸ TEST 6: Kiá»ƒm tra View</h2><div class='test-section'><div class='test-result test-warning'><span class='icon'>â ï¸</span><div><strong>View v_shipping_fees_detail</strong><br>ChÆ°a tá»“n táº¡i (khĂ´ng báº¯t buá»™c)</div></div></div><div class='summary'><h2>đŸ“ Káº¾T QUáº¢ Tá»”NG Há»¢P - PHASE 2</h2><div class='stats'><div class='stat-item'><span class='stat-number'>11</span><span class='stat-label'>Tá»•ng sá»‘ test</span></div><div class='stat-item'><span class='stat-number' style='color: #2ecc71;'>10</span><span class='stat-label'>âœ… Passed</span></div><div class='stat-item'><span class='stat-number' style='color: #f39c12;'>1</span><span class='stat-label'>â ï¸ Warnings</span></div><div class='stat-item'><span class='stat-number' style='color: #e74c3c;'>0</span><span class='stat-label'>âŒ Failed</span></div><div class='stat-item'><span class='stat-number'>90.9%</span><span class='stat-label'>Tá»· lá»‡ hoĂ n thĂ nh</span></div></div><div class='test-result test-warning' style='margin-top: 20px;'><span class='icon'>â ï¸</span><div><strong>Phase 2 CÆ  Báº¢N ÄĂƒ HOĂ€N THĂ€NH</strong><br>CĂ³ 1 cáº£nh bĂ¡o. NĂªn hoĂ n thiá»‡n trÆ°á»›c khi chuyá»ƒn sang Phase 3.</div></div></div></div>
+</body>
+</html>

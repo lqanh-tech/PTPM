@@ -49,7 +49,11 @@ try {
             case 'pending':
                 return '<span class="badge bg-warning">Chờ xử lý</span>';
             case 'approved':
-                return '<span class="badge bg-success">Đã duyệt</span>';
+                return '<span class="badge bg-info">Đang giao hàng</span>';
+            case 'delivered':
+                return '<span class="badge bg-primary">Đã giao hàng</span>';
+            case 'completed':
+                return '<span class="badge bg-success">Hoàn tất</span>';
             case 'cancelled':
                 return '<span class="badge bg-danger">Đã hủy</span>';
             default:
@@ -117,10 +121,6 @@ try {
                                 <td><?php echo date('d/m/Y H:i:s', strtotime($order['ngay_tao'])); ?></td>
                             </tr>
                             <tr>
-                                <td><strong>Tổng tiền:</strong></td>
-                                <td><strong class="text-success"><?php echo number_format($order['tong_tien'], 0, ',', '.'); ?> đ</strong></td>
-                            </tr>
-                            <tr>
                                 <td><strong>Trạng thái:</strong></td>
                                 <td><?php echo formatStatus($order['trang_thai']); ?></td>
                             </tr>
@@ -135,6 +135,18 @@ try {
                                 <tr>
                                     <td><strong>Địa chỉ giao hàng:</strong></td>
                                     <td><?php echo htmlspecialchars($order['dia_chi_giao_hang']); ?></td>
+                                </tr>
+                            <?php endif; ?>
+                            <?php if (isset($order['shipping_method_name']) && !empty($order['shipping_method_name'])): ?>
+                                <tr>
+                                    <td><strong>Phương thức vận chuyển:</strong></td>
+                                    <td><?php echo htmlspecialchars($order['shipping_method_name']); ?></td>
+                                </tr>
+                            <?php endif; ?>
+                            <?php if (isset($order['estimated_delivery']) && !empty($order['estimated_delivery'])): ?>
+                                <tr>
+                                    <td><strong>Dự kiến giao hàng:</strong></td>
+                                    <td><span class="text-success"><?php echo htmlspecialchars($order['estimated_delivery']); ?></span></td>
                                 </tr>
                             <?php endif; ?>
                         </table>
@@ -216,11 +228,35 @@ try {
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="3" class="text-end">Tạm tính:</td>
+                                            <td class="text-end">
+                                                <?php echo number_format($tongTien, 0, ',', '.'); ?> đ
+                                            </td>
+                                        </tr>
+                                        <?php if (isset($order['thue']) && $order['thue'] > 0): ?>
+                                        <tr>
+                                            <td colspan="3" class="text-end">Thuế VAT (10%):</td>
+                                            <td class="text-end">
+                                                <?php echo number_format($order['thue'], 0, ',', '.'); ?> đ
+                                            </td>
+                                        </tr>
+                                        <?php endif; ?>
+                                        <?php if (isset($order['phi_van_chuyen']) && $order['phi_van_chuyen'] > 0): ?>
+                                        <tr>
+                                            <td colspan="3" class="text-end">Phí vận chuyển:</td>
+                                            <td class="text-end">
+                                                <?php echo number_format($order['phi_van_chuyen'], 0, ',', '.'); ?> đ
+                                            </td>
+                                        </tr>
+                                        <?php endif; ?>
+                                    </tfoot>
                                     <tfoot class="table-dark">
                                         <tr>
                                             <td colspan="3" class="text-end"><strong>Tổng cộng:</strong></td>
                                             <td class="text-end">
-                                                <strong class="text-warning"><?php echo number_format($tongTien, 0, ',', '.'); ?> đ</strong>
+                                                <strong class="text-warning"><?php echo number_format($order['tong_tien'], 0, ',', '.'); ?> đ</strong>
                                             </td>
                                         </tr>
                                     </tfoot>
