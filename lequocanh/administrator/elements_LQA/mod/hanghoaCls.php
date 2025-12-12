@@ -9,6 +9,22 @@ class hanghoa
 
     private $db;
     private static $statusColumnInfo = null;
+    private $lastFilterDebug = [];
+
+    private function buildStatusCondition($alias = '')
+    {
+        $info = $this->getStatusColumnInfo();
+        if (!$info['column']) {
+            return '';
+        }
+
+        $prefix = $alias ? $alias . '.' : '';
+        if ($info['column'] === 'trangthai') {
+            return "({$prefix}{$info['column']} IS NULL OR {$prefix}{$info['column']} != 'ngung_ban')";
+        }
+
+        return "({$prefix}{$info['column']} IS NULL OR {$prefix}{$info['column']} != 2)";
+    }
 
     public function __construct()
     {
@@ -1337,15 +1353,29 @@ class hanghoa
     public function filterProducts($filters)
     {
         try {
-            // Query với rating subqueries
-            // Lọc sản phẩm: chỉ lấy những sản phẩm không bị ngừng bán (trang_thai != 2)
-            $sql = 'SELECT DISTINCT h.*,
-                    (SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as average_rating,
-                    (SELECT COUNT(*) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as review_count
-                    FROM hanghoa h';
+            $ratingSelect = '0 as average_rating';
+            $reviewCountSelect = '0 as review_count';
+
+            try {
+                $checkReviews = $this->db->query("SHOW TABLES LIKE 'product_reviews'");
+                if ($checkReviews && $checkReviews->rowCount() > 0) {
+                    $hasProductCol = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'ma_san_pham'");
+                    $hasRatingCol = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'rating'");
+                    if ($hasProductCol && $hasProductCol->rowCount() > 0 && $hasRatingCol && $hasRatingCol->rowCount() > 0) {
+                        $ratingSelect = '(SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as average_rating';
+                        $reviewCountSelect = '(SELECT COUNT(*) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as review_count';
+                    }
+                }
+            } catch (PDOException $e) {
+                $ratingSelect = '0 as average_rating';
+                $reviewCountSelect = '0 as review_count';
+            }
+
+            $sql = "SELECT DISTINCT h.*,\n                    $ratingSelect,\n                    $reviewCountSelect\n                    FROM hanghoa h";
 
             $joins = [];
-            $conditions = ['h.trang_thai != 2'];
+            $statusCondition = $this->buildStatusCondition('h');
+            $conditions = $statusCondition ? [$statusCondition] : [];
             $params = [];
 
             // Color and Size filters using thuoctinhhh table
@@ -1460,6 +1490,7 @@ class hanghoa
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
             $stmt->setFetchMode(PDO::FETCH_OBJ);
+            $this->lastFilterDebug = ['sql' => $sql, 'params' => $params];
 
             return $stmt->fetchAll();
         } catch (PDOException $e) {
@@ -1468,6 +1499,11 @@ class hanghoa
             error_log("Params: " . print_r($params ?? [], true));
             return [];
         }
+    }
+
+    public function getLastFilterDebug()
+    {
+        return $this->lastFilterDebug;
     }
 
     /**

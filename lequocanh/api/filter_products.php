@@ -33,6 +33,7 @@ try {
     
     // Get filtered products
     $products = $hanghoa->filterProducts($filters);
+    $debugMode = isset($_GET['debug']);
     
     // Convert objects to arrays and format rating data for JSON encoding
     $productsArray = [];
@@ -58,13 +59,18 @@ try {
         $productsArray[] = $productData;
     }
     
-    // Return success response
-    echo json_encode([
+    $response = [
         'success' => true,
         'products' => $productsArray,
         'total' => count($productsArray),
         'filters_applied' => $filters
-    ], JSON_UNESCAPED_UNICODE);
+    ];
+
+    if ($debugMode) {
+        $response['debug'] = $hanghoa->getLastFilterDebug();
+    }
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
     // Return error response
