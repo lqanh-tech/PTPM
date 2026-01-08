@@ -1,7 +1,5 @@
 <?php
-/**
- * Trang hiển thị nội dung tĩnh (Giới thiệu, Chính sách, Hướng dẫn, Blog)
- */
+
 require_once __DIR__ . '/administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/PageManager.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
@@ -13,7 +11,6 @@ $pageManager = new PageManager();
 $giohang = new GioHang();
 $cartItemCount = $giohang->getCartItemCount();
 
-// Lấy slug từ URL
 $slug = $_GET['slug'] ?? '';
 $page = null;
 
@@ -21,7 +18,6 @@ if ($slug) {
     $page = $pageManager->getPageBySlug($slug);
 }
 
-// Nếu không tìm thấy trang
 if (!$page) {
     header('HTTP/1.0 404 Not Found');
 }

@@ -1,36 +1,31 @@
 <?php
-// Xử lý thông báo
+
 $successMessage = isset($_SESSION['success_message']) ? $_SESSION['success_message'] : '';
 $errorMessage = isset($_SESSION['error_message']) ? $_SESSION['error_message'] : '';
 
-// Xóa thông báo sau khi hiển thị
 unset($_SESSION['success_message']);
 unset($_SESSION['error_message']);
 
-// Lấy thông tin tìm kiếm
 $searchKeyword = isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '';
 $searchField = isset($_GET['field']) ? $_GET['field'] : 'all';
-$filterType = isset($_GET['type']) ? $_GET['type'] : 'all'; // all, new, frequent, potential
+$filterType = isset($_GET['type']) ? $_GET['type'] : 'all';
 
-// Lấy thống kê khách hàng
 require_once __DIR__ . '/../mod/database.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Thống kê khách hàng
 $stats = [
     'total' => 0,
-    'new' => 0,        // Đăng ký trong 30 ngày gần đây
-    'frequent' => 0,   // Có >= 3 đơn hàng
-    'potential' => 0,  // Khách hàng tiềm năng
-    'active' => 0      // Có đơn hàng trong 30 ngày gần đây
+    'new' => 0,
+    'frequent' => 0,
+    'potential' => 0,
+    'active' => 0
 ];
 
 try {
-    // Tổng số khách hàng
+
     $stats['total'] = count($customers);
     
-    // Khách hàng mới (đăng ký trong 30 ngày)
     $newCustomersSql = "SELECT COUNT(DISTINCT u.iduser) as count 
                         FROM user u 
                         LEFT JOIN nhanvien nv ON nv.iduser = u.iduser
@@ -40,7 +35,6 @@ try {
     $stmt = $conn->query($newCustomersSql);
     $stats['new'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
-    // Khách hàng thường xuyên (có >= 3 đơn hàng đã duyệt)
     $frequentSql = "SELECT COUNT(*) as count FROM (
                         SELECT dh.ma_nguoi_dung, COUNT(*) as order_count
                         FROM don_hang dh
@@ -51,10 +45,6 @@ try {
     $stmt = $conn->query($frequentSql);
     $stats['frequent'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
-    // Khách hàng tiềm năng:
-    // - Có 1-2 đơn hàng thành công (chưa phải thường xuyên)
-    // - Tổng chi tiêu >= 500.000đ
-    // - Có hoạt động trong 60 ngày gần đây
     $potentialSql = "SELECT COUNT(*) as count FROM (
                         SELECT dh.ma_nguoi_dung, 
                                COUNT(*) as order_count,
@@ -70,7 +60,6 @@ try {
     $stmt = $conn->query($potentialSql);
     $stats['potential'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
-    // Khách hàng hoạt động (có đơn hàng trong 30 ngày)
     $activeSql = "SELECT COUNT(DISTINCT ma_nguoi_dung) as count 
                   FROM don_hang 
                   WHERE ngay_tao >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
@@ -81,7 +70,6 @@ try {
     error_log("Error getting customer stats: " . $e->getMessage());
 }
 
-// Lọc khách hàng theo loại
 $filteredCustomers = $customers;
 if ($filterType !== 'all') {
     $filteredCustomers = [];
@@ -89,14 +77,14 @@ if ($filterType !== 'all') {
         $username = $customer['username'];
         
         if ($filterType === 'new') {
-            // Khách hàng mới: đăng ký trong 30 ngày
+
             $regDate = strtotime($customer['ngaytao']);
             $thirtyDaysAgo = strtotime('-30 days');
             if ($regDate >= $thirtyDaysAgo) {
                 $filteredCustomers[] = $customer;
             }
         } elseif ($filterType === 'frequent') {
-            // Khách hàng thường xuyên: >= 3 đơn hàng
+
             $orderCountSql = "SELECT COUNT(*) as count FROM don_hang WHERE ma_nguoi_dung = ? AND trang_thai = 'approved'";
             $stmt = $conn->prepare($orderCountSql);
             $stmt->execute([$username]);
@@ -105,7 +93,7 @@ if ($filterType !== 'all') {
                 $filteredCustomers[] = $customer;
             }
         } elseif ($filterType === 'potential') {
-            // Khách hàng tiềm năng: 1-2 đơn, chi tiêu >= 500k, hoạt động trong 60 ngày
+
             $potentialSql = "SELECT COUNT(*) as order_count, 
                                     COALESCE(SUM(tong_tien), 0) as total_spent,
                                     MAX(ngay_tao) as last_order
@@ -241,7 +229,6 @@ if ($filterType !== 'all') {
     color: #922b21;
 }
 
-/* Modal styles */
 .customer-detail-modal .modal-dialog {
     max-width: 900px;
 }
@@ -429,7 +416,7 @@ if ($filterType !== 'all') {
                         </thead>
                         <tbody>
                             <?php foreach ($filteredCustomers as $customer): 
-                                // Lấy thông tin đơn hàng
+
                                 $orderCountSql = "SELECT COUNT(*) as count FROM don_hang WHERE ma_nguoi_dung = ?";
                                 $stmt = $conn->prepare($orderCountSql);
                                 $stmt->execute([$customer['username']]);
@@ -440,20 +427,17 @@ if ($filterType !== 'all') {
                                 $stmt->execute([$customer['username']]);
                                 $totalSpent = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
                                 
-                                // Lấy thêm thông tin để xác định tiềm năng
                                 $lastOrderSql = "SELECT MAX(ngay_tao) as last_order FROM don_hang WHERE ma_nguoi_dung = ? AND trang_thai = 'approved'";
                                 $stmt = $conn->prepare($lastOrderSql);
                                 $stmt->execute([$customer['username']]);
                                 $lastOrderData = $stmt->fetch(PDO::FETCH_ASSOC);
                                 $lastOrderTime = $lastOrderData['last_order'] ? strtotime($lastOrderData['last_order']) : 0;
                                 
-                                // Đếm đơn hàng approved
                                 $approvedCountSql = "SELECT COUNT(*) as count FROM don_hang WHERE ma_nguoi_dung = ? AND trang_thai = 'approved'";
                                 $stmt = $conn->prepare($approvedCountSql);
                                 $stmt->execute([$customer['username']]);
                                 $approvedCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
                                 
-                                // Xác định loại khách hàng
                                 $isNew = strtotime($customer['ngaytao']) >= strtotime('-30 days');
                                 $isFrequent = $approvedCount >= 3;
                                 $sixtyDaysAgo = strtotime('-60 days');
@@ -564,7 +548,6 @@ function renderCustomerDetail(data) {
     const orders = data.orders;
     const stats = data.stats;
     
-    // Kiểm tra đơn hàng gần nhất trong 60 ngày
     const sixtyDaysAgo = Date.now() - 60*24*60*60*1000;
     const lastOrderDate = orders.length > 0 ? new Date(orders[0].ngay_dat).getTime() : 0;
     const isPotential = stats.approved_orders >= 1 && stats.approved_orders <= 2 

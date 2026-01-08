@@ -5,19 +5,15 @@ require_once './elements_LQA/mod/mphieunhapCls.php';
 require_once './elements_LQA/mod/nhacungcapCls.php';
 require_once './elements_LQA/mod/nhanvienCls.php';
 
-// Khởi tạo các đối tượng
 $phieuNhapObj = new MPhieuNhap();
 $nccObj = new nhacungcap();
 $nvObj = new NhanVien();
 
-// Lấy danh sách phiếu nhập
 $list_phieunhap = $phieuNhapObj->getAllPhieuNhap();
 
-// Lấy danh sách nhà cung cấp và nhân viên cho form thêm mới
 $list_ncc = $nccObj->NhacungcapGetAll();
 $list_nv = $nvObj->nhanvienGetAll();
 
-// Tạo mã phiếu nhập mới tự động
 $maPhieuNhap = 'PN' . date('YmdHis');
 ?>
 
@@ -97,7 +93,7 @@ $maPhieuNhap = 'PN' . date('YmdHis');
             <?php
             if (!empty($list_phieunhap)) {
                 foreach ($list_phieunhap as $pn) {
-                    // Xác định trạng thái
+
                     $trangThai = "";
                     $trangThaiClass = "";
                     switch ($pn->trangThai) {
@@ -129,7 +125,7 @@ $maPhieuNhap = 'PN' . date('YmdHis');
                                 <i class="fas fa-eye"></i> Xem
                             </a>
 
-                            <?php if ($pn->trangThai == 0) { // Chỉ hiển thị các nút này nếu phiếu nhập chưa được duyệt
+                            <?php if ($pn->trangThai == 0) {
                             ?>
                                 <!-- Sửa phiếu nhập -->
                                 <a href="index.php?req=mphieunhapedit&idpn=<?php echo $pn->idPhieuNhap; ?>" class="btn-edit">

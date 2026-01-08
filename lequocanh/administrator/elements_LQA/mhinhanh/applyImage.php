@@ -9,31 +9,27 @@ require_once("../mod/hanghoaCls.php");
 header('Content-Type: application/json; charset=utf-8');
 
 try {
-    // Nhận dữ liệu từ request
+
     $data = json_decode(file_get_contents('php://input'), true);
 
     if (isset($data['image_id'])) {
         $imageId = (int)$data['image_id'];
         $hanghoa = new hanghoa();
 
-        // Lấy thông tin hình ảnh
         $imageInfo = $hanghoa->GetHinhAnhById($imageId);
 
         if (!$imageInfo) {
             throw new Exception("Không tìm thấy hình ảnh");
         }
 
-        // Lấy tên file không có phần mở rộng
         $fileName = pathinfo($imageInfo->ten_file, PATHINFO_FILENAME);
 
-        // Tìm sản phẩm có tên trùng với tên file
         $matchingProducts = $hanghoa->FindProductsByExactName($fileName);
 
         if (empty($matchingProducts)) {
             throw new Exception("Không tìm thấy sản phẩm nào có tên trùng khớp với tên file '{$fileName}'");
         }
 
-        // Áp dụng hình ảnh cho các sản phẩm tìm thấy
         $appliedCount = 0;
         $appliedProducts = [];
 

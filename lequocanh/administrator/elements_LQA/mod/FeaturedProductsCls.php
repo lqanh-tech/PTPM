@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Featured Products Manager
- * Quản lý sản phẩm nổi bật, mới, khuyến mãi
- */
-
 require_once __DIR__ . '/database.php';
 
 class FeaturedProducts
@@ -16,9 +11,6 @@ class FeaturedProducts
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Lấy sản phẩm nổi bật
-     */
     public function getFeaturedProducts($limit = 8)
     {
         $sql = "SELECT h.*, 
@@ -49,9 +41,6 @@ class FeaturedProducts
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy sản phẩm mới
-     */
     public function getNewProducts($limit = 8)
     {
         $sql = "SELECT h.*, 
@@ -82,9 +71,6 @@ class FeaturedProducts
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy sản phẩm khuyến mãi
-     */
     public function getSaleProducts($limit = 8)
     {
         $sql = "SELECT h.*, 
@@ -108,9 +94,6 @@ class FeaturedProducts
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Đánh dấu sản phẩm nổi bật
-     */
     public function setFeatured($idhanghoa, $is_featured = 1)
     {
         $sql = "UPDATE hanghoa SET is_featured = ? WHERE idhanghoa = ?";
@@ -118,9 +101,6 @@ class FeaturedProducts
         return $stmt->execute([$is_featured, $idhanghoa]);
     }
 
-    /**
-     * Đánh dấu sản phẩm mới
-     */
     public function setNew($idhanghoa, $is_new = 1)
     {
         $sql = "UPDATE hanghoa SET is_new = ? WHERE idhanghoa = ?";
@@ -128,9 +108,6 @@ class FeaturedProducts
         return $stmt->execute([$is_new, $idhanghoa]);
     }
 
-    /**
-     * Thiết lập khuyến mãi
-     */
     public function setSale($idhanghoa, $sale_price, $sale_end_date = null)
     {
         $sql = "UPDATE hanghoa 
@@ -143,9 +120,6 @@ class FeaturedProducts
         return $stmt->execute([$sale_price, $sale_end_date, $idhanghoa]);
     }
 
-    /**
-     * Hủy khuyến mãi
-     */
     public function removeSale($idhanghoa)
     {
         $sql = "UPDATE hanghoa 
@@ -158,9 +132,6 @@ class FeaturedProducts
         return $stmt->execute([$idhanghoa]);
     }
 
-    /**
-     * Tăng lượt xem
-     */
     public function incrementViewCount($idhanghoa)
     {
         $sql = "UPDATE hanghoa SET view_count = view_count + 1 WHERE idhanghoa = ?";
@@ -168,9 +139,6 @@ class FeaturedProducts
         return $stmt->execute([$idhanghoa]);
     }
 
-    /**
-     * Lấy sản phẩm xem nhiều nhất
-     */
     public function getMostViewedProducts($limit = 8)
     {
         $sql = "SELECT h.*, 

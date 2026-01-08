@@ -1,11 +1,5 @@
 <?php
 
-/**
- * File: orderDetailAjax.php
- * AJAX endpoint để lấy chi tiết đơn hàng
- */
-
-// Kết nối database
 require_once '../mod/database.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
@@ -18,7 +12,7 @@ if ($order_id <= 0) {
 }
 
 try {
-    // Lấy thông tin đơn hàng
+
     $orderSql = "SELECT dh.*, u.hoten, u.username, u.dienthoai, u.diachi
                  FROM don_hang dh
                  LEFT JOIN user u ON dh.ma_nguoi_dung COLLATE utf8mb4_general_ci = u.username COLLATE utf8mb4_general_ci
@@ -32,7 +26,6 @@ try {
         exit;
     }
 
-    // Lấy chi tiết sản phẩm trong đơn hàng
     $itemsSql = "SELECT ctdh.*, hh.tenhanghoa, hh.hinhanh, hh.giathamkhao
                  FROM chi_tiet_don_hang ctdh
                  LEFT JOIN hanghoa hh ON ctdh.ma_san_pham = hh.idhanghoa
@@ -42,7 +35,6 @@ try {
     $itemsStmt->execute([$order_id]);
     $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Hàm format trạng thái
     function formatStatus($status)
     {
         switch ($status) {
@@ -61,7 +53,6 @@ try {
         }
     }
 
-    // Hàm format trạng thái thanh toán
     function formatPaymentStatus($status)
     {
         switch ($status) {
@@ -76,7 +67,6 @@ try {
         }
     }
 
-    // Hàm format phương thức thanh toán
     function formatPaymentMethod($method)
     {
         switch ($method) {

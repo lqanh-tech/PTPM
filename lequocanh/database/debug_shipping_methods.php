@@ -1,7 +1,4 @@
 <?php
-/**
- * Debug Shipping Methods - Kiểm tra dữ liệu phương thức vận chuyển
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -11,7 +8,6 @@ try {
     echo "<h2>Shipping Methods - Database Data</h2>\n";
     echo "<pre>\n";
     
-    // Lấy dữ liệu từ shipping_methods
     $stmt = $db->query("SELECT * FROM shipping_methods ORDER BY sort_order DESC");
     $methods = $stmt->fetchAll(PDO::FETCH_ASSOC);
     

@@ -1,13 +1,10 @@
 <?php
-/**
- * Debug page - Kiểm tra lỗi khi nhân viên truy cập trang quản trị
- */
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 echo "<h2>Debug Page</h2>";
 
-// Start session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

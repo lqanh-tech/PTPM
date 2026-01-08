@@ -1,10 +1,5 @@
 <?php
-/**
- * Hệ thống ghi nhật ký truy cập menu
- * Tự động ghi lại khi người dùng truy cập vào các trang quản lý
- */
 
-// Tìm và include helper
 $helperPaths = [
     __DIR__ . '/nhatKyHoatDongHelper.php',
     __DIR__ . '/../mnhatkyhoatdong/nhatKyHoatDongHelper.php',
@@ -25,15 +20,11 @@ if (!$foundHelper) {
     return;
 }
 
-/**
- * Ghi nhật ký truy cập menu
- */
 function ghiNhatKyTruyCapMenu($username, $menuReq, $menuName) {
     if (empty($username) || empty($menuReq)) {
         return false;
     }
     
-    // Mapping các menu với đối tượng và hành động
     $menuMapping = [
         'hanghoaview' => ['Sản phẩm', 'Xem danh sách sản phẩm'],
         'loaihangview' => ['Loại hàng', 'Xem danh sách loại hàng'],
@@ -61,12 +52,9 @@ function ghiNhatKyTruyCapMenu($username, $menuReq, $menuName) {
     return ghiNhatKyHoatDong($username, 'Truy cập', $doiTuong, null, $chiTiet);
 }
 
-/**
- * Ghi nhật ký thời gian ở lại trang
- */
 function ghiNhatKyThoiGianTrang($username, $menuReq, $thoiGianGiay) {
     if (empty($username) || empty($menuReq) || $thoiGianGiay < 5) {
-        return false; // Chỉ ghi nếu ở lại ít nhất 5 giây
+        return false;
     }
     
     $phut = floor($thoiGianGiay / 60);
@@ -95,9 +83,6 @@ function ghiNhatKyThoiGianTrang($username, $menuReq, $thoiGianGiay) {
     return ghiNhatKyHoatDong($username, 'Làm việc', $doiTuong, null, $chiTiet);
 }
 
-/**
- * Ghi nhật ký các thao tác chi tiết trong trang
- */
 function ghiNhatKyThaoTacChiTiet($username, $thaoTac, $doiTuong, $doiTuongId = null, $chiTiet = '') {
     if (empty($username) || empty($thaoTac) || empty($doiTuong)) {
         return false;
@@ -106,14 +91,10 @@ function ghiNhatKyThaoTacChiTiet($username, $thaoTac, $doiTuong, $doiTuongId = n
     return ghiNhatKyHoatDong($username, $thaoTac, $doiTuong, $doiTuongId, $chiTiet);
 }
 
-/**
- * Auto-log khi include file này
- */
 if (isset($_SESSION['USER']) || isset($_SESSION['ADMIN'])) {
     $currentUser = isset($_SESSION['USER']) ? $_SESSION['USER'] : $_SESSION['ADMIN'];
     $currentReq = isset($_GET['req']) ? $_GET['req'] : 'index';
     
-    // Chỉ ghi nhật ký cho các trang quan trọng, không ghi cho index
     if ($currentReq !== 'index' && !empty($currentReq)) {
         ghiNhatKyTruyCapMenu($currentUser, $currentReq, '');
     }

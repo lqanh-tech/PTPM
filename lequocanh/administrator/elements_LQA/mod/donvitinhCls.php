@@ -19,7 +19,6 @@ class DonViTinh
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Lấy tất cả các đơn vị tính
     public function donvitinhGetAll()
     {
         $sql = 'SELECT * FROM donvitinh';
@@ -34,7 +33,6 @@ class DonViTinh
         return $getAll->fetchAll();
     }
 
-    // Thêm đơn vị tính mới
     public function donvitinhAdd($tenDonViTinh, $moTa, $ghiChu)
     {
         $sql = "INSERT INTO donvitinh (tenDonViTinh, moTa, ghiChu) VALUES (?, ?, ?)";
@@ -50,7 +48,6 @@ class DonViTinh
         return $add->rowCount();
     }
 
-    // Xóa đơn vị tính theo ID
     public function donvitinhDelete($idDonViTinh)
     {
         $sql = "DELETE FROM donvitinh WHERE idDonViTinh = ?";
@@ -66,7 +63,6 @@ class DonViTinh
         return $del->rowCount();
     }
 
-    // Cập nhật thông tin đơn vị tính
     public function donvitinhUpdate($tenDonViTinh, $moTa, $ghiChu, $idDonViTinh)
     {
         $sql = "UPDATE donvitinh 
@@ -76,14 +72,11 @@ class DonViTinh
 
         $update = $this->db->prepare($sql);
 
-        // Debug: Log SQL and parameters
         error_log("SQL: " . $sql);
         error_log("Params: " . json_encode($data));
 
-        // Execute query
         $result = $update->execute($data);
 
-        // Log result
         error_log("Update result: " . ($result ? "success" : "failed") . ", rows affected: " . $update->rowCount());
 
         if (!$result) {
@@ -94,7 +87,6 @@ class DonViTinh
         return $update->rowCount();
     }
 
-    // Lấy thông tin đơn vị tính theo ID
     public function donvitinhGetbyId($idDonViTinh)
     {
         $sql = 'SELECT * FROM donvitinh WHERE idDonViTinh = ?';
@@ -115,7 +107,6 @@ class DonViTinh
     {
         $sql = 'select * from donvitinh where idloaihang=?';
         $data = array($idloaihang);
-
 
         $getOne = $this->db->prepare($sql);
         $getOne->setFetchMode(PDO::FETCH_OBJ);

@@ -7,7 +7,6 @@ echo "========================================\n";
 echo "KIỂM TRA HÌNH ẢNH BANNER\n";
 echo "========================================\n\n";
 
-// Lấy tất cả banner
 $stmt = $db->query("SELECT id, title, image_url FROM banners");
 $banners = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -19,7 +18,6 @@ if (empty($banners)) {
         echo "Title: {$banner['title']}\n";
         echo "Image URL: {$banner['image_url']}\n";
         
-        // Kiểm tra file có tồn tại không
         $imagePath = '/var/www/html' . $banner['image_url'];
         if (file_exists($imagePath)) {
             echo "✓ File tồn tại: $imagePath\n";

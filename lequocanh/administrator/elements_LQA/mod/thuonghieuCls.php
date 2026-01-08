@@ -20,7 +20,6 @@ class ThuongHieu
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Lấy tất cả các thương hiệu
     public function thuonghieuGetAll()
     {
         $sql = 'SELECT * FROM thuonghieu';
@@ -35,7 +34,6 @@ class ThuongHieu
         return $getAll->fetchAll();
     }
 
-    // Thêm thương hiệu mới
     public function thuonghieuAdd($tenTH, $SDT, $email, $diaChi, $hinhanh)
     {
         $sql = "INSERT INTO thuonghieu (tenTH, SDT, email, diaChi, hinhanh) VALUES (?, ?, ?, ?, ?)";
@@ -51,7 +49,6 @@ class ThuongHieu
         return $add->rowCount();
     }
 
-    // Xóa thương hiệu theo ID
     public function thuonghieuDelete($idThuongHieu)
     {
         $sql = "DELETE FROM thuonghieu WHERE idThuongHieu = ?";
@@ -67,7 +64,6 @@ class ThuongHieu
         return $del->rowCount();
     }
 
-    // Cập nhật thông tin thương hiệu
     public function thuonghieuUpdate($tenTH, $SDT, $email, $diaChi, $hinhanh, $idThuongHieu)
     {
         $sql = "UPDATE thuonghieu 
@@ -85,7 +81,6 @@ class ThuongHieu
         return $update->rowCount();
     }
 
-    // Lấy thông tin thương hiệu theo ID
     public function thuonghieuGetbyId($idThuongHieu)
     {
         $sql = 'SELECT * FROM thuonghieu WHERE idThuongHieu = ?';

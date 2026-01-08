@@ -27,7 +27,6 @@ echo "<style>
 
 echo "<h2>Test Each Method calculate_shipping_fee()</h2>\n";
 
-// Get all active methods
 $stmt = $db->query("SELECT * FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order DESC");
 $methods = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -35,14 +34,13 @@ echo "<table>\n";
 echo "<tr><th>ID</th><th>Code</th><th>Name</th><th>Sort</th><th>Has Fee Config</th><th>calculate_shipping_fee() Result</th><th>Error</th><th>Status</th></tr>\n";
 
 foreach ($methods as $m) {
-    // Check if has fee config
+
     $stmt = $db->prepare("SELECT COUNT(*) as count FROM shipping_fees WHERE shipping_method_id = ? AND is_active = 1");
     $stmt->execute([$m['id']]);
     $feeCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
     
     $hasFee = $feeCount > 0;
     
-    // Try calculate_shipping_fee
     $fee = null;
     $error = null;
     $rowClass = '';

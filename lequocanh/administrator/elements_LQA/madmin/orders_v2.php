@@ -1,12 +1,14 @@
 <?php
-// Use SessionManager for safe session handling
+// Security includes
+require_once __DIR__ . '/../mod/SecurityHelpers.php';
+require_once __DIR__ . '/../mod/InputValidator.php';
+
+
 require_once './elements_LQA/mod/sessionManager.php';
 require_once './elements_LQA/config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Kiểm tra quyền truy cập
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -29,7 +31,6 @@ $db = Database::getInstance();
 $conn = $db->getConnection();
 $tonkho = new MTonKho();
 
-// Xử lý các action
 if (isset($_GET['action']) && isset($_GET['id'])) {
     $action = $_GET['action'];
     $orderId = (int)$_GET['id'];
@@ -37,12 +38,11 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     try {
         switch ($action) {
             case 'approve':
-                // Cập nhật trạng thái đơn hàng
+
                 $updateSql = "UPDATE don_hang SET trang_thai = 'approved', ngay_cap_nhat = NOW() WHERE id = ?";
                 $updateStmt = $conn->prepare($updateSql);
                 $updateStmt->execute([$orderId]);
                 
-                // Gửi thông báo cho khách hàng
                 $orderInfoSql = "SELECT ma_nguoi_dung FROM don_hang WHERE id = ?";
                 $orderInfoStmt = $conn->prepare($orderInfoSql);
                 $orderInfoStmt->execute([$orderId]);
@@ -57,23 +57,20 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 break;
                 
             case 'cancel':
-                // Lấy danh sách sản phẩm để hoàn kho
+
                 $itemsSql = "SELECT ma_san_pham, so_luong FROM chi_tiet_don_hang WHERE ma_don_hang = ?";
                 $itemsStmt = $conn->prepare($itemsSql);
                 $itemsStmt->execute([$orderId]);
                 $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Hoàn trả tồn kho
                 foreach ($items as $item) {
                     $tonkho->updateSoLuong($item['ma_san_pham'], $item['so_luong'], true);
                 }
                 
-                // Cập nhật trạng thái
                 $updateSql = "UPDATE don_hang SET trang_thai = 'cancelled', ngay_cap_nhat = NOW() WHERE id = ?";
                 $updateStmt = $conn->prepare($updateSql);
                 $updateStmt->execute([$orderId]);
                 
-                // Gửi thông báo
                 $orderInfoSql = "SELECT ma_nguoi_dung FROM don_hang WHERE id = ?";
                 $orderInfoStmt = $conn->prepare($orderInfoSql);
                 $orderInfoStmt->execute([$orderId]);
@@ -88,18 +85,16 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 break;
                 
             case 'approve_return':
-                // Lấy danh sách sản phẩm để hoàn kho
+
                 $itemsSql = "SELECT ma_san_pham, so_luong FROM chi_tiet_don_hang WHERE ma_don_hang = ?";
                 $itemsStmt = $conn->prepare($itemsSql);
                 $itemsStmt->execute([$orderId]);
                 $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Hoàn trả tồn kho
                 foreach ($items as $item) {
                     $tonkho->updateSoLuong($item['ma_san_pham'], $item['so_luong'], true);
                 }
                 
-                // Cập nhật trạng thái đổi/trả
                 $updateSql = "UPDATE don_hang SET trang_thai_doi_tra = 'approved', ngay_xu_ly_doi_tra = NOW(), ngay_cap_nhat = NOW() WHERE id = ?";
                 $updateStmt = $conn->prepare($updateSql);
                 $updateStmt->execute([$orderId]);
@@ -108,7 +103,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 break;
                 
             case 'reject_return':
-                // Cập nhật trạng thái đổi/trả
+
                 $updateSql = "UPDATE don_hang SET trang_thai_doi_tra = 'rejected', ngay_xu_ly_doi_tra = NOW(), ngay_cap_nhat = NOW() WHERE id = ?";
                 $updateStmt = $conn->prepare($updateSql);
                 $updateStmt->execute([$orderId]);
@@ -117,7 +112,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 break;
                 
             case 'confirm_delivery':
-                // Admin xác nhận đã giao hàng (tất cả phương thức thanh toán)
+
                 $orderInfoSql = "SELECT * FROM don_hang WHERE id = ?";
                 $orderInfoStmt = $conn->prepare($orderInfoSql);
                 $orderInfoStmt->execute([$orderId]);
@@ -131,12 +126,10 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                     throw new Exception('Đơn hàng chưa được duyệt');
                 }
                 
-                // Cập nhật trạng thái: đã giao hàng
                 $updateSql = "UPDATE don_hang SET trang_thai = 'delivered', ngay_giao_hang = NOW(), ngay_cap_nhat = NOW() WHERE id = ?";
                 $updateStmt = $conn->prepare($updateSql);
                 $updateStmt->execute([$orderId]);
                 
-                // Gửi thông báo cho khách
                 $notificationManager = new CustomerNotificationManager();
                 $title = "📦 Đơn hàng #{$orderId} đã được giao";
                 $isCOD = ($orderInfo['phuong_thuc_thanh_toan'] === 'cod');
@@ -151,7 +144,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 break;
                 
             case 'complete_order':
-                // Admin xác nhận hoàn tất đơn hàng (tất cả phương thức thanh toán)
+
                 $orderInfoSql = "SELECT * FROM don_hang WHERE id = ?";
                 $orderInfoStmt = $conn->prepare($orderInfoSql);
                 $orderInfoStmt->execute([$orderId]);
@@ -165,8 +158,6 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                     throw new Exception('Đơn hàng không ở trạng thái có thể hoàn tất');
                 }
                 
-                // Cập nhật trạng thái: hoàn tất
-                // Nếu là COD thì cập nhật cả trạng thái thanh toán
                 $isCOD = ($orderInfo['phuong_thuc_thanh_toan'] === 'cod');
                 if ($isCOD) {
                     $updateSql = "UPDATE don_hang SET 
@@ -176,7 +167,7 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                                   ngay_cap_nhat = NOW() 
                                   WHERE id = ?";
                 } else {
-                    // MoMo/Bank Transfer đã thanh toán trước
+
                     $updateSql = "UPDATE don_hang SET 
                                   trang_thai = 'completed', 
                                   ngay_nhan_hang = NOW(), 
@@ -186,7 +177,6 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 $updateStmt = $conn->prepare($updateSql);
                 $updateStmt->execute([$orderId]);
                 
-                // Gửi thông báo cho khách
                 $notificationManager = new CustomerNotificationManager();
                 $notificationManager->notifyOrderSuccess($orderId, $orderInfo['ma_nguoi_dung']);
                 
@@ -194,7 +184,6 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
                 break;
         }
         
-        // Redirect về trang danh sách
         header('Location: index.php?req=don_hang&t=' . time());
         exit();
         
@@ -204,11 +193,9 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
     }
 }
 
-// Lấy filter từ URL
 $statusFilter = isset($_GET['status']) ? $_GET['status'] : 'all';
 $returnFilter = isset($_GET['return_status']) ? $_GET['return_status'] : 'all';
 
-// Lấy tham số tìm kiếm
 $searchKeyword = isset($_GET['search']) ? trim($_GET['search']) : '';
 $searchDateFrom = isset($_GET['date_from']) ? $_GET['date_from'] : '';
 $searchDateTo = isset($_GET['date_to']) ? $_GET['date_to'] : '';
@@ -217,7 +204,6 @@ $searchPriceMax = isset($_GET['price_max']) ? $_GET['price_max'] : '';
 $searchPaymentMethod = isset($_GET['payment_method']) ? $_GET['payment_method'] : '';
 $searchProvince = isset($_GET['province']) ? trim($_GET['province']) : '';
 
-// Lấy thống kê
 $statsSql = "SELECT 
     COUNT(*) as total,
     SUM(CASE WHEN trang_thai = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -233,7 +219,6 @@ FROM don_hang";
 $statsStmt = $conn->query($statsSql);
 $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
 
-// Build query với filter và search
 $whereClauses = [];
 $params = [];
 
@@ -247,7 +232,6 @@ if ($returnFilter != 'all') {
     $params[] = $returnFilter;
 }
 
-// Tìm kiếm theo keyword (mã đơn, tên KH, SĐT, tên sản phẩm)
 if (!empty($searchKeyword)) {
     $whereClauses[] = "(don_hang.ma_don_hang_text LIKE ? OR 
                         don_hang.ma_nguoi_dung LIKE ? OR 
@@ -265,7 +249,6 @@ if (!empty($searchKeyword)) {
     $params[] = $searchParam;
 }
 
-// Tìm kiếm theo khoảng thời gian
 if (!empty($searchDateFrom)) {
     $whereClauses[] = "DATE(don_hang.ngay_tao) >= ?";
     $params[] = $searchDateFrom;
@@ -275,7 +258,6 @@ if (!empty($searchDateTo)) {
     $params[] = $searchDateTo;
 }
 
-// Tìm kiếm theo khoảng giá
 if (!empty($searchPriceMin)) {
     $whereClauses[] = "don_hang.tong_tien >= ?";
     $params[] = $searchPriceMin;
@@ -285,13 +267,11 @@ if (!empty($searchPriceMax)) {
     $params[] = $searchPriceMax;
 }
 
-// Tìm kiếm theo phương thức thanh toán
 if (!empty($searchPaymentMethod)) {
     $whereClauses[] = "don_hang.phuong_thuc_thanh_toan = ?";
     $params[] = $searchPaymentMethod;
 }
 
-// Tìm kiếm theo tỉnh/thành phố
 if (!empty($searchProvince)) {
     $whereClauses[] = "don_hang.dia_chi_giao_hang LIKE ?";
     $params[] = "%$searchProvince%";
@@ -389,7 +369,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
             margin: 2px;
         }
         
-        /* Search Box Styles */
         .search-container {
             background: white;
             border-radius: 12px;
@@ -487,7 +466,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
             background: #c82333;
         }
         
-        /* Scrollable Table Container */
         .table-scroll-container {
             max-height: 60vh;
             min-height: 300px;
@@ -538,7 +516,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
             white-space: nowrap;
         }
         
-        /* Order Actions Column */
         .order-actions {
             white-space: nowrap;
             min-width: 220px;
@@ -1018,7 +995,7 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                                 </td>
                                 <td>
                                     <?php
-                                    // Trạng thái đơn hàng
+
                                     switch ($order['trang_thai']) {
                                         case 'pending':
                                             echo '<span class="badge-status bg-warning text-dark"><i class="fas fa-clock me-1"></i>Chờ xác nhận</span>';
@@ -1037,7 +1014,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                                             break;
                                     }
                                     
-                                    // Trạng thái thanh toán cho COD
                                     if ($order['phuong_thuc_thanh_toan'] == 'cod') {
                                         echo '<br>';
                                         if ($order['trang_thai_thanh_toan'] == 'paid') {
@@ -1047,7 +1023,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                                         }
                                     }
                                     
-                                    // Trạng thái đổi/trả
                                     $returnStatus = isset($order['trang_thai_doi_tra']) ? $order['trang_thai_doi_tra'] : 'none';
                                     if ($returnStatus != 'none') {
                                         echo '<br>';
@@ -1170,13 +1145,12 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="./js_LQA/order_export.js"></script>
     
     <script>
-        // View Order Detail
+
         function viewOrderDetail(orderId) {
-            // Show modal
+
             const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
             modal.show();
             
-            // Load order details via AJAX
             fetch('elements_LQA/madmin/get_order_detail.php?id=' + orderId)
                 .then(response => response.text())
                 .then(html => {
@@ -1189,7 +1163,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                 });
         }
         
-        // Sync checkbox select-all between toolbar and table
         document.addEventListener('DOMContentLoaded', function() {
             const selectAllToolbar = document.getElementById('select-all-orders');
             const selectAllTable = document.getElementById('select-all-orders-table');
@@ -1201,7 +1174,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             }
             
-            // Update selected count
             function updateSelectedCount() {
                 const count = document.querySelectorAll('.order-checkbox:checked').length;
                 const countDisplay = document.getElementById('selected-count');
@@ -1215,7 +1187,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                 }
             }
             
-            // Listen to checkbox changes
             document.addEventListener('change', function(e) {
                 if (e.target.classList.contains('order-checkbox') || e.target.id === 'select-all-orders') {
                     updateSelectedCount();
@@ -1225,7 +1196,7 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
     </script>
     
     <script>
-        // Toggle Advanced Search
+
         document.getElementById('toggleAdvanced').addEventListener('click', function(e) {
             e.preventDefault();
             const advancedSearch = document.getElementById('advancedSearch');
@@ -1241,7 +1212,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
             }
         });
         
-        // Auto show advanced search if has advanced params
         <?php if (!empty($searchDateFrom) || !empty($searchDateTo) || !empty($searchPriceMin) || 
                   !empty($searchPriceMax) || !empty($searchPaymentMethod) || !empty($searchProvince)): ?>
         document.getElementById('advancedSearch').classList.add('show');
@@ -1249,28 +1219,24 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
         document.getElementById('toggleAdvanced').querySelector('span').textContent = 'Ẩn tìm kiếm nâng cao';
         <?php endif; ?>
         
-        // Remove single search parameter
         function removeSearchParam(param) {
             const url = new URL(window.location.href);
             url.searchParams.delete(param);
             window.location.href = url.toString();
         }
         
-        // Remove multiple search parameters
         function removeSearchParams(params) {
             const url = new URL(window.location.href);
             params.forEach(param => url.searchParams.delete(param));
             window.location.href = url.toString();
         }
         
-        // Clear all search parameters
         function clearAllSearch() {
             const url = new URL(window.location.href);
             const req = url.searchParams.get('req');
             const status = url.searchParams.get('status');
             const returnStatus = url.searchParams.get('return_status');
             
-            // Keep only essential params
             const newUrl = new URL(window.location.origin + window.location.pathname);
             if (req) newUrl.searchParams.set('req', req);
             if (status && status !== 'all') newUrl.searchParams.set('status', status);
@@ -1279,7 +1245,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
             window.location.href = newUrl.toString();
         }
         
-        // Highlight search keyword in results
         <?php if (!empty($searchKeyword)): ?>
         document.addEventListener('DOMContentLoaded', function() {
             const keyword = <?php echo json_encode($searchKeyword); ?>;
@@ -1289,7 +1254,7 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
                 const regex = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
                 
                 tableBody.querySelectorAll('td').forEach(function(cell) {
-                    if (cell.querySelector('a, button')) return; // Skip cells with buttons
+                    if (cell.querySelector('a, button')) return;
                     
                     const text = cell.textContent;
                     if (regex.test(text)) {
@@ -1300,7 +1265,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
         });
         <?php endif; ?>
         
-        // Auto-submit on Enter key
         document.getElementById('searchInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1308,7 +1272,6 @@ $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
             }
         });
         
-        // Show loading indicator on search
         document.getElementById('searchForm').addEventListener('submit', function() {
             const submitBtn = this.querySelector('button[type="submit"]');
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Đang tìm...';

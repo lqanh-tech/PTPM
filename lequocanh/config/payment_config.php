@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Payment Configuration
- */
-
 return [
     'default_gateway' => 'momo',
 
@@ -30,7 +26,7 @@ return [
         'cod' => [
             'enabled' => true,
             'fee' => 0,
-            'max_amount' => 5000000 // 5 million VND
+            'max_amount' => 5000000
         ]
     ],
 

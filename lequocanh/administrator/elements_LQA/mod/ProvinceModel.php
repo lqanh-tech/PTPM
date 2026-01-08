@@ -1,8 +1,4 @@
 <?php
-/**
- * Province Model - Quản lý Tỉnh/Thành phố
- * MVC Pattern - Model Layer
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -17,9 +13,6 @@ class ProvinceModel
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Lấy tất cả tỉnh/thành phố
-     */
     public function getAll($activeOnly = true)
     {
         $sql = "SELECT * FROM provinces";
@@ -33,9 +26,6 @@ class ProvinceModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy tỉnh/thành theo ID
-     */
     public function getById($id)
     {
         $sql = "SELECT * FROM provinces WHERE id = ?";
@@ -44,9 +34,6 @@ class ProvinceModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy tỉnh/thành theo mã
-     */
     public function getByCode($code)
     {
         $sql = "SELECT * FROM provinces WHERE code = ?";
@@ -55,9 +42,6 @@ class ProvinceModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy tỉnh/thành theo miền
-     */
     public function getByRegion($region)
     {
         $sql = "SELECT * FROM provinces WHERE region = ? AND is_active = 1 ORDER BY name";
@@ -66,9 +50,6 @@ class ProvinceModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Thêm tỉnh/thành mới
-     */
     public function create($data)
     {
         $sql = "INSERT INTO provinces (code, name, name_en, region, is_active) 
@@ -83,9 +64,6 @@ class ProvinceModel
         ]);
     }
 
-    /**
-     * Cập nhật tỉnh/thành
-     */
     public function update($id, $data)
     {
         $sql = "UPDATE provinces 
@@ -102,9 +80,6 @@ class ProvinceModel
         ]);
     }
 
-    /**
-     * Xóa tỉnh/thành (soft delete)
-     */
     public function delete($id)
     {
         $sql = "UPDATE provinces SET is_active = 0 WHERE id = ?";
@@ -112,9 +87,6 @@ class ProvinceModel
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Xóa vĩnh viễn
-     */
     public function forceDelete($id)
     {
         $sql = "DELETE FROM provinces WHERE id = ?";
@@ -122,9 +94,6 @@ class ProvinceModel
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Tìm kiếm tỉnh/thành
-     */
     public function search($keyword)
     {
         $sql = "SELECT * FROM provinces 
@@ -137,9 +106,6 @@ class ProvinceModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Đếm số lượng tỉnh/thành
-     */
     public function count($activeOnly = true)
     {
         $sql = "SELECT COUNT(*) as total FROM provinces";

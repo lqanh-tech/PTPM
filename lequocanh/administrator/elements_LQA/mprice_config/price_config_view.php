@@ -1,7 +1,6 @@
 <?php
 require_once '../config/price_logic_config.php';
 
-// Lấy cấu hình hiện tại
 $currentConfig = PriceLogicConfig::getCurrentConfig();
 ?>
 
@@ -194,7 +193,7 @@ $currentConfig = PriceLogicConfig::getCurrentConfig();
 
 <script>
 $(document).ready(function() {
-    // Xử lý form submit
+
     $('#priceConfigForm').on('submit', function(e) {
         e.preventDefault();
         

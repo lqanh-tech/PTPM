@@ -1,12 +1,10 @@
 <?php
-// Customer Order History Page
+
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
 require_once '../administrator/elements_LQA/mod/database.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check if user is logged in
 if (!isset($_SESSION['USER'])) {
     header('Location: ../index.php');
     exit();
@@ -14,11 +12,9 @@ if (!isset($_SESSION['USER'])) {
 
 $userId = $_SESSION['USER'];
 
-// Get database connection
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Get user orders
 $sql = "SELECT dh.*, 
         (SELECT COUNT(*) FROM chi_tiet_don_hang WHERE ma_don_hang = dh.id) as so_san_pham,
         (SELECT SUM(so_luong) FROM chi_tiet_don_hang WHERE ma_don_hang = dh.id) as tong_so_luong
@@ -29,7 +25,6 @@ $stmt = $conn->prepare($sql);
 $stmt->execute([$userId]);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get user info
 $userSql = "SELECT * FROM user WHERE username = ?";
 $userStmt = $conn->prepare($userSql);
 $userStmt->execute([$userId]);
@@ -347,7 +342,7 @@ $userInfo = $userStmt->fetch(PDO::FETCH_ASSOC);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
     function viewOrderDetail(orderId) {
-        // Load order details via AJAX
+
         fetch(`../administrator/elements_LQA/mkhachhang/orderDetailAjax.php?order_id=${orderId}`)
             .then(response => response.text())
             .then(html => {
@@ -362,13 +357,13 @@ $userInfo = $userStmt->fetch(PDO::FETCH_ASSOC);
     }
 
     function showPaymentInfo(orderId) {
-        // Show payment information
+
         alert('Vui lòng chuyển khoản theo thông tin đã cung cấp khi đặt hàng.');
     }
 
     function cancelOrder(orderId) {
         if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
-            // Implement order cancellation
+
             alert('Chức năng hủy đơn hàng đang được phát triển.');
         }
     }

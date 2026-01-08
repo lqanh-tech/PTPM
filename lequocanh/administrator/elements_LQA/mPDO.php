@@ -1,11 +1,5 @@
 <?php
 
-/**
- * mPDO - Wrapper class cho Database class
- * Tạo để tương thích với code cũ sử dụng mPDO
- */
-
-// Tìm và load file database.php
 $possible_paths = [
     __DIR__ . '/mod/database.php',
     __DIR__ . '/../elements_LQA/mod/database.php',
@@ -40,13 +34,6 @@ class mPDO
         }
     }
     
-    /**
-     * Thực thi câu lệnh SQL (INSERT, UPDATE, DELETE)
-     * 
-     * @param string $sql Câu lệnh SQL
-     * @param array $params Tham số bind
-     * @return bool Kết quả thực thi
-     */
     public function execute($sql, $params = []) 
     {
         try {
@@ -58,14 +45,6 @@ class mPDO
         }
     }
     
-    /**
-     * Thực thi câu lệnh SELECT và trả về kết quả
-     * 
-     * @param string $sql Câu lệnh SQL
-     * @param array $params Tham số bind
-     * @param bool $fetchAll True để lấy tất cả, False để lấy 1 dòng
-     * @return array|false Kết quả query
-     */
     public function executeS($sql, $params = [], $fetchAll = false) 
     {
         try {
@@ -83,56 +62,31 @@ class mPDO
         }
     }
     
-    /**
-     * Lấy ID của bản ghi vừa insert
-     * 
-     * @return string Last insert ID
-     */
     public function lastInsertId() 
     {
         return $this->conn->lastInsertId();
     }
     
-    /**
-     * Bắt đầu transaction
-     */
     public function beginTransaction() 
     {
         return $this->conn->beginTransaction();
     }
     
-    /**
-     * Commit transaction
-     */
     public function commit() 
     {
         return $this->conn->commit();
     }
     
-    /**
-     * Rollback transaction
-     */
     public function rollback() 
     {
         return $this->conn->rollback();
     }
     
-    /**
-     * Lấy connection PDO gốc
-     * 
-     * @return PDO
-     */
     public function getConnection() 
     {
         return $this->conn;
     }
     
-    /**
-     * Kiểm tra bảng có tồn tại không
-     * 
-     * @param string $tableName Tên bảng
-     * @return bool
-     */
     public function tableExists($tableName) 
     {
         try {
@@ -144,12 +98,6 @@ class mPDO
         }
     }
     
-    /**
-     * Lấy thông tin cấu trúc bảng
-     * 
-     * @param string $tableName Tên bảng
-     * @return array
-     */
     public function describeTable($tableName) 
     {
         try {
@@ -160,14 +108,6 @@ class mPDO
         }
     }
     
-    /**
-     * Đếm số dòng trong bảng
-     * 
-     * @param string $tableName Tên bảng
-     * @param string $condition Điều kiện WHERE (optional)
-     * @param array $params Tham số cho điều kiện
-     * @return int
-     */
     public function countRows($tableName, $condition = '', $params = []) 
     {
         try {
@@ -183,12 +123,6 @@ class mPDO
         }
     }
     
-    /**
-     * Thực thi nhiều câu lệnh SQL
-     * 
-     * @param array $sqlStatements Mảng các câu lệnh SQL
-     * @return bool
-     */
     public function executeMultiple($sqlStatements) 
     {
         try {
@@ -211,22 +145,11 @@ class mPDO
         }
     }
     
-    /**
-     * Escape string để tránh SQL injection
-     * 
-     * @param string $string Chuỗi cần escape
-     * @return string
-     */
     public function quote($string) 
     {
         return $this->conn->quote($string);
     }
     
-    /**
-     * Lấy thông tin lỗi cuối cùng
-     * 
-     * @return array
-     */
     public function errorInfo() 
     {
         return $this->conn->errorInfo();

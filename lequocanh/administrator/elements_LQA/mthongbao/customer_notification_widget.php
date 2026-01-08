@@ -1,22 +1,18 @@
 <?php
-// Customer Notification Widget
-// Include this file where you want to display notifications
 
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/CustomerNotificationManager.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check if user is logged in
 if (!isset($_SESSION['USER'])) {
-    return; // Don't show notifications if not logged in
+    return;
 }
 
 $userId = $_SESSION['USER'];
 $notificationManager = new CustomerNotificationManager();
 $unreadCount = $notificationManager->getUnreadCount($userId);
-$notifications = $notificationManager->getUserNotifications($userId, 5); // Get latest 5 notifications
+$notifications = $notificationManager->getUserNotifications($userId, 5);
 ?>
 
 <style>
@@ -282,7 +278,7 @@ $notifications = $notificationManager->getUserNotifications($userId, 5); // Get 
 </div>
 
 <?php
-// Helper functions for notification icons and colors
+
 function getNotificationIconClass($type) {
     switch ($type) {
         case 'order_approved': return 'check-circle';
@@ -318,7 +314,6 @@ function toggleNotifications() {
     dropdown.classList.toggle('show');
 }
 
-// Close dropdown when clicking outside
 document.addEventListener('click', function(event) {
     const widget = document.querySelector('.notification-widget');
     if (!widget.contains(event.target)) {
@@ -327,7 +322,7 @@ document.addEventListener('click', function(event) {
 });
 
 function markAsRead(notificationId) {
-    // Gửi request đánh dấu đã đọc nhưng không reload trang
+
     fetch('/lequocanh/administrator/elements_LQA/mthongbao/mark_notification_read.php', {
         method: 'POST',
         headers: {
@@ -341,7 +336,6 @@ function markAsRead(notificationId) {
     })
     .catch(error => console.error('Error:', error));
     
-    // Không return false để link vẫn hoạt động
     return true;
 }
 
@@ -352,7 +346,7 @@ function markAllAsRead() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Reload to update notifications
+
             location.reload();
         }
     })
@@ -376,9 +370,6 @@ function deleteReadNotifications() {
     .catch(error => console.error('Error:', error));
 }
 
-// Function này không còn cần thiết vì đã chuyển sang dùng link trực tiếp
-
-// Auto-refresh notifications every 30 seconds
 setInterval(function() {
     refreshNotificationCount();
 }, 30000);
@@ -394,7 +385,7 @@ function refreshNotificationCount() {
                     countEl.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
                     countEl.style.display = 'flex';
                 } else {
-                    // Tạo badge mới nếu chưa có
+
                     const bell = document.querySelector('.notification-bell');
                     if (bell) {
                         const newBadge = document.createElement('span');

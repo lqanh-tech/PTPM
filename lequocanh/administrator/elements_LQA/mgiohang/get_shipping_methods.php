@@ -1,7 +1,4 @@
 <?php
-/**
- * API: Lấy danh sách phương thức vận chuyển
- */
 
 header('Content-Type: application/json');
 
@@ -14,7 +11,7 @@ try {
     
     switch ($action) {
         case 'list':
-            // Lấy tất cả phương thức vận chuyển
+
             $methods = $shippingMethod->getActiveMethods();
             
             echo json_encode([
@@ -24,7 +21,7 @@ try {
             break;
             
         case 'calculate':
-            // Tính phí vận chuyển cho phương thức cụ thể
+
             $methodCode = $_GET['method'] ?? $_POST['method'] ?? 'standard';
             $orderTotal = floatval($_GET['order_total'] ?? $_POST['order_total'] ?? 0);
             $distanceKm = floatval($_GET['distance_km'] ?? $_POST['distance_km'] ?? 0);
@@ -38,7 +35,7 @@ try {
             break;
             
         case 'pickup_info':
-            // Lấy thông tin cửa hàng cho pickup
+
             $storeInfo = $shippingMethod->getPickupStoreInfo();
             
             echo json_encode([

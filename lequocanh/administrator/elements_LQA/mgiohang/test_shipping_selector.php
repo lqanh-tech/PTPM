@@ -1,10 +1,7 @@
 <?php
-/**
- * STANDALONE TEST - Shipping Method Selector Isolated Test
- */
+
 session_start();
 
-// Set fake session data
 $_SESSION['cart_weight'] = 1.0;
 $_SESSION['cart_total'] = 100000;
 $_SESSION['province_id'] = 1;
@@ -30,7 +27,7 @@ $_SESSION['shipping_fee'] = 0;
         <hr>
         
         <?php 
-        // Include the shipping method selector
+
         include 'shipping_method_selector_v2.php'; 
         ?>
         

@@ -1,19 +1,11 @@
 <?php
 
-/**
- * MoMo IPN Handler
- * Xử lý thông báo thanh toán từ MoMo (Instant Payment Notification)
- * Dựa trên official MoMo PHP SDK - ipn_momo.php
- */
-
 require_once __DIR__ . '/../mod/database.php';
 
-// MoMo configuration
 $partnerCode = 'MOMO';
 $accessKey = 'F8BBA842ECF85';
 $secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
 
-// Log all incoming data
 $logData = [
     'GET' => $_GET,
     'POST' => $_POST,
@@ -21,7 +13,6 @@ $logData = [
 ];
 logMoMoTransaction('IPN_RECEIVED', $logData);
 
-// Get IPN data from POST
 $partnerCode = $_POST["partnerCode"] ?? '';
 $orderId = $_POST["orderId"] ?? '';
 $requestId = $_POST["requestId"] ?? '';
@@ -36,7 +27,6 @@ $responseTime = $_POST["responseTime"] ?? '';
 $extraData = $_POST["extraData"] ?? '';
 $signature = $_POST["signature"] ?? '';
 
-// Verify signature
 $rawHash = "accessKey=" . $accessKey . "&amount=" . $amount . "&extraData=" . $extraData . "&message=" . $message . "&orderId=" . $orderId . "&orderInfo=" . $orderInfo . "&orderType=" . $orderType . "&partnerCode=" . $partnerCode . "&payType=" . $payType . "&requestId=" . $requestId . "&responseTime=" . $responseTime . "&resultCode=" . $resultCode . "&transId=" . $transId;
 
 $partnerSignature = hash_hmac("sha256", $rawHash, $secretKey);
@@ -50,23 +40,22 @@ $response = [
 ];
 
 if ($signature == $partnerSignature) {
-    // Signature valid, process the payment
+
     $response['resultCode'] = 0;
     $response['message'] = 'Success';
 
-    // Update order status in database
     try {
         $db = Database::getInstance()->getConnection();
 
         if ($resultCode == 0) {
-            // Payment successful - Kiểm tra xem đơn hàng đã tồn tại chưa
+
             $checkOrderSql = "SELECT id, ma_nguoi_dung FROM don_hang WHERE ma_don_hang_text = ?";
             $checkStmt = $db->prepare($checkOrderSql);
             $checkStmt->execute([$orderId]);
             $existingOrder = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existingOrder) {
-                // Cập nhật đơn hàng đã tồn tại
+
                 $updateSql = "UPDATE don_hang SET
                              trang_thai_thanh_toan = 'paid',
                              trang_thai = 'approved',
@@ -77,7 +66,6 @@ if ($signature == $partnerSignature) {
                 $stmt = $db->prepare($updateSql);
                 $result = $stmt->execute([$orderId]);
                 
-                // GỬI THÔNG BÁO ĐẾN KHÁCH HÀNG
                 try {
                     require_once __DIR__ . '/../mod/CustomerNotificationManager.php';
                     $notificationManager = new CustomerNotificationManager();
@@ -87,7 +75,7 @@ if ($signature == $partnerSignature) {
                     error_log("MoMo IPN - Error sending notification: " . $notifError->getMessage());
                 }
             } else {
-                // Tạo đơn hàng mới từ session hoặc extraData
+
                 $extraData = json_decode(base64_decode($_POST['extraData'] ?? ''), true);
                 $userId = $extraData['user_id'] ?? 'guest';
                 $shippingAddress = $extraData['shipping_address'] ?? 'Không có địa chỉ';
@@ -109,10 +97,9 @@ if ($signature == $partnerSignature) {
                 'order_created' => !$existingOrder
             ]);
 
-            // Send notification email if needed
             sendPaymentNotification($orderId, $transId, $amount);
         } else {
-            // Payment failed
+
             $updateSql = "UPDATE don_hang SET
                          trang_thai_thanh_toan = 'failed',
                          phuong_thuc_thanh_toan = 'momo',
@@ -143,13 +130,9 @@ if ($signature == $partnerSignature) {
     ]);
 }
 
-// Return response to MoMo
 header('Content-Type: application/json');
 echo json_encode($response);
 
-/**
- * Log MoMo transaction
- */
 function logMoMoTransaction($type, $data)
 {
     $logFile = __DIR__ . '/../logs/momo_transactions.log';
@@ -168,15 +151,11 @@ function logMoMoTransaction($type, $data)
     file_put_contents($logFile, json_encode($logEntry) . "\n", FILE_APPEND | LOCK_EX);
 }
 
-/**
- * Gửi thông báo thanh toán thành công
- */
 function sendPaymentNotification($orderId, $transId, $amount)
 {
     try {
         $db = Database::getInstance()->getConnection();
 
-        // Lấy thông tin đơn hàng
         $orderSql = "SELECT dh.*, u.email, u.ten as customer_name 
                     FROM don_hang dh 
                     LEFT JOIN users u ON dh.ma_nguoi_dung = u.username 
@@ -186,7 +165,7 @@ function sendPaymentNotification($orderId, $transId, $amount)
         $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
         if ($order && !empty($order['email'])) {
-            // Tạo nội dung email
+
             $subject = 'Xác nhận thanh toán đơn hàng #' . $order['id'];
             $message = "
             <h2>Thanh toán thành công!</h2>
@@ -202,10 +181,6 @@ function sendPaymentNotification($orderId, $transId, $amount)
             <p>Cảm ơn bạn đã mua hàng!</p>
             ";
 
-            // Gửi email (cần cấu hình mail server)
-            // mail($order['email'], $subject, $message, 'Content-Type: text/html; charset=UTF-8');
-
-            // Log email notification
             logMoMoTransaction('EMAIL_NOTIFICATION_SENT', [
                 'orderId' => $orderId,
                 'email' => $order['email'],

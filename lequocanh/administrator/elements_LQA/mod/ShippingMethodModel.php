@@ -1,8 +1,4 @@
 <?php
-/**
- * Shipping Method Model - Quản lý Phương thức vận chuyển
- * MVC Pattern - Model Layer
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -17,9 +13,6 @@ class ShippingMethodModel
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Lấy tất cả phương thức vận chuyển
-     */
     public function getAll($activeOnly = true)
     {
         $sql = "SELECT * FROM shipping_methods";
@@ -33,9 +26,6 @@ class ShippingMethodModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy phương thức theo ID
-     */
     public function getById($id)
     {
         $sql = "SELECT * FROM shipping_methods WHERE id = ?";
@@ -44,9 +34,6 @@ class ShippingMethodModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy phương thức theo mã
-     */
     public function getByCode($code)
     {
         $sql = "SELECT * FROM shipping_methods WHERE code = ?";
@@ -55,9 +42,6 @@ class ShippingMethodModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Thêm phương thức mới
-     */
     public function create($data)
     {
         $sql = "INSERT INTO shipping_methods (code, name, description, delivery_time, price_multiplier, icon, is_active, sort_order) 
@@ -75,9 +59,6 @@ class ShippingMethodModel
         ]);
     }
 
-    /**
-     * Cập nhật phương thức
-     */
     public function update($id, $data)
     {
         $sql = "UPDATE shipping_methods 
@@ -98,9 +79,6 @@ class ShippingMethodModel
         ]);
     }
 
-    /**
-     * Xóa phương thức (soft delete)
-     */
     public function delete($id)
     {
         $sql = "UPDATE shipping_methods SET is_active = 0 WHERE id = ?";

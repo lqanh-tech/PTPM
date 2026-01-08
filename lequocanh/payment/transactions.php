@@ -1,24 +1,17 @@
 <?php
 
-/**
- * Trang hiển thị lịch sử giao dịch MoMo
- */
-
 require_once 'MoMoPayment.php';
 
-// Phân trang
 $page = max(1, intval($_GET['page'] ?? 1));
 $limit = 10;
 $offset = ($page - 1) * $limit;
 
-// Lọc theo trạng thái
 $statusFilter = $_GET['status'] ?? '';
 
 try {
     require_once '../administrator/elements_LQA/mPDO.php';
     $pdo = new mPDO();
     
-    // Đếm tổng số giao dịch
     $countSql = "SELECT COUNT(*) as total FROM momo_transactions";
     $countParams = [];
     
@@ -31,7 +24,6 @@ try {
     $total = $totalResult['total'] ?? 0;
     $totalPages = ceil($total / $limit);
     
-    // Lấy danh sách giao dịch
     $sql = "SELECT * FROM momo_transactions";
     $params = [];
     

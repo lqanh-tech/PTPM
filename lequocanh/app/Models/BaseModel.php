@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Enhanced Base Model with Active Record Pattern
- * Modern ORM-like functionality for all models
- */
-
 abstract class BaseModel
 {
     protected static $table = '';
@@ -29,25 +24,16 @@ abstract class BaseModel
         $this->syncOriginal();
     }
 
-    /**
-     * Get table name
-     */
     protected static function getTable()
     {
         return static::$table ?: strtolower(static::class) . 's';
     }
 
-    /**
-     * Get primary key
-     */
     protected static function getPrimaryKey()
     {
         return static::$primaryKey;
     }
 
-    /**
-     * Fill model with attributes
-     */
     public function fill($attributes)
     {
         foreach ($attributes as $key => $value) {
@@ -58,17 +44,11 @@ abstract class BaseModel
         return $this;
     }
 
-    /**
-     * Sync original attributes
-     */
     private function syncOriginal()
     {
         $this->original = $this->attributes;
     }
 
-    /**
-     * Get all records
-     */
     public static function all()
     {
         $sql = "SELECT * FROM " . static::getTable();
@@ -86,9 +66,6 @@ abstract class BaseModel
         return $results;
     }
 
-    /**
-     * Find record by ID
-     */
     public static function find($id)
     {
         $sql = "SELECT * FROM " . static::getTable() . " WHERE " . static::getPrimaryKey() . " = ? LIMIT 1";
@@ -108,9 +85,6 @@ abstract class BaseModel
         return $model;
     }
 
-    /**
-     * Find records by condition
-     */
     public static function where($column, $operator, $value = null)
     {
         if ($value === null) {
@@ -133,9 +107,6 @@ abstract class BaseModel
         return $results;
     }
 
-    /**
-     * Save model to database
-     */
     public function save()
     {
         if ($this->exists) {
@@ -145,9 +116,6 @@ abstract class BaseModel
         return $this->insert();
     }
 
-    /**
-     * Insert new record
-     */
     private function insert()
     {
         $attributes = $this->getAttributesForSave();
@@ -175,9 +143,6 @@ abstract class BaseModel
         return false;
     }
 
-    /**
-     * Update existing record
-     */
     private function update()
     {
         $attributes = $this->getAttributesForSave();
@@ -209,9 +174,6 @@ abstract class BaseModel
         return false;
     }
 
-    /**
-     * Delete record
-     */
     public function delete()
     {
         if (!$this->exists) {
@@ -224,19 +186,14 @@ abstract class BaseModel
         return $stmt->execute([$this->attributes[static::getPrimaryKey()]]);
     }
 
-    /**
-     * Get attributes for save (exclude hidden)
-     */
     private function getAttributesForSave()
     {
         $attributes = $this->attributes;
 
-        // Remove primary key for insert
         if (!$this->exists) {
             unset($attributes[static::getPrimaryKey()]);
         }
 
-        // Remove hidden attributes
         foreach (static::$hidden as $hidden) {
             unset($attributes[$hidden]);
         }
@@ -244,38 +201,25 @@ abstract class BaseModel
         return $attributes;
     }
 
-    /**
-     * Get attribute value
-     */
     public function __get($key)
     {
         return $this->attributes[$key] ?? null;
     }
 
-    /**
-     * Set attribute value
-     */
     public function __set($key, $value)
     {
         $this->attributes[$key] = $value;
     }
 
-    /**
-     * Check if attribute exists
-     */
     public function __isset($key)
     {
         return isset($this->attributes[$key]);
     }
 
-    /**
-     * Convert to array
-     */
     public function toArray()
     {
         $array = $this->attributes;
 
-        // Remove hidden attributes
         foreach (static::$hidden as $hidden) {
             unset($array[$hidden]);
         }
@@ -283,17 +227,11 @@ abstract class BaseModel
         return $array;
     }
 
-    /**
-     * Convert to JSON
-     */
     public function toJson()
     {
         return json_encode($this->toArray());
     }
 
-    /**
-     * Create new instance
-     */
     public static function create($attributes)
     {
         $model = new static($attributes);
@@ -301,9 +239,6 @@ abstract class BaseModel
         return $model;
     }
 
-    /**
-     * Get count
-     */
     public static function count()
     {
         $sql = "SELECT COUNT(*) FROM " . static::getTable();
@@ -313,25 +248,16 @@ abstract class BaseModel
         return $stmt->fetchColumn();
     }
 
-    /**
-     * Check if model exists
-     */
     public function exists()
     {
         return $this->exists;
     }
 
-    /**
-     * Get the primary key value
-     */
     public function getKey()
     {
         return $this->attributes[static::getPrimaryKey()] ?? null;
     }
 
-    /**
-     * Refresh model from database
-     */
     public function refresh()
     {
         if (!$this->exists) {

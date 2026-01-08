@@ -1,8 +1,7 @@
 <?php
-// Test script for get_address_data.php
+
 $_SERVER['REQUEST_METHOD'] = 'GET';
 
-// Test 1: Get Provinces
 echo "Testing Provinces...\n";
 $_GET['type'] = 'provinces';
 ob_start();
@@ -19,7 +18,6 @@ if ($data['success'] && count($data['data']) > 0) {
     exit(1);
 }
 
-// Test 2: Get Districts
 echo "\nTesting Districts for Province ID $provinceId...\n";
 $_GET['type'] = 'districts';
 $_GET['province_id'] = $provinceId;
@@ -37,7 +35,6 @@ if ($data['success'] && count($data['data']) > 0) {
     exit(1);
 }
 
-// Test 3: Get Wards
 echo "\nTesting Wards for District ID $districtId...\n";
 $_GET['type'] = 'wards';
 $_GET['district_id'] = $districtId;

@@ -1,7 +1,4 @@
 <?php
-/**
- * Extract VIEW Definition
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -16,7 +13,7 @@ try {
     if ($viewDef) {
         echo "Definition:\n";
         echo "----------------------------------------\n";
-        // Format nicely
+
         $sql = $viewDef['Create View'];
         $sql = preg_replace('/SELECT/', "\nSELECT\n  ", $sql);
         $sql = preg_replace('/,/', ",\n  ", $sql);

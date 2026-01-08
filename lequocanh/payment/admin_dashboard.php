@@ -239,7 +239,6 @@
 let notificationEnabled = true;
 let refreshInterval;
 
-// Load dashboard data
 function loadDashboardData() {
     fetch('api/dashboard_data.php')
         .then(response => response.json())
@@ -253,7 +252,6 @@ function loadDashboardData() {
         .catch(error => console.error('Error loading dashboard data:', error));
 }
 
-// Load notifications
 function loadNotifications() {
     if (!notificationEnabled) return;
     
@@ -284,7 +282,6 @@ function loadNotifications() {
         .catch(error => console.error('Error loading notifications:', error));
 }
 
-// Toggle notifications
 function toggleNotifications() {
     notificationEnabled = !notificationEnabled;
     const icon = document.getElementById('notificationToggle');
@@ -298,12 +295,11 @@ function toggleNotifications() {
     }
 }
 
-// Auto refresh
 function startAutoRefresh() {
     refreshInterval = setInterval(() => {
         loadDashboardData();
         loadNotifications();
-    }, 5000); // Refresh every 5 seconds
+    }, 5000);
 }
 
 function stopAutoRefresh() {
@@ -312,7 +308,6 @@ function stopAutoRefresh() {
     }
 }
 
-// Send test notification
 function sendTestNotification() {
     fetch('api/test_notification.php', { method: 'POST' })
         .then(response => response.json())
@@ -329,17 +324,14 @@ function sendTestNotification() {
         });
 }
 
-// Generate daily report
 function generateDailyReport() {
     window.open('api/daily_report.php', '_blank');
 }
 
-// Export transactions
 function exportTransactions() {
     window.open('api/export_transactions.php', '_blank');
 }
 
-// Clear logs
 function clearLogs() {
     if (confirm('Bạn có chắc muốn xóa tất cả logs?')) {
         fetch('api/clear_logs.php', { method: 'POST' })
@@ -350,7 +342,6 @@ function clearLogs() {
     }
 }
 
-// Toggle maintenance mode
 function toggleMaintenance() {
     const action = confirm('Bật chế độ bảo trì?') ? 'enable' : 'disable';
     
@@ -365,7 +356,6 @@ function toggleMaintenance() {
     });
 }
 
-// Save notification settings
 document.getElementById('notificationSettings').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -387,14 +377,12 @@ document.getElementById('notificationSettings').addEventListener('submit', funct
     });
 });
 
-// Initialize dashboard
 document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
     loadNotifications();
     startAutoRefresh();
 });
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', function() {
     stopAutoRefresh();
 });

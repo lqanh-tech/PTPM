@@ -1,8 +1,4 @@
 <?php
-/**
- * Shipping Method Selector Component
- * Include this file in checkout.php to display shipping method options
- */
 
 require_once __DIR__ . '/../mod/ShippingMethodCls.php';
 
@@ -207,21 +203,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     shippingOptions.forEach(option => {
         option.addEventListener('click', function() {
-            // Remove selected class from all
+
             shippingOptions.forEach(opt => {
                 opt.classList.remove('selected');
                 opt.querySelector('input[type="radio"]').checked = false;
                 
-                // Hide pickup info if exists
                 const pickupInfo = opt.querySelector('.pickup-store-info');
                 if (pickupInfo) pickupInfo.style.display = 'none';
             });
             
-            // Add selected class to clicked option
             this.classList.add('selected');
             this.querySelector('input[type="radio"]').checked = true;
             
-            // Update hidden inputs
             const methodCode = this.dataset.method;
             const methodFee = parseFloat(this.dataset.fee) || 0;
             const requiresAddress = this.dataset.requiresAddress === '1';
@@ -229,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedMethodInput.value = methodCode;
             selectedFeeInput.value = methodFee;
             
-            // Show/hide address section based on method
             const addressSection = document.getElementById('shipping-address');
             if (addressSection) {
                 if (methodCode === 'pickup') {
@@ -239,16 +231,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Show pickup store info if pickup selected
             if (methodCode === 'pickup') {
                 const pickupInfo = this.querySelector('.pickup-store-info');
                 if (pickupInfo) pickupInfo.style.display = 'block';
             }
             
-            // Update shipping fee display
             updateShippingFeeDisplay(methodFee);
             
-            // Trigger custom event for other scripts
             document.dispatchEvent(new CustomEvent('shippingMethodChanged', {
                 detail: {
                     method: methodCode,
@@ -259,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Function to update shipping fee display
     function updateShippingFeeDisplay(fee) {
         const shippingFeeValue = document.getElementById('shipping-fee-value');
         const shippingStatus = document.getElementById('shipping-status');
@@ -276,17 +264,14 @@ document.addEventListener('DOMContentLoaded', function() {
             shippingStatus.textContent = 'Đã chọn';
         }
         
-        // Update global shipping fee variable - sử dụng window object
         if (typeof window.currentShippingFee !== 'undefined') {
             window.currentShippingFee = fee;
         }
         
-        // Update final total if function exists
         if (typeof window.updateFinalTotal === 'function') {
             window.updateFinalTotal();
         }
         
-        // Cập nhật tổng tiền trực tiếp nếu các element tồn tại
         const finalTotalDisplay = document.getElementById('final-total-display');
         if (finalTotalDisplay) {
             const subtotal = parseFloat(document.getElementById('subtotal-display')?.textContent.replace(/[^\d]/g, '') || 0);
@@ -296,11 +281,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Initialize with first option
     const firstOption = document.querySelector('.shipping-method-option.selected');
     if (firstOption) {
         const initialFee = parseFloat(firstOption.dataset.fee) || 0;
-        // Delay để đảm bảo checkout.php đã load xong
+
         setTimeout(() => updateShippingFeeDisplay(initialFee), 100);
     }
 });

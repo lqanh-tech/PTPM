@@ -1,19 +1,8 @@
 <?php
-/**
- * Script Migration Password từ Plain Text sang Bcrypt
- * 
- * Script này sẽ:
- * 1. Quét tất cả user trong database
- * 2. Kiểm tra password nào còn là plain text
- * 3. Hash lại password đó sử dụng Bcrypt
- * 
- * CẢNH BÁO: Chạy script này một lần duy nhất!
- */
 
 require_once './elements_LQA/mod/database.php';
 require_once './elements_LQA/mod/PasswordHelper.php';
 
-// Bật hiển thị lỗi
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -24,7 +13,6 @@ echo "<p>Bắt đầu quá trình migration...</p>";
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Lấy tất cả user
     $sql = "SELECT iduser, username, password FROM user";
     $stmt = $db->prepare($sql);
     $stmt->execute();
@@ -45,15 +33,13 @@ try {
         
         echo "<p><strong>User:</strong> $username (ID: $iduser)</p>";
         
-        // Kiểm tra xem password có phải là plain text không
         if (PasswordHelper::isPlainText($password)) {
             echo "<p style='color: orange;'>→ Password là plain text, đang hash...</p>";
             
             try {
-                // Hash password
+
                 $hashedPassword = PasswordHelper::hash($password);
                 
-                // Update vào database
                 $updateSql = "UPDATE user SET password = ? WHERE iduser = ?";
                 $updateStmt = $db->prepare($updateSql);
                 $updateStmt->execute([$hashedPassword, $iduser]);
@@ -72,7 +58,6 @@ try {
         echo "<hr>";
     }
     
-    // Tổng kết
     echo "<h3>Kết quả Migration:</h3>";
     echo "<ul>";
     echo "<li><strong>Tổng số user:</strong> $totalUsers</li>";

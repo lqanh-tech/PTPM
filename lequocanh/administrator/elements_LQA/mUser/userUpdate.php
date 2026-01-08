@@ -90,7 +90,6 @@ if (!$getUserUpdate) {
         $("#formupdateuser").on("submit", function(e) {
             e.preventDefault();
 
-            // Validate form
             let isValid = true;
             $(this).find("input[required]").each(function() {
                 if (!$(this).val()) {
@@ -101,7 +100,6 @@ if (!$getUserUpdate) {
                 }
             });
 
-            // Validate phone number
             const phone = $(this).find('input[name="dienthoai"]').val();
             if (phone) {
                 const phoneRegex = /^[0-9]{10}$/;
@@ -111,7 +109,6 @@ if (!$getUserUpdate) {
                 }
             }
 
-            // If form is valid, submit it
             if (isValid) {
                 this.submit();
             } else {
@@ -119,7 +116,6 @@ if (!$getUserUpdate) {
             }
         });
 
-        // Remove invalid class on input
         $("input").on("input", function() {
             $(this).removeClass("is-invalid");
         });

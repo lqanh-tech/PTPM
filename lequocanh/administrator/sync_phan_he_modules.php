@@ -1,12 +1,7 @@
 <?php
-/**
- * Script đồng bộ các module phân quyền mới vào database
- * Chạy script này sau khi thêm module mới vào menu left.php
- */
 
 session_start();
 
-// Kiểm tra quyền admin
 if (!isset($_SESSION['ADMIN'])) {
     die('Bạn cần đăng nhập với quyền Admin để chạy script này.');
 }
@@ -18,7 +13,6 @@ echo "<h2>Đồng bộ Module Phân Quyền</h2>";
 try {
     $phanHeObj = new PhanHeQuanLy();
     
-    // Đồng bộ các module mới
     $addedCount = $phanHeObj->syncModules();
     
     if ($addedCount > 0) {
@@ -27,7 +21,6 @@ try {
         echo "<p style='color: blue;'>ℹ Tất cả các module đã tồn tại trong hệ thống.</p>";
     }
     
-    // Hiển thị danh sách tất cả module hiện có
     echo "<h3>Danh sách tất cả Module Phân Quyền:</h3>";
     echo "<table border='1' cellpadding='10' cellspacing='0'>";
     echo "<tr><th>ID</th><th>Mã Module</th><th>Tên Module</th><th>Mô tả</th><th>Trạng thái</th></tr>";

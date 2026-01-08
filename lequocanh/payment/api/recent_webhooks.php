@@ -1,16 +1,11 @@
 <?php
 
-/**
- * API endpoint để lấy webhook gần đây
- */
-
 header('Content-Type: application/json');
 
 try {
     require_once '../../administrator/elements_LQA/mPDO.php';
     $pdo = new mPDO();
     
-    // Lấy 10 giao dịch gần nhất
     $query = "SELECT order_id, amount, order_info, status, created_at 
               FROM momo_transactions 
               ORDER BY created_at DESC 

@@ -1,15 +1,9 @@
 <?php
 
-/**
- * File: nhatKyHoatDongCls.php
- * Lớp quản lý nhật ký hoạt động của nhân viên
- */
-
-// Xác định đường dẫn tới file database.php
 $possible_paths = array(
-    dirname(__FILE__) . '/database.php',                    // Cùng thư mục
-    dirname(dirname(dirname(__FILE__))) . '/elements_LQA/mod/database.php',  // Từ thư mục administrator
-    dirname(dirname(dirname(dirname(__FILE__)))) . '/administrator/elements_LQA/mod/database.php'  // Từ thư mục gốc
+    dirname(__FILE__) . '/database.php',
+    dirname(dirname(dirname(__FILE__))) . '/elements_LQA/mod/database.php',
+    dirname(dirname(dirname(dirname(__FILE__)))) . '/administrator/elements_LQA/mod/database.php'
 );
 
 $database_file = null;
@@ -36,9 +30,6 @@ class NhatKyHoatDong
         $this->createTableIfNotExists();
     }
 
-    /**
-     * Tạo bảng nhat_ky_hoat_dong nếu chưa tồn tại
-     */
     private function createTableIfNotExists()
     {
         try {
@@ -65,22 +56,11 @@ class NhatKyHoatDong
         }
     }
 
-    /**
-     * Ghi nhật ký hoạt động
-     *
-     * @param string $username Tên đăng nhập của người dùng
-     * @param string $hanhDong Hành động thực hiện (thêm, sửa, xóa, đăng nhập, v.v.)
-     * @param string $doiTuong Đối tượng tác động (sản phẩm, đơn hàng, người dùng, v.v.)
-     * @param int $doiTuongId ID của đối tượng (nếu có)
-     * @param string $chiTiet Chi tiết về hành động
-     * @return int|bool ID của bản ghi mới hoặc false nếu có lỗi
-     */
     public function ghiNhatKy($username, $hanhDong, $doiTuong, $doiTuongId = null, $chiTiet = '')
     {
         try {
             $ipAddress = $this->getClientIP();
 
-            // Xác định module dựa trên username
             $moDun = 'Hệ thống';
             if (strpos($username, 'manager') !== false) {
                 $moDun = 'Quản lý';
@@ -90,7 +70,6 @@ class NhatKyHoatDong
                 $moDun = 'Quản trị';
             }
 
-            // Cập nhật SQL để phù hợp với cấu trúc bảng hiện tại
             $sql = "INSERT INTO nhat_ky_hoat_dong (username, hanh_dong, doi_tuong, doi_tuong_id, chi_tiet, mo_dun, ip_address)
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -104,26 +83,18 @@ class NhatKyHoatDong
         }
     }
 
-    /**
-     * Lấy danh sách nhật ký hoạt động theo điều kiện
-     *
-     * @param array $filters Các điều kiện lọc (username, username_in, hanh_dong, doi_tuong, tu_ngay, den_ngay)
-     * @param int $limit Số lượng bản ghi tối đa
-     * @param int $offset Vị trí bắt đầu
-     * @return array Danh sách nhật ký hoạt động
-     */
     public function layDanhSachNhatKy($filters = [], $limit = 100, $offset = 0)
     {
         try {
-            // Kiểm tra xem bảng có tồn tại không
+
             $checkTableSql = "SHOW TABLES LIKE 'nhat_ky_hoat_dong'";
             $checkTableStmt = $this->db->prepare($checkTableSql);
             $checkTableStmt->execute();
 
             if ($checkTableStmt->rowCount() == 0) {
-                // Bảng không tồn tại, tạo bảng
+
                 $this->createTableIfNotExists();
-                return []; // Trả về mảng rỗng vì bảng vừa được tạo
+                return [];
             }
 
             $whereClause = [];
@@ -133,7 +104,7 @@ class NhatKyHoatDong
                 $whereClause[] = "nk.username = ?";
                 $params[] = $filters['username'];
             } elseif (isset($filters['username_in']) && is_array($filters['username_in']) && !empty($filters['username_in'])) {
-                // Lọc theo danh sách username
+
                 $placeholders = implode(',', array_fill(0, count($filters['username_in']), '?'));
                 $whereClause[] = "nk.username IN ($placeholders)";
                 $params = array_merge($params, $filters['username_in']);
@@ -166,7 +137,6 @@ class NhatKyHoatDong
 
             $where = count($whereClause) > 0 ? "WHERE " . implode(" AND ", $whereClause) : "";
 
-            // Kiểm tra xem bảng user và nhanvien có tồn tại không
             $checkUserTableSql = "SHOW TABLES LIKE 'user'";
             $checkUserTableStmt = $this->db->prepare($checkUserTableSql);
             $checkUserTableStmt->execute();
@@ -175,7 +145,6 @@ class NhatKyHoatDong
             $checkNhanVienTableStmt = $this->db->prepare($checkNhanVienTableSql);
             $checkNhanVienTableStmt->execute();
 
-            // Sử dụng query đơn giản để tránh lỗi collation
             $sql = "SELECT nk.*
                     FROM nhat_ky_hoat_dong nk
                     $where
@@ -192,24 +161,18 @@ class NhatKyHoatDong
         }
     }
 
-    /**
-     * Đếm tổng số bản ghi nhật ký theo điều kiện
-     *
-     * @param array $filters Các điều kiện lọc (username, username_in, hanh_dong, doi_tuong, tu_ngay, den_ngay)
-     * @return int Tổng số bản ghi
-     */
     public function demTongSoNhatKy($filters = [])
     {
         try {
-            // Kiểm tra xem bảng có tồn tại không
+
             $checkTableSql = "SHOW TABLES LIKE 'nhat_ky_hoat_dong'";
             $checkTableStmt = $this->db->prepare($checkTableSql);
             $checkTableStmt->execute();
 
             if ($checkTableStmt->rowCount() == 0) {
-                // Bảng không tồn tại, tạo bảng
+
                 $this->createTableIfNotExists();
-                return 0; // Trả về 0 vì bảng vừa được tạo
+                return 0;
             }
 
             $whereClause = [];
@@ -219,7 +182,7 @@ class NhatKyHoatDong
                 $whereClause[] = "username = ?";
                 $params[] = $filters['username'];
             } elseif (isset($filters['username_in']) && is_array($filters['username_in']) && !empty($filters['username_in'])) {
-                // Lọc theo danh sách username
+
                 $placeholders = implode(',', array_fill(0, count($filters['username_in']), '?'));
                 $whereClause[] = "username IN ($placeholders)";
                 $params = array_merge($params, $filters['username_in']);
@@ -265,27 +228,20 @@ class NhatKyHoatDong
         }
     }
 
-    /**
-     * Lấy thông tin chi tiết một nhật ký hoạt động theo ID
-     *
-     * @param int $id ID của nhật ký hoạt động
-     * @return array|false Thông tin chi tiết nhật ký hoặc false nếu không tìm thấy
-     */
     public function getActivityById($id)
     {
         try {
-            // Kiểm tra xem bảng có tồn tại không
+
             $checkTableSql = "SHOW TABLES LIKE 'nhat_ky_hoat_dong'";
             $checkTableStmt = $this->db->prepare($checkTableSql);
             $checkTableStmt->execute();
 
             if ($checkTableStmt->rowCount() == 0) {
-                // Bảng không tồn tại, tạo bảng
+
                 $this->createTableIfNotExists();
                 return false;
             }
 
-            // Query đơn giản để tránh lỗi collation
             $sql = "SELECT * FROM nhat_ky_hoat_dong WHERE id = ?";
 
             $stmt = $this->db->prepare($sql);
@@ -298,11 +254,6 @@ class NhatKyHoatDong
         }
     }
 
-    /**
-     * Lấy IP của client
-     *
-     * @return string IP của client
-     */
     private function getClientIP()
     {
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {

@@ -1,8 +1,4 @@
 <?php
-/**
- * Ward Model - Quản lý Phường/Xã
- * MVC Pattern - Model Layer
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -17,9 +13,6 @@ class WardModel
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Lấy phường/xã theo quận/huyện
-     */
     public function getByDistrictId($districtId, $activeOnly = true)
     {
         $sql = "SELECT * FROM wards WHERE district_id = ?";
@@ -33,9 +26,6 @@ class WardModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy phường/xã theo ID
-     */
     public function getById($id)
     {
         $sql = "SELECT w.*, d.name as district_name, p.name as province_name 
@@ -48,9 +38,6 @@ class WardModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Thêm phường/xã mới
-     */
     public function create($data)
     {
         $sql = "INSERT INTO wards (district_id, code, name, name_en, is_active) 
@@ -65,9 +52,6 @@ class WardModel
         ]);
     }
 
-    /**
-     * Cập nhật phường/xã
-     */
     public function update($id, $data)
     {
         $sql = "UPDATE wards 
@@ -84,9 +68,6 @@ class WardModel
         ]);
     }
 
-    /**
-     * Xóa phường/xã (soft delete)
-     */
     public function delete($id)
     {
         $sql = "UPDATE wards SET is_active = 0 WHERE id = ?";
@@ -94,9 +75,6 @@ class WardModel
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Tìm kiếm phường/xã
-     */
     public function search($keyword, $districtId = null)
     {
         $sql = "SELECT w.*, d.name as district_name 

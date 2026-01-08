@@ -10,7 +10,6 @@ class MTonKho
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Lấy thông tin tồn kho theo ID hàng hóa
     public function getTonKhoByIdHangHoa($idhanghoa)
     {
         $sql = "SELECT * FROM tonkho WHERE idhanghoa = ?";
@@ -20,7 +19,6 @@ class MTonKho
         return $stmt->fetch();
     }
 
-    // Lấy tất cả thông tin tồn kho
     public function getAllTonKho()
     {
         $sql = "SELECT t.*, h.tenhanghoa, h.mota, dvt.tenDonViTinh
@@ -34,11 +32,10 @@ class MTonKho
         return $stmt->fetchAll();
     }
 
-    // Cập nhật số lượng tồn kho
     public function updateSoLuong($idhanghoa, $soLuongThayDoi, $isIncrement = true, $useExternalTransaction = false)
     {
         try {
-            // Tạo bảng system_logs nếu chưa tồn tại
+
             try {
                 $this->db->exec("CREATE TABLE IF NOT EXISTS system_logs (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,31 +46,26 @@ class MTonKho
                 error_log("Error creating system_logs table: " . $e->getMessage());
             }
 
-            // Ghi log vào bảng system_logs
             $logMessage = "Updating tonkho for idhanghoa: " . $idhanghoa . ", soLuongThayDoi: " . $soLuongThayDoi . ", isIncrement: " . ($isIncrement ? "true" : "false");
             $this->logToDatabase($logMessage);
 
-            // Ghi log để debug
             error_log($logMessage);
 
-            // Kiểm tra xem hàng hóa đã có trong bảng tồn kho chưa
             $tonkho = $this->getTonKhoByIdHangHoa($idhanghoa);
 
             if ($tonkho) {
-                // Nếu đã có, cập nhật số lượng
+
                 $oldSoLuong = $tonkho->soLuong;
                 $newSoLuong = $isIncrement
                     ? $oldSoLuong + $soLuongThayDoi
                     : $oldSoLuong - $soLuongThayDoi;
 
-                // Đảm bảo số lượng không âm
                 $newSoLuong = max(0, $newSoLuong);
 
                 $logMessage = "Updating existing tonkho: old soLuong = " . $oldSoLuong . ", new soLuong = " . $newSoLuong;
                 $this->logToDatabase($logMessage);
                 error_log($logMessage);
 
-                // Chỉ sử dụng transaction nội bộ nếu không có transaction bên ngoài
                 $needInternalTransaction = !$useExternalTransaction;
                 if ($needInternalTransaction) {
                     $this->db->beginTransaction();
@@ -100,16 +92,15 @@ class MTonKho
 
                 return $result;
             } else {
-                // Nếu chưa có, thêm mới vào bảng tồn kho
+
                 $logMessage = "Creating new tonkho entry for idhanghoa: " . $idhanghoa . " with soLuong: " . ($isIncrement ? $soLuongThayDoi : 0);
                 $this->logToDatabase($logMessage);
                 error_log($logMessage);
 
-                // Kiểm tra xem bảng tonkho có tồn tại không
                 try {
                     $checkTable = $this->db->query("SHOW TABLES LIKE 'tonkho'");
                     if ($checkTable->rowCount() == 0) {
-                        // Tạo bảng tonkho nếu chưa tồn tại
+
                         $logMessage = "Table tonkho does not exist, creating it";
                         $this->logToDatabase($logMessage);
                         error_log($logMessage);
@@ -131,14 +122,11 @@ class MTonKho
                     error_log($logMessage);
                 }
 
-                // Chỉ sử dụng transaction nội bộ nếu không có transaction bên ngoài
                 $needInternalTransaction = !$useExternalTransaction;
                 if ($needInternalTransaction) {
                     $this->db->beginTransaction();
                 }
 
-                // Nếu là tăng số lượng, thêm mới với số lượng đã cho
-                // Nếu là giảm số lượng, thêm mới với số lượng 0 (vì không thể giảm từ không có gì)
                 $initialSoLuong = $isIncrement ? $soLuongThayDoi : 0;
 
                 $sql = "INSERT INTO tonkho (idhanghoa, soLuong, soLuongToiThieu, viTri) VALUES (?, ?, 0, '')";
@@ -170,7 +158,6 @@ class MTonKho
         }
     }
 
-    // Ghi log vào bảng system_logs
     private function logToDatabase($message)
     {
         try {
@@ -182,7 +169,6 @@ class MTonKho
         }
     }
 
-    // Cập nhật thông tin tồn kho
     public function updateTonKho($idTonKho, $soLuong, $soLuongToiThieu, $viTri)
     {
         try {
@@ -197,7 +183,6 @@ class MTonKho
         }
     }
 
-    // Kiểm tra hàng hóa có tồn tại trong bảng tồn kho không
     public function checkHangHoaExists($idhanghoa)
     {
         $sql = "SELECT COUNT(*) FROM tonkho WHERE idhanghoa = ?";
@@ -206,7 +191,6 @@ class MTonKho
         return $stmt->fetchColumn() > 0;
     }
 
-    // Lấy danh sách hàng hóa sắp hết (số lượng dưới mức tối thiểu nhưng chưa hết hàng)
     public function getHangHoaSapHet()
     {
         $sql = "SELECT t.*, h.tenhanghoa, h.mota, dvt.tenDonViTinh
@@ -221,7 +205,6 @@ class MTonKho
         return $stmt->fetchAll();
     }
 
-    // Lấy danh sách hàng hóa hết hàng (số lượng = 0)
     public function getHangHoaHetHang()
     {
         $sql = "SELECT t.*, h.tenhanghoa, h.mota, dvt.tenDonViTinh
@@ -236,7 +219,6 @@ class MTonKho
         return $stmt->fetchAll();
     }
 
-    // Lấy thông tin tồn kho theo ID tồn kho
     public function getTonKhoById($idTonKho)
     {
         try {

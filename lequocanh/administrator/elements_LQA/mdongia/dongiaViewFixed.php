@@ -1,5 +1,5 @@
 <?php
-// Include CSS cho giao diện mới
+
 echo '<link rel="stylesheet" href="./elements_LQA/mdongia/dongiaStyles.css">';
 ?>
 
@@ -21,14 +21,13 @@ echo '<link rel="stylesheet" href="./elements_LQA/mdongia/dongiaStyles.css">';
 </div>
 
 <?php
-// Hiển thị thông báo nếu có
+
 if (isset($_SESSION['dongia_message'])) {
     $message = $_SESSION['dongia_message'];
     $success = isset($_SESSION['dongia_success']) ? $_SESSION['dongia_success'] : false;
     $alertClass = $success ? 'alert-success' : 'alert-danger';
     echo '<div class="alert ' . $alertClass . '" role="alert">' . htmlspecialchars($message) . '</div>';
 
-    // Xóa thông báo sau khi hiển thị
     unset($_SESSION['dongia_message']);
     unset($_SESSION['dongia_success']);
 }
@@ -135,7 +134,7 @@ if (empty($list_hh)) {
             echo "<!-- Debug: Found $l prices -->";
             if ($l > 0) {
                 foreach ($list_lh as $u) {
-                    // Kiểm tra trạng thái đơn giá
+
                     $isActive = $u->apDung;
                     $isExpired = strtotime($u->ngayKetThuc) < time();
                     $statusClass = $isActive ? 'success' : ($isExpired ? 'danger' : 'warning');
@@ -254,9 +253,9 @@ if (empty($list_hh)) {
 </div>
 
 <script>
-// JavaScript cho các chức năng mới
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Xử lý nút áp dụng giá
+
     document.querySelectorAll('.switch-price-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const idDonGia = this.dataset.id;
@@ -269,7 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Xử lý nút xem lịch sử
     document.querySelectorAll('.view-history-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const productId = this.dataset.product;
@@ -277,7 +275,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Xử lý nút xóa
     document.querySelectorAll('.delete-price-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             const idDonGia = this.dataset.id;
@@ -289,7 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Chuyển đổi đơn giá
 function switchPrice(idDonGia) {
     fetch('./elements_LQA/mdongia/dongiaSwitch.php', {
         method: 'POST',
@@ -316,7 +312,6 @@ function switchPrice(idDonGia) {
     });
 }
 
-// Xóa đơn giá
 function deletePrice(idDonGia) {
     fetch('./elements_LQA/mdongia/dongiaAct.php?reqact=deletedongia', {
         method: 'POST',
@@ -336,12 +331,10 @@ function deletePrice(idDonGia) {
     });
 }
 
-// Format giá tiền
 function formatPrice(price) {
     return new Intl.NumberFormat('vi-VN').format(price);
 }
 
-// Cập nhật giá và tên hàng hóa khi chọn sản phẩm
 function updatePrice() {
     var select = document.getElementById("hanghoaSelect");
     if (select.selectedIndex > 0) {
@@ -351,7 +344,6 @@ function updatePrice() {
         document.getElementById("giaban").value = price;
         document.getElementById("tenHangHoa").value = name;
 
-        // Tự động đặt ngày áp dụng là ngày hiện tại
         var today = new Date();
         var formattedDate = today.toISOString().substr(0, 10);
 
@@ -360,7 +352,6 @@ function updatePrice() {
             ngayApDungInput.value = formattedDate;
         }
 
-        // Đặt ngày kết thúc là 1 năm sau
         var nextYear = new Date();
         nextYear.setFullYear(today.getFullYear() + 1);
         var formattedNextYear = nextYear.toISOString().substr(0, 10);
@@ -374,7 +365,7 @@ function updatePrice() {
 </script>
 
 <style>
-/* CSS cơ bản cho giao diện */
+
 .admin-form {
     background: #f8f9fa;
     padding: 20px;

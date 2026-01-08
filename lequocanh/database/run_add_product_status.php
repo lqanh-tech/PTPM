@@ -1,8 +1,4 @@
 <?php
-/**
- * Script chạy migration thêm cột trạng thái vào bảng hanghoa
- * Chạy file này để thực thi migration
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -11,7 +7,6 @@ try {
     
     echo "=== BẮT ĐẦU MIGRATION: THÊM CỘT TRẠNG THÁI ===\n\n";
     
-    // Đọc file SQL
     $sqlFile = __DIR__ . '/add_product_status.sql';
     if (!file_exists($sqlFile)) {
         throw new Exception("Không tìm thấy file SQL: $sqlFile");
@@ -19,7 +14,6 @@ try {
     
     $sql = file_get_contents($sqlFile);
     
-    // Tách các câu lệnh SQL (bỏ qua delimiter và trigger vì cần xử lý riêng)
     $statements = [];
     $lines = explode("\n", $sql);
     $currentStatement = '';
@@ -28,12 +22,10 @@ try {
     foreach ($lines as $line) {
         $line = trim($line);
         
-        // Bỏ qua comment và dòng trống
         if (empty($line) || strpos($line, '--') === 0) {
             continue;
         }
         
-        // Xử lý DELIMITER
         if (strpos($line, 'DELIMITER') === 0) {
             $inDelimiter = !$inDelimiter;
             continue;
@@ -41,14 +33,13 @@ try {
         
         $currentStatement .= $line . ' ';
         
-        // Nếu đang trong delimiter block, tìm $$
         if ($inDelimiter) {
             if (strpos($line, '$$') !== false) {
                 $statements[] = trim($currentStatement);
                 $currentStatement = '';
             }
         } else {
-            // Nếu không trong delimiter, tìm dấu ;
+
             if (substr($line, -1) === ';') {
                 $statements[] = trim($currentStatement);
                 $currentStatement = '';
@@ -56,7 +47,6 @@ try {
         }
     }
     
-    // Thực thi từng câu lệnh
     $successCount = 0;
     $errorCount = 0;
     
@@ -64,10 +54,9 @@ try {
         if (empty($statement)) continue;
         
         try {
-            // Bỏ dấu ; cuối nếu có
+
             $statement = rtrim($statement, ';');
             
-            // Bỏ qua các câu lệnh SELECT thông báo
             if (stripos($statement, 'SELECT \'Migration completed') !== false) {
                 continue;
             }
@@ -78,7 +67,7 @@ try {
             echo "✓ Thành công\n\n";
             
         } catch (PDOException $e) {
-            // Bỏ qua lỗi "Duplicate column" hoặc "already exists"
+
             if (strpos($e->getMessage(), 'Duplicate column') !== false || 
                 strpos($e->getMessage(), 'already exists') !== false) {
                 echo "⚠ Đã tồn tại, bỏ qua\n\n";
@@ -90,10 +79,8 @@ try {
         }
     }
     
-    // Kiểm tra kết quả
     echo "\n=== KIỂM TRA KẾT QUẢ ===\n";
     
-    // Kiểm tra cột trangthai
     $checkColumn = $db->query("SHOW COLUMNS FROM hanghoa LIKE 'trangthai'");
     if ($checkColumn->rowCount() > 0) {
         $columnInfo = $checkColumn->fetch(PDO::FETCH_ASSOC);
@@ -104,7 +91,6 @@ try {
         echo "✗ Cột 'trangthai' chưa được thêm\n";
     }
     
-    // Kiểm tra bảng history
     $checkTable = $db->query("SHOW TABLES LIKE 'hanghoa_trangthai_history'");
     if ($checkTable->rowCount() > 0) {
         echo "✓ Bảng 'hanghoa_trangthai_history' đã được tạo\n";
@@ -112,7 +98,6 @@ try {
         echo "⚠ Bảng 'hanghoa_trangthai_history' chưa được tạo\n";
     }
     
-    // Kiểm tra trigger
     $checkTrigger = $db->query("SHOW TRIGGERS LIKE 'hanghoa'");
     $triggers = $checkTrigger->fetchAll(PDO::FETCH_ASSOC);
     $hasTrigger = false;
@@ -129,7 +114,6 @@ try {
         echo "⚠ Trigger 'hanghoa_trangthai_log' chưa được tạo (có thể cần quyền TRIGGER)\n";
     }
     
-    // Đếm số sản phẩm theo trạng thái
     $countStatus = $db->query("
         SELECT trangthai, COUNT(*) as total 
         FROM hanghoa 

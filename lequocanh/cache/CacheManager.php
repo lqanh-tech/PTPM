@@ -1,13 +1,9 @@
 <?php
-/**
- * Simple File-based Cache Manager
- * Giảm tải database queries và tăng tốc response
- */
 
 class CacheManager {
     private static $instance = null;
     private $cacheDir;
-    private $defaultTTL = 300; // 5 phút
+    private $defaultTTL = 300;
     
     private function __construct() {
         $this->cacheDir = __DIR__;
@@ -23,16 +19,10 @@ class CacheManager {
         return self::$instance;
     }
     
-    /**
-     * Lấy cache key từ tên
-     */
     private function getCacheFile($key) {
         return $this->cacheDir . '/' . md5($key) . '.cache';
     }
     
-    /**
-     * Lấy dữ liệu từ cache
-     */
     public function get($key) {
         $file = $this->getCacheFile($key);
         
@@ -42,7 +32,6 @@ class CacheManager {
         
         $data = unserialize(file_get_contents($file));
         
-        // Kiểm tra hết hạn
         if ($data['expires'] < time()) {
             unlink($file);
             return null;
@@ -51,9 +40,6 @@ class CacheManager {
         return $data['value'];
     }
     
-    /**
-     * Lưu dữ liệu vào cache
-     */
     public function set($key, $value, $ttl = null) {
         $ttl = $ttl ?? $this->defaultTTL;
         $file = $this->getCacheFile($key);
@@ -66,9 +52,6 @@ class CacheManager {
         return file_put_contents($file, serialize($data), LOCK_EX) !== false;
     }
     
-    /**
-     * Xóa cache theo key
-     */
     public function delete($key) {
         $file = $this->getCacheFile($key);
         if (file_exists($file)) {
@@ -77,20 +60,14 @@ class CacheManager {
         return true;
     }
     
-    /**
-     * Xóa tất cả cache
-     */
     public function clear() {
         $files = glob($this->cacheDir . '/*.cache');
         foreach ($files as $file) {
-            unlink($file);
+            @unlink($file);
         }
         return true;
     }
-    
-    /**
-     * Cache với callback - tự động lấy/lưu
-     */
+
     public function remember($key, $ttl, callable $callback) {
         $value = $this->get($key);
         
@@ -105,7 +82,6 @@ class CacheManager {
     }
 }
 
-// Helper function
 if (!function_exists('cache')) {
     function cache($key = null, $value = null, $ttl = 300) {
         $cache = CacheManager::getInstance();

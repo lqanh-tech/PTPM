@@ -1,8 +1,4 @@
 <?php
-/**
- * Modern API Router
- * Phase 4 - RESTful API with middleware support
- */
 
 class Router {
     private $routes = [];
@@ -74,17 +70,15 @@ class Router {
     
     private function executeRoute($route, $path) {
         try {
-            // Execute middleware
+
             foreach ($route['middleware'] as $middlewareName) {
                 if (isset($this->middleware[$middlewareName])) {
                     $this->middleware[$middlewareName]->handle();
                 }
             }
             
-            // Extract parameters
             $params = $this->extractParams($route['path'], $path);
             
-            // Execute handler
             if (is_callable($route['handler'])) {
                 return call_user_func($route['handler'], $params);
             } elseif (is_string($route['handler'])) {

@@ -1,8 +1,4 @@
 <?php
-/**
- * Advanced Application Configuration
- * Improvement: Environment-based configuration with validation
- */
 
 class AppConfig {
     private static $config = null;
@@ -13,22 +9,16 @@ class AppConfig {
             return self::$config;
         }
         
-        // Determine environment
         self::$environment = self::detectEnvironment();
         
-        // Load base configuration
         $baseConfig = self::loadBaseConfig();
         
-        // Load environment-specific configuration
         $envConfig = self::loadEnvironmentConfig(self::$environment);
         
-        // Merge configurations
         self::$config = array_merge($baseConfig, $envConfig);
         
-        // Validate configuration
         self::validateConfig();
         
-        // Set PHP configurations
         self::applyPhpConfig();
         
         return self::$config;
@@ -55,12 +45,11 @@ class AppConfig {
     }
     
     private static function detectEnvironment() {
-        // Check environment variable first
+
         if ($env = getenv('APP_ENV')) {
             return $env;
         }
         
-        // Check if .env file exists
         if (file_exists(__DIR__ . '/../../../../.env')) {
             $envVars = parse_ini_file(__DIR__ . '/../../../../.env');
             if (isset($envVars['APP_ENV'])) {
@@ -68,7 +57,6 @@ class AppConfig {
             }
         }
         
-        // Default based on server characteristics
         if (isset($_SERVER['HTTP_HOST'])) {
             $host = $_SERVER['HTTP_HOST'];
             if (strpos($host, 'localhost') !== false || 
@@ -105,7 +93,7 @@ class AppConfig {
             
             'session' => [
                 'name' => 'LEQUOCANH_SESSION',
-                'lifetime' => 7200, // 2 hours
+                'lifetime' => 7200,
                 'path' => '/',
                 'domain' => '',
                 'secure' => false,
@@ -118,9 +106,9 @@ class AppConfig {
                 'csrf_expire' => 3600,
                 'password_min_length' => 8,
                 'max_login_attempts' => 5,
-                'lockout_duration' => 900, // 15 minutes
+                'lockout_duration' => 900,
                 'allowed_file_types' => ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx'],
-                'max_file_size' => 5242880 // 5MB
+                'max_file_size' => 5242880
             ],
             
             'cache' => [
@@ -133,7 +121,7 @@ class AppConfig {
             'logging' => [
                 'enabled' => true,
                 'max_files' => 30,
-                'max_file_size' => 10485760, // 10MB
+                'max_file_size' => 10485760,
                 'log_queries' => false,
                 'log_errors' => true
             ],
@@ -147,7 +135,7 @@ class AppConfig {
             
             'api' => [
                 'version' => 'v1',
-                'rate_limit' => 1000, // requests per hour
+                'rate_limit' => 1000,
                 'jwt_secret' => 'change-this-in-production',
                 'jwt_expire' => 3600,
                 'cors_origins' => ['*'],
@@ -176,10 +164,10 @@ class AppConfig {
                     'log_queries' => true
                 ],
                 'cache' => [
-                    'enabled' => false // Disable cache in development
+                    'enabled' => false
                 ],
                 'performance' => [
-                    'slow_query_threshold' => 0.05 // More sensitive in dev
+                    'slow_query_threshold' => 0.05
                 ]
             ],
             
@@ -202,7 +190,7 @@ class AppConfig {
                     'log_queries' => false
                 ],
                 'security' => [
-                    'csrf_expire' => 1800 // Shorter in production
+                    'csrf_expire' => 1800
                 ],
                 'api' => [
                     'jwt_secret' => getenv('JWT_SECRET') ?: bin2hex(random_bytes(32)),
@@ -245,23 +233,19 @@ class AppConfig {
             }
         }
         
-        // Validate specific values
         if (self::isProduction() && self::get('api.jwt_secret') === 'change-this-in-production') {
             throw new Exception("JWT secret must be changed in production environment");
         }
     }
     
     private static function applyPhpConfig() {
-        // Set timezone
+
         date_default_timezone_set(self::get('app.timezone', 'UTC'));
         
-        // Set memory limit
         ini_set('memory_limit', self::get('performance.memory_limit', '256M'));
         
-        // Set execution time
         set_time_limit(self::get('performance.max_execution_time', 30));
         
-        // Error reporting based on environment
         if (self::isDevelopment()) {
             error_reporting(E_ALL);
             ini_set('display_errors', 1);
@@ -272,7 +256,6 @@ class AppConfig {
             ini_set('log_errors', 1);
         }
         
-        // Session configuration
         $sessionConfig = self::get('session');
         ini_set('session.name', $sessionConfig['name']);
         ini_set('session.gc_maxlifetime', $sessionConfig['lifetime']);
@@ -301,7 +284,6 @@ class AppConfig {
             return self::$config;
         }
         
-        // In production, hide sensitive information
         $safe = self::$config;
         unset($safe['database']['password']);
         unset($safe['api']['jwt_secret']);

@@ -1,24 +1,16 @@
 <?php
-/**
- * CSRF Protection Example - Demonstrates how to use CSRF protection
- * Priority: HIGH - Security demonstration
- */
 
-// Include required files
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/csrfProtection.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Validate CSRF token
+
         CSRFProtection::requireValidToken($_POST);
         
-        // Process form data here
         $message = "Form submitted successfully with valid CSRF token!";
         $messageType = "success";
         
@@ -102,9 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h4>2. Validate CSRF Token in Processing:</h4>
         <pre><code>try {
     CSRFProtection::requireValidToken($_POST);
-    // Process form data here
+
 } catch (Exception $e) {
-    // Handle CSRF validation failure
+
 }</code></pre>
         
         <h4>3. For AJAX Requests:</h4>
@@ -114,9 +106,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h4>4. Manual Token Validation:</h4>
         <pre><code>$token = $_POST['csrf_token'] ?? '';
 if (CSRFProtection::validateToken($token)) {
-    // Token is valid
+
 } else {
-    // Token is invalid
+
 }</code></pre>
     </div>
     

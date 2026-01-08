@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 session_start();
 if (!isset($_SESSION['USER']) || !isset($_SESSION['ADMIN'])) {
     header("Location: login.php");
@@ -9,17 +9,14 @@ if (!isset($_SESSION['USER']) || !isset($_SESSION['ADMIN'])) {
 require_once './elements_LQA/mod/mphieunhapCls.php';
 require_once './elements_LQA/mod/mtonkhoCls.php';
 
-// Khởi tạo đối tượng
 $phieunhapObj = new MPhieuNhap();
 
-// Xử lý khi form được gửi đi
 $message = '';
 $messageType = '';
 
 if (isset($_POST['fix_tonkho'])) {
     $idPhieuNhap = $_POST['idPhieuNhap'];
     
-    // Gọi phương thức cập nhật tồn kho
     $result = $phieunhapObj->forceUpdateTonKho($idPhieuNhap);
     
     if ($result) {
@@ -31,8 +28,7 @@ if (isset($_POST['fix_tonkho'])) {
     }
 }
 
-// Lấy danh sách phiếu nhập đã duyệt
-$list_phieunhap = $phieunhapObj->getPhieuNhapByTrangThai(1); // Trạng thái 1 = Đã duyệt
+$list_phieunhap = $phieunhapObj->getPhieuNhapByTrangThai(1);
 ?>
 
 <div class="admin-title">Cập nhật tồn kho cho phiếu nhập đã duyệt</div>

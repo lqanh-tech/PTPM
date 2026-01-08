@@ -178,7 +178,7 @@
 </div>
 
 <script>
-// Address Selector Module
+
 const AddressSelector = (function() {
     let selectedProvince = null;
     let selectedDistrict = null;
@@ -202,13 +202,11 @@ const AddressSelector = (function() {
         ward: document.getElementById('ward-loading'),
     };
     
-    // Initialize
     function init() {
         loadProvinces();
         setupEventListeners();
     }
     
-    // Setup event listeners
     function setupEventListeners() {
         elements.provinceSelect.addEventListener('change', onProvinceChange);
         elements.districtSelect.addEventListener('change', onDistrictChange);
@@ -216,7 +214,6 @@ const AddressSelector = (function() {
         elements.addressDetail.addEventListener('blur', updateFullAddress);
     }
     
-    // Load provinces
     async function loadProvinces() {
         try {
             showLoader('province', true);
@@ -237,11 +234,9 @@ const AddressSelector = (function() {
         }
     }
     
-    // Province change handler
     async function onProvinceChange(e) {
         const provinceId = e.target.value;
         
-        // Reset dependent selects
         resetSelect(elements.districtSelect, '-- Chọn Quận/Huyện --');
         resetSelect(elements.wardSelect, '-- Chọn Phường/Xã --');
         elements.shippingResult.style.display = 'none';
@@ -257,7 +252,6 @@ const AddressSelector = (function() {
             name: e.target.options[e.target.selectedIndex].text
         };
         
-        // Load districts
         try {
             showLoader('district', true);
             elements.districtSelect.disabled = true;
@@ -279,11 +273,9 @@ const AddressSelector = (function() {
         updateFullAddress();
     }
     
-    // District change handler
     async function onDistrictChange(e) {
         const districtId = e.target.value;
         
-        // Reset ward select
         resetSelect(elements.wardSelect, '-- Chọn Phường/Xã --');
         elements.shippingResult.style.display = 'none';
         
@@ -297,7 +289,6 @@ const AddressSelector = (function() {
             name: e.target.options[e.target.selectedIndex].text
         };
         
-        // Load wards
         try {
             showLoader('ward', true);
             elements.wardSelect.disabled = true;
@@ -319,7 +310,6 @@ const AddressSelector = (function() {
         updateFullAddress();
     }
     
-    // Ward change handler
     function onWardChange(e) {
         const wardCode = e.target.value;
         
@@ -334,7 +324,6 @@ const AddressSelector = (function() {
         }
     }
     
-    // Update full address display
     function updateFullAddress() {
         const detail = elements.addressDetail.value.trim();
         const parts = [];
@@ -352,7 +341,6 @@ const AddressSelector = (function() {
         }
     }
     
-    // Calculate shipping fee
     async function calculateShipping() {
         if (!selectedDistrict || !selectedWard) {
             return;
@@ -396,7 +384,6 @@ const AddressSelector = (function() {
         }
     }
     
-    // Display shipping calculation result
     function displayShippingResult(result) {
         const html = `
             <div class="alert alert-success">
@@ -429,9 +416,8 @@ const AddressSelector = (function() {
         elements.shippingResult.innerHTML = html;
     }
     
-    // Helper: Populate select element
     function populateSelect(selectElement, data, valueKey, textKey) {
-        // Clear existing options except first
+
         selectElement.innerHTML = '<option value="">' + selectElement.options[0].text + '</option>';
         
         data.forEach(item => {
@@ -442,20 +428,17 @@ const AddressSelector = (function() {
         });
     }
     
-    // Helper: Reset select
     function resetSelect(selectElement, placeholder) {
         selectElement.innerHTML = `<option value="">${placeholder}</option>`;
         selectElement.disabled = true;
     }
     
-    // Helper: Show/hide loader
     function showLoader(type, show) {
         if (loaders[type]) {
             loaders[type].style.display = show ? 'block' : 'none';
         }
     }
     
-    // Get selected address data
     function getSelectedAddress() {
         return {
             province_id: selectedProvince?.id,
@@ -471,7 +454,6 @@ const AddressSelector = (function() {
         };
     }
     
-    // Validate address
     function validate() {
         const errors = [];
         
@@ -488,7 +470,6 @@ const AddressSelector = (function() {
         };
     }
     
-    // Public API
     return {
         init,
         getSelectedAddress,
@@ -496,11 +477,9 @@ const AddressSelector = (function() {
     };
 })();
 
-// Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', function() {
     AddressSelector.init();
     
-    // Export to window for external access
     window.AddressSelector = AddressSelector;
 });
 </script>

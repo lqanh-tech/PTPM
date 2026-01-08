@@ -1,8 +1,4 @@
 <?php
-/**
- * Export Excel - Sử dụng PhpSpreadsheet
- * Xuất danh sách đơn hàng ra Excel
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -17,7 +13,6 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-// Kiểm tra quyền admin
 session_start();
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     http_response_code(403);
@@ -27,8 +22,7 @@ if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
 try {
     $exporter = new OrderExporter();
 
-    // Xác định loại export
-    $type = $_GET['type'] ?? 'summary'; // summary, detailed
+    $type = $_GET['type'] ?? 'summary';
     $orderIds = [];
 
     if ($type === 'detailed') {
@@ -41,14 +35,13 @@ try {
     $spreadsheet = new Spreadsheet();
 
     if ($type === 'summary') {
-        // Sheet tổng hợp
+
         exportSummarySheet($spreadsheet, $exporter, $_GET);
     } else {
-        // Sheet chi tiết
+
         exportDetailedSheets($spreadsheet, $exporter, $orderIds);
     }
 
-    // Output Excel
     $filename = 'don_hang_' . date('YmdHis') . '.xlsx';
 
     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -64,38 +57,28 @@ try {
     die('Error creating Excel: ' . $e->getMessage());
 }
 
-/**
- * Xuất sheet tổng hợp
- */
 function exportSummarySheet($spreadsheet, $exporter, $filters) {
     $orders = $exporter->getOrdersList($filters);
     
-    // Sheet 1: Thống kê tổng quan
     $statsSheet = $spreadsheet->getActiveSheet();
     $statsSheet->setTitle('Thống kê');
     createStatisticsSheet($statsSheet, $orders, $filters);
     
-    // Sheet 2: Danh sách chi tiết
     $detailSheet = $spreadsheet->createSheet(1);
     $detailSheet->setTitle('Danh sách đơn hàng');
     createDetailSheet($detailSheet, $orders);
     
-    // Sheet 3: Phân tích theo ngày
     $dateSheet = $spreadsheet->createSheet(2);
     $dateSheet->setTitle('Phân tích theo ngày');
     createDateAnalysisSheet($dateSheet, $orders);
 }
 
-/**
- * Tạo sheet thống kê
- */
 function createStatisticsSheet($sheet, $orders, $filters) {
-    // Tính toán thống kê
+
     $stats = calculateStatistics($orders);
     
     $row = 1;
     
-    // Tiêu đề
     $sheet->setCellValue('A' . $row, 'BÁO CÁO THỐNG KÊ ĐƠN HÀNG');
     $sheet->mergeCells('A1:F1');
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(18)->getColor()->setRGB('2C3E50');
@@ -108,7 +91,6 @@ function createStatisticsSheet($sheet, $orders, $filters) {
     $sheet->mergeCells('A3:F3');
     $sheet->getStyle('A3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     
-    // Bộ lọc
     if (!empty($filters)) {
         $row = 4;
         $filterText = 'Bộ lọc: ';
@@ -122,7 +104,6 @@ function createStatisticsSheet($sheet, $orders, $filters) {
     
     $row = 6;
     
-    // Tổng quan
     $sheet->setCellValue('A' . $row, 'TỔNG QUAN');
     $sheet->mergeCells('A' . $row . ':F' . $row);
     $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(14);
@@ -150,7 +131,6 @@ function createStatisticsSheet($sheet, $orders, $filters) {
     
     $row += 2;
     
-    // Thống kê theo trạng thái
     $sheet->setCellValue('A' . $row, 'THỐNG KÊ THEO TRẠNG THÁI');
     $sheet->mergeCells('A' . $row . ':D' . $row);
     $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(12);
@@ -183,7 +163,6 @@ function createStatisticsSheet($sheet, $orders, $filters) {
     
     $row += 2;
     
-    // Thống kê theo phương thức thanh toán
     $sheet->setCellValue('A' . $row, 'THỐNG KÊ THEO PHƯƠNG THỨC THANH TOÁN');
     $sheet->mergeCells('A' . $row . ':D' . $row);
     $sheet->getStyle('A' . $row)->getFont()->setBold(true)->setSize(12);
@@ -213,19 +192,14 @@ function createStatisticsSheet($sheet, $orders, $filters) {
         $row++;
     }
     
-    // Auto size
     foreach (range('A', 'F') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
 }
 
-/**
- * Tạo sheet danh sách chi tiết
- */
 function createDetailSheet($sheet, $orders) {
     $row = 1;
     
-    // Header
     $sheet->setCellValue('A' . $row, 'DANH SÁCH CHI TIẾT ĐƠN HÀNG');
     $sheet->mergeCells('A1:L1');
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
@@ -241,7 +215,6 @@ function createDetailSheet($sheet, $orders) {
     
     $row = 5;
     
-    // Column headers
     $headers = ['STT', 'Mã đơn hàng', 'Khách hàng', 'Điện thoại', 'Email', 'Địa chỉ', 'Ngày đặt', 'Tổng tiền', 'Trạng thái', 'PT Thanh toán', 'TT Thanh toán', 'Ghi chú'];
     $col = 'A';
     
@@ -256,7 +229,6 @@ function createDetailSheet($sheet, $orders) {
         $col++;
     }
     
-    // Data
     $row = 6;
     $stt = 1;
     $totalRevenue = 0;
@@ -275,16 +247,13 @@ function createDetailSheet($sheet, $orders) {
         $sheet->setCellValue('K' . $row, $order['trang_thai_thanh_toan'] ?? '');
         $sheet->setCellValue('L' . $row, $order['ghi_chu'] ?? '');
         
-        // Format tiền
         $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode('#,##0 "đ"');
         
-        // Màu trạng thái
         $statusColor = getStatusColor($order['trang_thai']);
         $sheet->getStyle('I' . $row)->getFill()
             ->setFillType(Fill::FILL_SOLID)
             ->getStartColor()->setRGB($statusColor);
         
-        // Zebra striping
         if ($row % 2 == 0) {
             $sheet->getStyle('A' . $row . ':L' . $row)->getFill()
                 ->setFillType(Fill::FILL_SOLID)
@@ -295,7 +264,6 @@ function createDetailSheet($sheet, $orders) {
         $row++;
     }
     
-    // Tổng kết
     $row++;
     $sheet->setCellValue('G' . $row, 'TỔNG DOANH THU:');
     $sheet->getStyle('G' . $row)->getFont()->setBold(true)->setSize(12);
@@ -303,21 +271,16 @@ function createDetailSheet($sheet, $orders) {
     $sheet->getStyle('H' . $row)->getFont()->setBold(true)->setSize(12)->getColor()->setRGB('E74C3C');
     $sheet->getStyle('H' . $row)->getNumberFormat()->setFormatCode('#,##0 "đ"');
     
-    // Auto size columns
     foreach (range('A', 'L') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
     
-    // Borders
     $sheet->getStyle('A5:L' . ($row - 1))->getBorders()->getAllBorders()
         ->setBorderStyle(Border::BORDER_THIN);
 }
 
-/**
- * Tạo sheet phân tích theo ngày
- */
 function createDateAnalysisSheet($sheet, $orders) {
-    // Group by date
+
     $byDate = [];
     foreach ($orders as $order) {
         $date = date('Y-m-d', strtotime($order['ngay_tao']));
@@ -333,7 +296,6 @@ function createDateAnalysisSheet($sheet, $orders) {
     
     $row = 1;
     
-    // Header
     $sheet->setCellValue('A' . $row, 'PHÂN TÍCH DOANH THU THEO NGÀY');
     $sheet->mergeCells('A1:E1');
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
@@ -343,7 +305,6 @@ function createDateAnalysisSheet($sheet, $orders) {
     
     $row = 3;
     
-    // Column headers
     $headers = ['Ngày', 'Số đơn', 'Doanh thu', 'Đơn TB', 'Tăng trưởng'];
     $col = 'A';
     foreach ($headers as $header) {
@@ -371,7 +332,6 @@ function createDateAnalysisSheet($sheet, $orders) {
         $sheet->getStyle('D' . $row)->getNumberFormat()->setFormatCode('#,##0 "đ"');
         $sheet->getStyle('E' . $row)->getNumberFormat()->setFormatCode('0.0%');
         
-        // Color growth
         if ($growth > 0) {
             $sheet->getStyle('E' . $row)->getFont()->getColor()->setRGB('27AE60');
         } elseif ($growth < 0) {
@@ -382,15 +342,11 @@ function createDateAnalysisSheet($sheet, $orders) {
         $row++;
     }
     
-    // Auto size
     foreach (range('A', 'E') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
 }
 
-/**
- * Tính toán thống kê
- */
 function calculateStatistics($orders) {
     $stats = [
         'total_orders' => count($orders),
@@ -403,7 +359,6 @@ function calculateStatistics($orders) {
     foreach ($orders as $order) {
         $stats['total_revenue'] += $order['tong_tien'];
         
-        // By status
         $status = $order['trang_thai'];
         if (!isset($stats['by_status'][$status])) {
             $stats['by_status'][$status] = ['count' => 0, 'revenue' => 0];
@@ -411,7 +366,6 @@ function calculateStatistics($orders) {
         $stats['by_status'][$status]['count']++;
         $stats['by_status'][$status]['revenue'] += $order['tong_tien'];
         
-        // By payment
         $payment = $order['phuong_thuc_thanh_toan'];
         if (!isset($stats['by_payment'][$payment])) {
             $stats['by_payment'][$payment] = ['count' => 0, 'revenue' => 0];
@@ -425,13 +379,9 @@ function calculateStatistics($orders) {
     return $stats;
 }
 
-/**
- * Xuất sheet chi tiết nhiều đơn
- */
 function exportDetailedSheets($spreadsheet, $exporter, $orderIds) {
     $orders = $exporter->getMultipleOrdersDetails($orderIds);
     
-    // Sheet 1: Tổng quan
     $sheet = $spreadsheet->getActiveSheet();
     $sheet->setTitle('Tổng quan');
     
@@ -465,7 +415,6 @@ function exportDetailedSheets($spreadsheet, $exporter, $orderIds) {
         $sheet->setCellValue('E' . $row, $order['trang_thai']);
         $sheet->setCellValue('F' . $row, 'Sheet ' . ($sheetIndex + 1));
         
-        // Tạo sheet riêng cho từng đơn
         createOrderDetailSheet($spreadsheet, $order, $sheetIndex);
         
         $row++;
@@ -477,16 +426,12 @@ function exportDetailedSheets($spreadsheet, $exporter, $orderIds) {
     }
 }
 
-/**
- * Tạo sheet chi tiết cho 1 đơn hàng
- */
 function createOrderDetailSheet($spreadsheet, $order, $index) {
     $sheet = $spreadsheet->createSheet($index);
     $sheet->setTitle(substr($order['ma_don_hang_text'], 0, 20));
     
     $row = 1;
     
-    // Thông tin đơn hàng
     $sheet->setCellValue('A' . $row, 'CHI TIẾT ĐƠN HÀNG');
     $sheet->mergeCells('A1:E1');
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
@@ -523,7 +468,6 @@ function createOrderDetailSheet($spreadsheet, $order, $index) {
     $sheet->getStyle('A' . $row)->getFont()->setBold(true);
     $sheet->mergeCells('B' . $row . ':E' . $row);
     
-    // Sản phẩm
     $row += 2;
     $sheet->setCellValue('A' . $row, 'DANH SÁCH SẢN PHẨM');
     $sheet->mergeCells('A' . $row . ':E' . $row);
@@ -554,7 +498,6 @@ function createOrderDetailSheet($spreadsheet, $order, $index) {
         $row++;
     }
     
-    // Tổng tiền
     $row++;
     $sheet->setCellValue('D' . $row, 'Tạm tính:');
     $sheet->getStyle('D' . $row)->getFont()->setBold(true);
@@ -574,22 +517,18 @@ function createOrderDetailSheet($spreadsheet, $order, $index) {
     $sheet->getStyle('E' . $row)->getFont()->setBold(true)->getColor()->setRGB('DC3545');
     $sheet->getStyle('E' . $row)->getNumberFormat()->setFormatCode('#,##0 "đ"');
     
-    // Auto size
     foreach (range('A', 'E') as $col) {
         $sheet->getColumnDimension($col)->setAutoSize(true);
     }
 }
 
-/**
- * Lấy màu theo trạng thái
- */
 function getStatusColor($status) {
     $colors = [
-        'pending' => 'FFF3CD',      // Vàng - Chờ xác nhận
-        'approved' => 'D1ECF1',     // Xanh dương nhạt - Đang giao
-        'delivered' => 'CCE5FF',    // Xanh dương - Đã giao
-        'completed' => 'D4EDDA',    // Xanh lá - Hoàn tất
-        'cancelled' => 'F8D7DA',    // Đỏ - Đã hủy
+        'pending' => 'FFF3CD',
+        'approved' => 'D1ECF1',
+        'delivered' => 'CCE5FF',
+        'completed' => 'D4EDDA',
+        'cancelled' => 'F8D7DA',
         'processing' => 'D1ECF1',
         'Chờ xác nhận' => 'FFF3CD',
         'Đang giao' => 'D1ECF1',

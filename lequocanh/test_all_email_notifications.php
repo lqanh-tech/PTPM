@@ -1,8 +1,4 @@
 <?php
-/**
- * Comprehensive Email Notification Test Script
- * Tests all email types: order success, approved, cancelled, payment, return request, return approved
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -27,7 +23,6 @@ echo "<div class='container'>";
 echo "<h1>📧 Comprehensive Email Notification Test</h1>";
 echo "<p>Testing all email notifications for the system</p>";
 
-// Load required files
 require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/EmailService.php';
 
@@ -37,7 +32,6 @@ try {
     
     echo "<div class='success'><strong>✅ EmailService initialized successfully</strong></div>";
     
-    // Get test user (khachhang)
     $userSql = "SELECT username, email, hoten FROM user WHERE username = 'khachhang'";
     $userStmt = $db->prepare($userSql);
     $userStmt->execute();
@@ -52,7 +46,6 @@ try {
     echo "<strong>Email:</strong> {$testUser['email']}";
     echo "</div>";
     
-    // Get latest order for testing
     $orderSql = "SELECT * FROM don_hang ORDER BY id DESC LIMIT 1";
     $orderStmt = $db->prepare($orderSql);
     $orderStmt->execute();
@@ -73,7 +66,6 @@ try {
     
     echo "<hr>";
     
-    // Test 1: Order Success Email
     echo "<div class='test-section'>";
     echo "<h2>1️⃣ Order Success Email</h2>";
     echo "<p>Testing order confirmation email...</p>";
@@ -90,7 +82,6 @@ try {
     }
     echo "</div>";
     
-    // Test 2: Order Approved Email
     echo "<div class='test-section'>";
     echo "<h2>2️⃣ Order Approved Email (Bank Transfer Approved)</h2>";
     echo "<p>Testing email when admin approves order...</p>";
@@ -107,7 +98,6 @@ try {
     }
     echo "</div>";
     
-    // Test 3: Payment Confirmed Email
     echo "<div class='test-section'>";
     echo "<h2>3️⃣ Payment Confirmed Email</h2>";
     echo "<p>Testing payment confirmation email...</p>";
@@ -124,7 +114,6 @@ try {
     }
     echo "</div>";
     
-    // Test 4: Order Cancelled Email
     echo "<div class='test-section'>";
     echo "<h2>4️⃣ Order Cancelled Email</h2>";
     echo "<p>Testing order cancellation email...</p>";
@@ -144,7 +133,6 @@ try {
     }
     echo "</div>";
     
-    // Test 5: Return Request Email (if method exists)
     echo "<div class='test-section'>";
     echo "<h2>5️⃣ Return Request Email</h2>";
     echo "<p>Testing return/exchange request email...</p>";
@@ -168,7 +156,6 @@ try {
     }
     echo "</div>";
     
-    // Test 6: Return Approved Email (if method exists)
     echo "<div class='test-section'>";
     echo "<h2>6️⃣ Return Approved Email</h2>";
     echo "<p>Testing email when admin approves return request...</p>";
@@ -190,7 +177,6 @@ try {
     }
     echo "</div>";
     
-    // Summary
     echo "<hr>";
     echo "<h2>📊 Test Summary</h2>";
     echo "<div class='email-list'>";
@@ -206,7 +192,6 @@ try {
     echo "<p><strong>Please check your inbox (and spam folder) at:</strong> <code>$testEmail</code></p>";
     echo "</div>";
     
-    // Error log preview
     echo "<h2>📋 Recent Error Logs</h2>";
     $errorLog = __DIR__ . '/error.log';
     if (file_exists($errorLog)) {

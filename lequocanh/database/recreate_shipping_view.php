@@ -1,7 +1,4 @@
 <?php
-/**
- * Check VIEW Definition and Recreate if Necessary
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -20,7 +17,6 @@ try {
         th { background-color: #667eea; color: white; }
     </style>\n";
     
-    // 1. Check current VIEW definition
     echo "<h3>1. Current VIEW Definition</h3>\n";
     
     $stmt = $db->query("SHOW CREATE VIEW v_shipping_methods_with_fees");
@@ -30,7 +26,6 @@ try {
         echo "<pre>" . htmlspecialchars($viewDef['Create View']) . "</pre>\n";
     }
     
-    // 2. Test current VIEW
     echo "<h3>2. Test Current VIEW Output</h3>\n";
     
     $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees ORDER BY sort_order DESC");
@@ -51,7 +46,6 @@ try {
     }
     echo "</table>\n";
     
-    // 3. Recreate VIEW with proper definition
     echo "<h3>3. Recreate VIEW (Fixed Version)</h3>\n";
     
     $db->exec("DROP VIEW IF EXISTS v_shipping_methods_with_fees");
@@ -82,7 +76,6 @@ try {
     echo "<div class='alert alert-success'>✅ VIEW recreated successfully!</div>\n";
     echo "<pre>" . htmlspecialchars($createViewSQL) . "</pre>\n";
     
-    // 4. Test new VIEW
     echo "<h3>4. Test NEW VIEW Output</h3>\n";
     
     $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees ORDER BY sort_order DESC");
@@ -104,7 +97,6 @@ try {
     }
     echo "</table>\n";
     
-    // 5. Compare
     echo "<h3>5. Comparison</h3>\n";
     
     if (count($viewData) !== count($newViewData)) {

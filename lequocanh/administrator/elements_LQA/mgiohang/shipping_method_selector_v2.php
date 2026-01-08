@@ -1,20 +1,14 @@
 <?php
-/**
- * Shipping Method Selector V2 - Giao diện đồng bộ với quản lý
- * Sử dụng calculate_shipping_fee() function
- */
 
 require_once __DIR__ . '/../mod/database.php';
 
 $db = Database::getInstance()->getConnection();
 
-// Lấy thông tin đơn hàng từ session
 $cartWeight = $_SESSION['cart_weight'] ?? 1.0;
 $cartValue = $_SESSION['cart_total'] ?? 0;
 $provinceId = $_SESSION['province_id'] ?? 1;
 $districtId = $_SESSION['district_id'] ?? 1;
 
-// Lấy danh sách phương thức
 $stmt = $db->query("
     SELECT 
         sm.*,
@@ -29,7 +23,6 @@ $stmt = $db->query("
 ");
 $shippingMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Tính phí cho từng phương thức
 foreach ($shippingMethods as &$method) {
     $stmt = $db->prepare("SELECT calculate_shipping_fee(?, ?, ?, ?, ?) as fee");
     $stmt->execute([$method['id'], $provinceId, $districtId, $cartWeight, $cartValue]);
@@ -222,7 +215,6 @@ foreach ($shippingMethods as &$method) {
     text-decoration: underline;
 }
 
-/* Modal chi tiết phí */
 .shipping-detail-modal {
     display: none;
     position: fixed;
@@ -324,23 +316,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     rows.forEach(row => {
         row.addEventListener('click', function(e) {
-            // Nếu click vào button chi tiết, đừng xử lý selection
+
             if (e.target.closest('.btn-shipping-detail')) {
                 return;
             }
             
-            // Nếu click vào radio, đừng xử lý lại
             if (e.target.tagName === 'INPUT' && e.target.type === 'radio') {
                 selectShippingMethod(this);
                 return;
             }
             
-            // Click vào hàng khác = chọn phương thức
             selectShippingMethod(this);
         });
     });
     
-    // Xử lý thay đổi radio button
     document.querySelectorAll('input[name="shipping_method"]').forEach(radio => {
         radio.addEventListener('change', function() {
             const row = this.closest('.shipping-method-row');
@@ -350,7 +339,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Initialize với phương thức đầu tiên
     const firstRow = document.querySelector('.shipping-method-row.selected');
     if (firstRow) {
         const initialFee = parseFloat(firstRow.dataset.fee) || 0;
@@ -359,34 +347,30 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function selectShippingMethod(row) {
-    // Remove selected từ tất cả
+
     document.querySelectorAll('.shipping-method-row').forEach(r => {
         r.classList.remove('selected');
         r.querySelector('input[type="radio"]').checked = false;
     });
     
-    // Add selected vào hàng được click
     row.classList.add('selected');
     row.querySelector('input[type="radio"]').checked = true;
     
-    // Update hidden inputs
     const methodCode = row.dataset.method;
     const methodFee = parseFloat(row.dataset.fee) || 0;
     
     document.getElementById('selected_shipping_method').value = methodCode;
     document.getElementById('selected_shipping_fee').value = methodFee;
     
-    // Update tổng tiền
     updateTotalAmount(methodFee);
     
-    // Trigger event
     document.dispatchEvent(new CustomEvent('shippingMethodChanged', {
         detail: { method: methodCode, fee: methodFee }
     }));
 }
 
 function updateTotalAmount(shippingFee) {
-    // Update shipping fee display
+
     const shippingFeeDisplay = document.getElementById('shipping-fee-value');
     if (shippingFeeDisplay) {
         if (shippingFee === 0) {
@@ -396,7 +380,6 @@ function updateTotalAmount(shippingFee) {
         }
     }
     
-    // Update final total
     const subtotal = parseFloat(document.getElementById('subtotal-value')?.textContent.replace(/[^\d]/g, '') || 0);
     const vat = parseFloat(document.getElementById('vat-value')?.textContent.replace(/[^\d]/g, '') || 0);
     const total = subtotal + vat + shippingFee;
@@ -411,18 +394,15 @@ function showShippingDetail(event, code, name, baseFee, feePerKg, cartWeight, fi
     event.preventDefault();
     event.stopPropagation();
     
-    // Tính phí theo trọng lượng
     const weightFee = parseFloat(cartWeight) * parseFloat(feePerKg);
     const totalBefore = parseFloat(baseFee) + weightFee;
     
-    // Update modal content
     document.getElementById('detailMethodName').textContent = name;
     document.getElementById('detailBaseFee').textContent = new Intl.NumberFormat('vi-VN').format(baseFee) + ' ₫';
     document.getElementById('detailWeightFee').textContent = new Intl.NumberFormat('vi-VN').format(weightFee) + ' ₫';
     document.getElementById('detailWeightBreakdown').textContent = '(' + parseFloat(cartWeight) + 'kg × ' + new Intl.NumberFormat('vi-VN').format(feePerKg) + '₫/kg)';
     document.getElementById('detailTotalBefore').textContent = new Intl.NumberFormat('vi-VN').format(totalBefore) + ' ₫';
     
-    // Hiển thị info miễn phí nếu có
     const freeShipNote = document.getElementById('detailFreeShipNote');
     if (parseInt(isFree) === 1 && parseFloat(finalFee) === 0) {
         freeShipNote.style.display = 'flex';
@@ -431,7 +411,6 @@ function showShippingDetail(event, code, name, baseFee, feePerKg, cartWeight, fi
         freeShipNote.style.display = 'none';
     }
     
-    // Hiển thị phí cuối cùng
     const finalFeeDisplay = document.getElementById('detailFinalFee');
     if (parseInt(isFree) === 1) {
         finalFeeDisplay.textContent = 'Miễn phí';
@@ -441,7 +420,6 @@ function showShippingDetail(event, code, name, baseFee, feePerKg, cartWeight, fi
         finalFeeDisplay.style.color = '#667eea';
     }
     
-    // Show modal
     document.getElementById('shippingDetailModal').classList.add('show');
 }
 
@@ -449,7 +427,6 @@ function closeShippingDetail() {
     document.getElementById('shippingDetailModal').classList.remove('show');
 }
 
-// Close modal khi click bên ngoài
 window.onclick = function(event) {
     const modal = document.getElementById('shippingDetailModal');
     if (event.target == modal) {

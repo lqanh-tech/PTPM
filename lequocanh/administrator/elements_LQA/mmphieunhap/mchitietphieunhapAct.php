@@ -1,9 +1,8 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 require_once '../mod/mphieunhapCls.php';
 require_once '../mod/mchitietphieunhapCls.php';
@@ -16,7 +15,7 @@ if (isset($_GET['reqact'])) {
     
     switch ($reqact) {
         case 'addnew':
-            // Thêm mới chi tiết phiếu nhập
+
             if (isset($_POST['idPhieuNhap']) && isset($_POST['idhanghoa']) && isset($_POST['soLuong']) && isset($_POST['donGia']) && isset($_POST['giaNhap'])) {
                 $idPhieuNhap = $_POST['idPhieuNhap'];
                 $idhanghoa = $_POST['idhanghoa'];
@@ -37,7 +36,7 @@ if (isset($_GET['reqact'])) {
             break;
             
         case 'update':
-            // Cập nhật chi tiết phiếu nhập
+
             if (isset($_POST['idCTPN']) && isset($_POST['soLuong']) && isset($_POST['donGia']) && isset($_POST['giaNhap'])) {
                 $idCTPN = $_POST['idCTPN'];
                 $soLuong = $_POST['soLuong'];
@@ -58,7 +57,7 @@ if (isset($_GET['reqact'])) {
             break;
             
         case 'delete':
-            // Xóa chi tiết phiếu nhập
+
             if (isset($_GET['idct']) && isset($_GET['idpn'])) {
                 $idCTPN = $_GET['idct'];
                 $idPhieuNhap = $_GET['idpn'];

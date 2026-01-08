@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Automated Testing - Quick Start</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        .method {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .method h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        .method p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+            transition: all 0.3s;
+            font-size: 1.1em;
+        }
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-success { background: #28a745; }
+        .btn-success:hover { background: #218838; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #e0a800; }
+        .code {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .feature {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+        }
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .feature-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .feature-desc {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Automated Testing System</h1>
+        <p class="subtitle">Hệ thống kiểm tra và sửa lỗi tự động cho dự án LeQuocAnh</p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">✅</div>
+                <div class="feature-title">Auto Testing</div>
+                <div class="feature-desc">Tự động kiểm tra toàn bộ hệ thống</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔧</div>
+                <div class="feature-title">Auto Fixing</div>
+                <div class="feature-desc">Tự động sửa lỗi phát hiện</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏥</div>
+                <div class="feature-title">Health Monitor</div>
+                <div class="feature-desc">Giám sát sức khỏe hệ thống</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Dashboard</div>
+                <div class="feature-desc">Xem báo cáo chi tiết</div>
+            </div>
+        </div>
+        
+        <div class="method">
+            <h2>🚀 Phương pháp 1: Quick Start (Khuyến nghị)</h2>
+            <p>Chạy test và auto-fix trong một lệnh duy nhất:</p>
+            <div class="code">php quick_test.php</div>
+            <p>Hoặc click vào nút bên dưới để chạy từ web:</p>
+            <a href="quick_test.php" class="btn btn-success">▶️ Run Quick Test</a>
+        </div>
+        
+        <div class="method">
+            <h2>🐳 Phương pháp 2: Docker (Production)</h2>
+            <p>Chạy tests trong môi trường Docker isolated:</p>
+            <div class="code">run_docker_tests.bat</div>
+            <p>Docker sẽ tự động:</p>
+            <ul style="margin-left: 20px; color: #666; line-height: 1.8;">
+                <li>Khởi động MySQL test database</li>
+                <li>Chạy automated tests</li>
+                <li>Áp dụng auto-fixes nếu cần</li>
+                <li>Chạy health monitor</li>
+                <li>Dọn dẹp môi trường</li>
+            </ul>
+        </div>
+        
+        <div class="method">
+            <h2>🌐 Phương pháp 3: Web Dashboard</h2>
+            <p>Quản lý tests qua giao diện web trực quan:</p>
+            <a href="test_dashboard.php" class="btn">📊 Open Dashboard</a>
+            <p style="margin-top: 15px;">Dashboard cho phép:</p>
+            <ul style="margin-left: 20px; color: #666; line-height: 1.8;">
+                <li>Xem kết quả tests real-time</li>
+                <li>Chạy tests với một click</li>
+                <li>Áp dụng fixes tự động</li>
+                <li>Xem health status</li>
+                <li>Xem lịch sử tests</li>
+            </ul>
+        </div>
+        
+        <div class="method">
+            <h2>⚙️ Phương pháp 4: Manual (Advanced)</h2>
+            <p>Chạy từng bước riêng biệt:</p>
+            <div class="code">
+# Bước 1: Chạy tests<br>
+php automated_test_runner.php<br>
+<br>
+# Bước 2: Áp dụng fixes (nếu có lỗi)<br>
+php auto_fix_runner.php<br>
+<br>
+# Bước 3: Chạy health monitor<br>
+php health_monitor.php
+            </div>
+        </div>
+        
+        <div class="actions">
+            <h2 style="margin-bottom: 20px;">🎯 Bắt đầu ngay</h2>
+            <a href="quick_test.php" class="btn btn-success">▶️ Run Quick Test</a>
+            <a href="test_dashboard.php" class="btn">📊 Open Dashboard</a>
+            <a href="auto_fix_indexes.php" class="btn btn-warning">🔧 Fix Indexes</a>
+            <a href="test_optimizations.php" class="btn">⚡ Test Optimizations</a>
+            <a href="AUTOMATED_TESTING_README.md" class="btn" target="_blank">📚 Documentation</a>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+            <strong>💡 Lưu ý:</strong>
+            <ul style="margin-left: 20px; margin-top: 10px; color: #856404; line-height: 1.8;">
+                <li>Chạy tests trước khi deploy code mới</li>
+                <li>Kiểm tra dashboard mỗi ngày</li>
+                <li>Backup database trước khi auto-fix</li>
+                <li>Xem chi tiết trong <code>test-results/</code> và <code>monitoring/</code></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

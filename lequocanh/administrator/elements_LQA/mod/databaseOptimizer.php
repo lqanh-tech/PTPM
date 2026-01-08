@@ -1,22 +1,5 @@
 <?php
 
-/**
- * Database Optimizer - Phase 3 Performance Enhancement
- *
- * Comprehensive database optimization tool for analyzing and improving
- * database performance through query optimization, indexing, and caching.
- *
- * Features:
- * - Slow query analysis
- * - Index optimization recommendations
- * - Query caching system
- * - Connection pooling
- * - Performance metrics tracking
- *
- * @author Phase 3 Implementation
- * @version 1.0.0
- */
-
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/../config/constants.php';
 require_once __DIR__ . '/logger.php';
@@ -28,14 +11,12 @@ class DatabaseOptimizer
     private static $instance = null;
     private $queryCache = [];
     private $performanceMetrics = [];
-    private $slowQueryThreshold = 0.1; // 100ms
+    private $slowQueryThreshold = 0.1;
 
-    // Query cache settings
     private $cacheEnabled = true;
-    private $cacheTimeout = 300; // 5 minutes
-    private $maxCacheSize = 1000; // Maximum cached queries
+    private $cacheTimeout = 300;
+    private $maxCacheSize = 1000;
 
-    // Connection pool settings
     private static $connectionPool = [];
     private static $maxConnections = 10;
     private static $connectionTimeout = 30;
@@ -60,19 +41,14 @@ class DatabaseOptimizer
         return self::$instance;
     }
 
-    /**
-     * Initialize optimizer settings and create necessary tables
-     */
     private function initializeOptimizer()
     {
         try {
-            // Create performance metrics table if not exists
+
             $this->createPerformanceTable();
 
-            // Create query cache table if not exists
             $this->createQueryCacheTable();
 
-            // Enable MySQL query logging for analysis
             $this->enableQueryLogging();
 
             $this->logger->info("DatabaseOptimizer initialized successfully");
@@ -82,9 +58,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Create performance metrics table
-     */
     private function createPerformanceTable()
     {
         $sql = "CREATE TABLE IF NOT EXISTS performance_metrics (
@@ -103,9 +76,6 @@ class DatabaseOptimizer
         $this->db->exec($sql);
     }
 
-    /**
-     * Create query cache table
-     */
     private function createQueryCacheTable()
     {
         $sql = "CREATE TABLE IF NOT EXISTS query_cache (
@@ -120,31 +90,24 @@ class DatabaseOptimizer
         $this->db->exec($sql);
     }
 
-    /**
-     * Enable MySQL slow query logging
-     */
     private function enableQueryLogging()
     {
         try {
-            // Enable slow query log
+
             $this->db->exec("SET GLOBAL slow_query_log = 'ON'");
             $this->db->exec("SET GLOBAL long_query_time = " . $this->slowQueryThreshold);
             $this->db->exec("SET GLOBAL log_queries_not_using_indexes = 'ON'");
         } catch (Exception $e) {
-            // Log warning but don't fail - might not have privileges
+
             $this->logger->warning("Could not enable query logging: " . $e->getMessage());
         }
     }
 
-    /**
-     * Execute optimized query with caching and performance tracking
-     */
     public function executeQuery($sql, $params = [], $useCache = true)
     {
         $startTime = microtime(true);
         $cacheKey = $this->generateCacheKey($sql, $params);
 
-        // Try cache first if enabled
         if ($useCache && $this->cacheEnabled) {
             $cachedResult = $this->getCachedResult($cacheKey);
             if ($cachedResult !== null) {
@@ -154,18 +117,16 @@ class DatabaseOptimizer
         }
 
         try {
-            // Execute query
+
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
             $executionTime = microtime(true) - $startTime;
 
-            // Log performance metrics
             $this->logQueryPerformance($sql, $params, $executionTime, $stmt->rowCount());
 
-            // Cache result if enabled
-            if ($useCache && $this->cacheEnabled && $executionTime < 1.0) { // Only cache fast queries
+            if ($useCache && $this->cacheEnabled && $executionTime < 1.0) {
                 $this->cacheResult($cacheKey, $result);
             }
 
@@ -182,17 +143,11 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Generate cache key for query and parameters
-     */
     private function generateCacheKey($sql, $params)
     {
         return hash('sha256', $sql . serialize($params));
     }
 
-    /**
-     * Get cached query result
-     */
     private function getCachedResult($cacheKey)
     {
         try {
@@ -212,13 +167,10 @@ class DatabaseOptimizer
         return null;
     }
 
-    /**
-     * Cache query result
-     */
     private function cacheResult($cacheKey, $result)
     {
         try {
-            // Clean old cache entries if we're at max size
+
             $this->cleanOldCache();
 
             $expiresAt = date('Y-m-d H:i:s', time() + $this->cacheTimeout);
@@ -236,9 +188,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Update cache hit count
-     */
     private function updateCacheHitCount($cacheKey)
     {
         try {
@@ -250,22 +199,18 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Clean old cache entries
-     */
     private function cleanOldCache()
     {
         try {
-            // Remove expired entries
+
             $this->db->exec("DELETE FROM query_cache WHERE expires_at < NOW()");
 
-            // Remove oldest entries if we're at max size
             $countSql = "SELECT COUNT(*) as count FROM query_cache";
             $stmt = $this->db->query($countSql);
             $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
             if ($count >= $this->maxCacheSize) {
-                $deleteCount = $count - $this->maxCacheSize + 100; // Remove extra 100
+                $deleteCount = $count - $this->maxCacheSize + 100;
                 $this->db->exec("DELETE FROM query_cache ORDER BY created_at ASC LIMIT $deleteCount");
             }
         } catch (Exception $e) {
@@ -273,15 +218,11 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Log query performance metrics
-     */
     private function logQueryPerformance($sql, $params, $executionTime, $rowCount)
     {
         try {
             $queryHash = hash('md5', $sql);
 
-            // Only log if execution time exceeds threshold or it's a slow query
             if ($executionTime > $this->slowQueryThreshold) {
                 $insertSql = "INSERT INTO performance_metrics
                              (query_hash, query_text, execution_time, rows_sent)
@@ -289,7 +230,6 @@ class DatabaseOptimizer
                 $stmt = $this->db->prepare($insertSql);
                 $stmt->execute([$queryHash, $sql, $executionTime, $rowCount]);
 
-                // Log warning for very slow queries
                 if ($executionTime > 1.0) {
                     $this->logger->warning("Slow query detected", [
                         'execution_time' => $executionTime,
@@ -303,9 +243,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Analyze slow queries and provide optimization recommendations
-     */
     public function analyzeSlowQueries($limit = 20)
     {
         try {
@@ -343,41 +280,32 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Generate optimization recommendations for a query
-     */
     private function generateOptimizationRecommendations($sql)
     {
         $recommendations = [];
         $sqlLower = strtolower($sql);
 
-        // Check for missing WHERE clauses
         if (strpos($sqlLower, 'select') !== false && strpos($sqlLower, 'where') === false) {
             $recommendations[] = "Consider adding WHERE clause to limit result set";
         }
 
-        // Check for SELECT *
         if (strpos($sqlLower, 'select *') !== false) {
             $recommendations[] = "Avoid SELECT * - specify only needed columns";
         }
 
-        // Check for missing LIMIT
         if (strpos($sqlLower, 'select') !== false && strpos($sqlLower, 'limit') === false) {
             $recommendations[] = "Consider adding LIMIT clause for large result sets";
         }
 
-        // Check for complex JOINs
         $joinCount = substr_count($sqlLower, 'join');
         if ($joinCount > 3) {
             $recommendations[] = "Complex JOINs detected - consider query restructuring or denormalization";
         }
 
-        // Check for subqueries
         if (strpos($sqlLower, '(select') !== false) {
             $recommendations[] = "Subqueries detected - consider using JOINs for better performance";
         }
 
-        // Check for ORDER BY without LIMIT
         if (strpos($sqlLower, 'order by') !== false && strpos($sqlLower, 'limit') === false) {
             $recommendations[] = "ORDER BY without LIMIT can be expensive - consider adding LIMIT";
         }
@@ -385,9 +313,6 @@ class DatabaseOptimizer
         return $recommendations;
     }
 
-    /**
-     * Suggest indexes for tables based on query patterns
-     */
     public function suggestIndexes($tableName = null)
     {
         try {
@@ -396,7 +321,7 @@ class DatabaseOptimizer
             if ($tableName) {
                 $suggestions[$tableName] = $this->analyzeTableIndexes($tableName);
             } else {
-                // Analyze all tables
+
                 $tables = $this->getAllTables();
                 foreach ($tables as $table) {
                     $tableIndexes = $this->analyzeTableIndexes($table);
@@ -413,26 +338,20 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Analyze indexes for a specific table
-     */
     private function analyzeTableIndexes($tableName)
     {
         $suggestions = [];
 
         try {
-            // Get table structure
+
             $stmt = $this->db->query("DESCRIBE `$tableName`");
             $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Get existing indexes
             $stmt = $this->db->query("SHOW INDEX FROM `$tableName`");
             $existingIndexes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Analyze query patterns for this table
             $queryPatterns = $this->getQueryPatternsForTable($tableName);
 
-            // Suggest indexes based on WHERE clauses
             foreach ($queryPatterns as $pattern) {
                 $whereColumns = $this->extractWhereColumns($pattern['query_text']);
                 foreach ($whereColumns as $column) {
@@ -447,7 +366,6 @@ class DatabaseOptimizer
                 }
             }
 
-            // Suggest composite indexes for multi-column WHERE clauses
             $compositeColumns = $this->findCompositeIndexOpportunities($queryPatterns);
             foreach ($compositeColumns as $columns) {
                 if (!$this->hasCompositeIndex($existingIndexes, $columns)) {
@@ -470,9 +388,6 @@ class DatabaseOptimizer
         return $suggestions;
     }
 
-    /**
-     * Get all tables in the database
-     */
     private function getAllTables()
     {
         $stmt = $this->db->query("SHOW TABLES");
@@ -483,9 +398,6 @@ class DatabaseOptimizer
         return $tables;
     }
 
-    /**
-     * Get query patterns for a specific table
-     */
     private function getQueryPatternsForTable($tableName)
     {
         try {
@@ -504,15 +416,11 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Extract WHERE clause columns from SQL
-     */
     private function extractWhereColumns($sql)
     {
         $columns = [];
         $sqlLower = strtolower($sql);
 
-        // Simple regex to find WHERE conditions
         if (preg_match_all('/where\s+.*?(\w+)\s*[=<>!]/i', $sql, $matches)) {
             foreach ($matches[1] as $column) {
                 if (!in_array($column, ['and', 'or', 'not', 'in', 'like'])) {
@@ -524,9 +432,6 @@ class DatabaseOptimizer
         return array_unique($columns);
     }
 
-    /**
-     * Check if table has index on specific column
-     */
     private function hasIndexOnColumn($existingIndexes, $column)
     {
         foreach ($existingIndexes as $index) {
@@ -537,9 +442,6 @@ class DatabaseOptimizer
         return false;
     }
 
-    /**
-     * Check if table has composite index on columns
-     */
     private function hasCompositeIndex($existingIndexes, $columns)
     {
         $indexGroups = [];
@@ -559,9 +461,6 @@ class DatabaseOptimizer
         return false;
     }
 
-    /**
-     * Find opportunities for composite indexes
-     */
     private function findCompositeIndexOpportunities($queryPatterns)
     {
         $compositeOpportunities = [];
@@ -580,15 +479,11 @@ class DatabaseOptimizer
         return array_values($compositeOpportunities);
     }
 
-    /**
-     * Get performance statistics
-     */
     public function getPerformanceStats()
     {
         try {
             $stats = [];
 
-            // Query performance stats
             $sql = "SELECT
                         COUNT(*) as total_queries,
                         AVG(execution_time) as avg_execution_time,
@@ -601,7 +496,6 @@ class DatabaseOptimizer
             $stmt->execute([$this->slowQueryThreshold]);
             $stats['queries'] = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Cache performance stats
             $sql = "SELECT
                         COUNT(*) as total_cached,
                         SUM(hit_count) as total_hits,
@@ -612,7 +506,6 @@ class DatabaseOptimizer
             $stmt = $this->db->query($sql);
             $stats['cache'] = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Calculate cache hit ratio
             $totalQueries = $stats['queries']['total_queries'] ?? 0;
             $totalHits = $stats['cache']['total_hits'] ?? 0;
             $stats['cache']['hit_ratio'] = $totalQueries > 0 ? round(($totalHits / $totalQueries) * 100, 2) : 0;
@@ -624,9 +517,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Clear query cache
-     */
     public function clearCache()
     {
         try {
@@ -639,9 +529,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Optimize database tables
-     */
     public function optimizeTables($tables = null)
     {
         try {
@@ -671,9 +558,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Get database size information
-     */
     public function getDatabaseSize()
     {
         try {
@@ -693,9 +577,6 @@ class DatabaseOptimizer
         }
     }
 
-    /**
-     * Generate comprehensive optimization report
-     */
     public function generateOptimizationReport()
     {
         $report = [
@@ -707,7 +588,6 @@ class DatabaseOptimizer
             'recommendations' => []
         ];
 
-        // Generate general recommendations
         $stats = $report['performance_stats'];
         if (isset($stats['queries']['slow_queries']) && $stats['queries']['slow_queries'] > 0) {
             $report['recommendations'][] = "Found {$stats['queries']['slow_queries']} slow queries - consider optimization";

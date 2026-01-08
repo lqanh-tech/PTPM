@@ -1,8 +1,4 @@
 <?php
-/**
- * Direct Email Test Script
- * Test EmailService directly without creating an order
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -10,7 +6,6 @@ ini_set('display_errors', 1);
 echo "<h1>Email Service Direct Test</h1>\n";
 echo "<p>Testing EmailService with SMTP configuration...</p>\n";
 
-// Load required files - FIX: Remove duplicate lequocanh
 require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/EmailService.php';
 
@@ -39,7 +34,7 @@ if (file_exists($envFile)) {
         $value = trim($value);
         
         if (strpos($key, 'MAIL_') === 0) {
-            // Mask password
+
             if ($key == 'MAIL_PASSWORD') {
                 $config[$key] = '***HIDDEN***';
             } else {
@@ -63,7 +58,6 @@ echo "<h2>Step 3: Get Test Order Data</h2>\n";
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Lấy đơn hàng mới nhất
     $sql = "SELECT * FROM don_hang ORDER BY id DESC LIMIT 1";
     $stmt = $db->prepare($sql);
     $stmt->execute();
@@ -72,13 +66,12 @@ try {
     if (!$order) {
         echo "❌ No orders found in database<br>\n";
         echo "<p>Creating a test scenario with fake order data...</p>\n";
-        $orderId = 999999; // Fake order ID for testing
-        $testEmail = 'quocanh5758@gmail.com'; // Email from .env
+        $orderId = 999999;
+        $testEmail = 'quocanh5758@gmail.com';
     } else {
         echo "✅ Found order: #{$order['ma_don_hang_text']} (ID: {$order['id']})<br>\n";
         $orderId = $order['id'];
         
-        // Lấy email của user
         $userSql = "SELECT email, hoten FROM user WHERE username = ?";
         $userStmt = $db->prepare($userSql);
         $userStmt->execute([$order['ma_nguoi_dung']]);
@@ -138,7 +131,7 @@ if (file_exists($errorLog)) {
     echo "<div style='background: #f8f9fa; padding: 15px; border: 1px solid #dee2e6; border-radius: 5px; max-height: 400px; overflow-y: auto;'>\n";
     echo "<pre style='margin: 0; font-size: 12px;'>";
     foreach ($recentLines as $line) {
-        // Highlight email-related logs
+
         if (stripos($line, 'email') !== false || stripos($line, 'smtp') !== false) {
             echo "<strong style='color: #007bff;'>" . htmlspecialchars($line) . "</strong>";
         } else {

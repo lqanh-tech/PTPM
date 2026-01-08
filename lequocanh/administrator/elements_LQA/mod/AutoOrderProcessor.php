@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Auto Order Processor
- * Xử lý tự động đơn hàng
- */
-
 require_once 'database.php';
 require_once 'CustomerNotificationManager.php';
 
@@ -19,21 +14,16 @@ class AutoOrderProcessor
         $this->notificationManager = new CustomerNotificationManager();
     }
 
-    /**
-     * Tự động duyệt đơn hàng đã thanh toán
-     */
     public function autoApprovePaymentConfirmedOrders()
     {
         try {
-            // Lấy cấu hình
+
             $autoApproveEnabled = $this->getConfig('auto_approve_paid_orders', '1');
 
             if ($autoApproveEnabled !== '1') {
                 return ['success' => false, 'message' => 'Tự động duyệt đã bị tắt'];
             }
 
-            // Tìm các đơn hàng đã thanh toán nhưng chưa được duyệt
-            // Bao gồm cả 'paid' và 'completed' để tương thích
             $sql = "SELECT id, ma_nguoi_dung, ma_don_hang_text, tong_tien
                     FROM don_hang
                     WHERE trang_thai = 'pending'
@@ -49,13 +39,12 @@ class AutoOrderProcessor
 
             foreach ($orders as $order) {
                 if ($this->approveOrder($order['id'], true)) {
-                    // Gửi thông báo cho khách hàng
+
                     $this->notificationManager->notifyOrderApproved($order['id'], $order['ma_nguoi_dung']);
                     $this->notificationManager->notifyPaymentConfirmed($order['id'], $order['ma_nguoi_dung']);
 
                     $approvedCount++;
 
-                    // Log
                     error_log("Auto approved order #{$order['id']} for user {$order['ma_nguoi_dung']}");
                 }
             }
@@ -71,13 +60,10 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Duyệt đơn hàng cụ thể (public method)
-     */
     public function approveSpecificOrder($orderId, $isAutoApproved = false)
     {
         try {
-            // Kiểm tra đơn hàng có tồn tại và đang ở trạng thái pending không
+
             $checkSql = "SELECT id, trang_thai, trang_thai_thanh_toan, phuong_thuc_thanh_toan
                         FROM don_hang WHERE id = ?";
             $checkStmt = $this->db->prepare($checkSql);
@@ -92,7 +78,6 @@ class AutoOrderProcessor
                 return ['success' => false, 'message' => 'Đơn hàng đã được xử lý'];
             }
 
-            // Duyệt đơn hàng
             if ($this->approveOrder($orderId, $isAutoApproved)) {
                 return [
                     'success' => true,
@@ -108,15 +93,11 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Duyệt đơn hàng (private method)
-     */
     private function approveOrder($orderId, $isAutoApproved = false)
     {
         try {
             $this->db->beginTransaction();
 
-            // Cập nhật trạng thái đơn hàng
             $sql = "UPDATE don_hang
                     SET trang_thai = 'approved',
                         auto_approved = ?,
@@ -134,13 +115,10 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Xử lý đơn hàng hết hạn hủy
-     */
     public function processExpiredCancelDeadlines()
     {
         try {
-            // Tìm các đơn hàng COD đã hết hạn hủy và chưa được duyệt
+
             $sql = "SELECT id, ma_nguoi_dung 
                     FROM don_hang 
                     WHERE trang_thai = 'pending' 
@@ -155,7 +133,7 @@ class AutoOrderProcessor
             $processedCount = 0;
 
             foreach ($orders as $order) {
-                // Xóa deadline để không thể hủy nữa
+
                 $updateSql = "UPDATE don_hang SET cancel_deadline = NULL WHERE id = ?";
                 $updateStmt = $this->db->prepare($updateSql);
                 $updateStmt->execute([$order['id']]);
@@ -174,13 +152,10 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Kiểm tra và xử lý đơn hàng cần duyệt thủ công
-     */
     public function getOrdersRequiringManualApproval()
     {
         try {
-            // Lấy các đơn COD hoặc đơn chưa thanh toán cần duyệt thủ công
+
             $sql = "SELECT id, ma_don_hang_text, ma_nguoi_dung, tong_tien, 
                            phuong_thuc_thanh_toan, trang_thai_thanh_toan, ngay_tao,
                            cancel_deadline
@@ -196,7 +171,6 @@ class AutoOrderProcessor
             $stmt->execute();
             $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Phân loại đơn hàng
             $codOrders = [];
             $pendingPaymentOrders = [];
 
@@ -220,9 +194,6 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Lấy cấu hình
-     */
     private function getConfig($key, $default = '')
     {
         try {
@@ -237,9 +208,6 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Cập nhật cấu hình
-     */
     public function updateConfig($key, $value, $description = '')
     {
         try {
@@ -256,35 +224,28 @@ class AutoOrderProcessor
         }
     }
 
-    /**
-     * Lấy thống kê đơn hàng
-     */
     public function getOrderStats()
     {
         try {
             $stats = [];
 
-            // Tổng đơn hàng pending
             $sql = "SELECT COUNT(*) as count FROM don_hang WHERE trang_thai = 'pending'";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             $stats['pending_total'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-            // Đơn COD cần duyệt
             $sql = "SELECT COUNT(*) as count FROM don_hang 
                     WHERE trang_thai = 'pending' AND phuong_thuc_thanh_toan = 'cod'";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             $stats['cod_pending'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-            // Đơn đã thanh toán chờ duyệt
             $sql = "SELECT COUNT(*) as count FROM don_hang 
                     WHERE trang_thai = 'pending' AND trang_thai_thanh_toan = 'completed'";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             $stats['paid_pending'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
 
-            // Đơn tự động duyệt hôm nay
             $sql = "SELECT COUNT(*) as count FROM don_hang 
                     WHERE auto_approved = 1 AND DATE(ngay_cap_nhat) = CURDATE()";
             $stmt = $this->db->prepare($sql);

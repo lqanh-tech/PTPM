@@ -1,8 +1,5 @@
 <?php
-/**
- * Trang Quản Lý Hỗ Trợ Khách Hàng (Support Tickets)
- * Admin có thể xem và trả lời tickets
- */
+
 ?>
 
 <style>
@@ -336,7 +333,6 @@ async function loadTicketDetail(ticketId) {
         
         renderTicketDetail(result.data.ticket, result.data.messages);
         
-        // Update active state in list using data-ticket-id
         document.querySelectorAll('.ticket-item').forEach(item => {
             const itemTicketId = item.getAttribute('data-ticket-id');
             if (itemTicketId == ticketId) {
@@ -395,7 +391,6 @@ function renderTicketDetail(ticket, messages) {
         </div>
     `;
     
-    // Scroll to bottom
     const messagesContainer = document.getElementById('messagesContainer');
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
@@ -491,13 +486,10 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Load on page load
 loadTickets();
 
-// Auto refresh every 10 seconds
 refreshInterval = setInterval(loadTickets, 10000);
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', () => {
     if (refreshInterval) {
         clearInterval(refreshInterval);

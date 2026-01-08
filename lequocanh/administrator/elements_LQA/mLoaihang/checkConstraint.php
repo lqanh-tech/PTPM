@@ -16,11 +16,10 @@ if (isset($_GET['idloaihang'])) {
         $idloaihang = $_GET['idloaihang'];
         $lh = new loaihang();
         
-        // Đếm số lượng sản phẩm
         $count = $lh->countHanghoaByLoaihang($idloaihang);
         
         if ($count > 0) {
-            // Lấy danh sách một số sản phẩm để hiển thị
+
             $products = $lh->getHanghoaByLoaihang($idloaihang);
             $productNames = array_map(function($p) { return $p->tenhanghoa; }, $products);
             

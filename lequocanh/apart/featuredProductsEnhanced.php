@@ -1,8 +1,4 @@
 <?php
-/**
- * Widget hiển thị sản phẩm đặc biệt - Enhanced Version
- * Với nhiều badge và thông tin hơn
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/FeaturedProductsCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/AutoFeaturedCls.php';
@@ -10,29 +6,20 @@ require_once __DIR__ . '/../administrator/elements_LQA/mod/AutoFeaturedCls.php';
 $featuredMgr = new FeaturedProducts();
 $autoMgr = new AutoFeatured();
 
-// Lấy dữ liệu
 $featuredProducts = $featuredMgr->getFeaturedProducts(8);
 $newProducts = $featuredMgr->getNewProducts(8);
 $saleProducts = $featuredMgr->getSaleProducts(8);
 
-// Lấy top products để hiển thị badge
 $topSales = $autoMgr->getTopProducts('sales', 20);
 $topViews = $autoMgr->getTopProducts('views', 20);
 
-// Tạo array để check nhanh
 $topSalesIds = array_column($topSales, 'idhanghoa');
 $topViewsIds = array_column($topViews, 'idhanghoa');
 
-/**
- * Helper function để format giá
- */
 function formatPrice($price) {
     return number_format($price, 0, ',', '.') . ' đ';
 }
 
-/**
- * Helper function để lấy URL hình ảnh
- */
 function getProductImage($product) {
     if (!empty($product->hinhanh) && $product->hinhanh != 0) {
         return "administrator/elements_LQA/mhanghoa/displayImage.php?id=" . $product->hinhanh;
@@ -40,16 +27,10 @@ function getProductImage($product) {
     return "public_files/no-image.png";
 }
 
-/**
- * Helper function để kiểm tra sản phẩm bán chạy
- */
 function isBestSeller($productId, $topSalesIds) {
     return in_array($productId, array_slice($topSalesIds, 0, 10));
 }
 
-/**
- * Helper function để kiểm tra sản phẩm xem nhiều
- */
 function isMostViewed($productId, $topViewsIds) {
     return in_array($productId, array_slice($topViewsIds, 0, 10));
 }
@@ -118,7 +99,6 @@ function isMostViewed($productId, $topViewsIds) {
     transform: translateY(-5px);
 }
 
-/* Badge Container */
 .product-badges {
     position: absolute;
     top: 10px;
@@ -139,7 +119,6 @@ function isMostViewed($productId, $topViewsIds) {
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-/* Badge Colors */
 .badge-new {
     background: linear-gradient(135deg, #27ae60, #2ecc71);
 }
@@ -174,7 +153,6 @@ function isMostViewed($productId, $topViewsIds) {
     }
 }
 
-/* Stats Badge (bottom left) */
 .product-stats {
     position: absolute;
     bottom: 10px;
@@ -521,7 +499,7 @@ function isMostViewed($productId, $topViewsIds) {
 
 <script>
 function addToCart(productId) {
-    // Implement add to cart functionality
+
     window.location.href = '?addcart=' + productId;
 }
 </script>

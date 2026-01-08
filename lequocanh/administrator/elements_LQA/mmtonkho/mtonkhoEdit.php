@@ -4,18 +4,14 @@
 require_once './elements_LQA/mod/mtonkhoCls.php';
 require_once './elements_LQA/mod/hanghoaCls.php';
 
-// Khởi tạo các đối tượng
 $tonkhoObj = new MTonKho();
 $hanghoaObj = new hanghoa();
 
-// Lấy thông tin tồn kho cần sửa
 if (isset($_GET['idtk'])) {
     $idTonKho = $_GET['idtk'];
 
-    // Lấy danh sách tồn kho
     $list_tonkho = $tonkhoObj->getAllTonKho();
 
-    // Tìm thông tin tồn kho cần sửa
     $tonkho = null;
     foreach ($list_tonkho as $item) {
         if ($item->idTonKho == $idTonKho) {

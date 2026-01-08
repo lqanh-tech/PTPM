@@ -1,7 +1,4 @@
 <?php
-/**
- * Test Export Direct
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -11,7 +8,6 @@ $_SESSION['ADMIN'] = 'admin';
 
 echo "<h2>Test Export Direct</h2>";
 
-// Test vendor path
 echo "<h3>1. Testing Vendor Path</h3>";
 $vendorPath = __DIR__ . '/../../../../../vendor/autoload.php';
 echo "Vendor path: $vendorPath<br>";
@@ -43,7 +39,6 @@ if (file_exists($vendorPath)) {
     }
 }
 
-// Test TCPDF
 echo "<h3>2. Testing TCPDF</h3>";
 if (class_exists('TCPDF')) {
     echo "✅ TCPDF class exists<br>";
@@ -57,7 +52,6 @@ if (class_exists('TCPDF')) {
     echo "❌ TCPDF class not found<br>";
 }
 
-// Test PhpSpreadsheet
 echo "<h3>3. Testing PhpSpreadsheet</h3>";
 if (class_exists('PhpOffice\\PhpSpreadsheet\\Spreadsheet')) {
     echo "✅ PhpSpreadsheet class exists<br>";
@@ -71,7 +65,6 @@ if (class_exists('PhpOffice\\PhpSpreadsheet\\Spreadsheet')) {
     echo "❌ PhpSpreadsheet class not found<br>";
 }
 
-// Test OrderExporter
 echo "<h3>4. Testing OrderExporter</h3>";
 require_once __DIR__ . '/OrderExporter.php';
 

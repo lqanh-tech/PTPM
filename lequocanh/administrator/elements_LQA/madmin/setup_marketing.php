@@ -1,15 +1,11 @@
 <?php
 
-/**
- * Setup script để tạo các bảng banner, news, promotion
- */
 require_once __DIR__ . '/elements_LQA/mod/database.php';
 
 $db = Database::getInstance()->getConnection();
 
 echo "<h2>Kiểm tra và tạo bảng Marketing</h2>";
 
-// SQL để tạo các bảng
 $tables = [
     'banners' => "CREATE TABLE IF NOT EXISTS banners (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -59,7 +55,6 @@ foreach ($tables as $name => $sql) {
     }
 }
 
-// Kiểm tra uploads directory
 $uploadsDir = __DIR__ . '/uploads';
 if (!file_exists($uploadsDir)) {
     mkdir($uploadsDir, 0755, true);

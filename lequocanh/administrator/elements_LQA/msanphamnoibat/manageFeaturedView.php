@@ -1,8 +1,4 @@
 <?php
-/**
- * Quản Lý Sản Phẩm Đặc Biệt
- * 3 Tab: Nổi Bật | Mới | Khuyến Mãi
- */
 
 require_once __DIR__ . '/../mod/database.php';
 require_once __DIR__ . '/../mod/AutoFeaturedCls.php';
@@ -13,7 +9,6 @@ $autoFeatured = new AutoFeatured();
 $message = '';
 $messageType = 'success';
 
-// Xử lý actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = $_POST['action'] ?? '';
@@ -55,12 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy danh sách sản phẩm
 $tab = $_GET['tab'] ?? 'featured';
 
-// Query cho từng tab
 if ($tab == 'featured') {
-    // Sản phẩm nổi bật
+
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.created_at, h.is_featured,
             th.tenTH as ten_thuonghieu,
             (SELECT COUNT(*) FROM chi_tiet_don_hang WHERE ma_san_pham = h.idhanghoa) as total_sold,
@@ -70,7 +63,7 @@ if ($tab == 'featured') {
             WHERE h.is_featured = 1
             ORDER BY h.created_at DESC";
 } elseif ($tab == 'new') {
-    // Sản phẩm mới (30 ngày)
+
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.created_at, h.is_featured,
             th.tenTH as ten_thuonghieu,
             h.hinhanh as image
@@ -79,7 +72,7 @@ if ($tab == 'featured') {
             WHERE h.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             ORDER BY h.created_at DESC";
 } else {
-    // Sản phẩm khuyến mãi - TẠM THỜI DISABLE vì chưa có cột giakhuyenmai
+
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.created_at, h.is_featured,
             th.tenTH as ten_thuonghieu,
             0 as discount_percent,
@@ -88,8 +81,7 @@ if ($tab == 'featured') {
             LEFT JOIN thuonghieu th ON h.idthuonghieu = th.idthuonghieu
             WHERE 1=0
             ORDER BY h.created_at DESC";
-    // TODO: Thêm cột giakhuyenmai vào bảng hanghoa
-    // ALTER TABLE hanghoa ADD COLUMN giakhuyenmai DECIMAL(15,2) NULL AFTER giathamkhao;
+
 }
 
 $stmt = $db->query($sql);
@@ -331,7 +323,7 @@ $products = $stmt->fetchAll(PDO::FETCH_OBJ);
                     <p class="mb-2">Để sử dụng chức năng khuyến mãi, bạn cần:</p>
                     <ol class="mb-2">
                         <li>Thêm cột <code>giakhuyenmai</code> vào bảng <code>hanghoa</code></li>
-                        <li>Truy cập phpMyAdmin: <a href="http://localhost:28888" target="_blank">http://localhost:28888</a></li>
+                        <li>Truy cập phpMyAdmin: <a href="http://localhost:28888" target="_blank">http:
                         <li>Chạy SQL:
                             <pre class="bg-dark text-white p-2 mt-2 mb-2" style="font-size: 12px;">ALTER TABLE hanghoa 
 ADD COLUMN giakhuyenmai DECIMAL(15,2) NULL 

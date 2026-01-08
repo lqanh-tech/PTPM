@@ -1,16 +1,12 @@
 <?php
-/**
- * Create Shipping Fee Tables
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Load database config
 if (file_exists(__DIR__ . '/db_config.php')) {
     $dbConfig = require __DIR__ . '/db_config.php';
 } else {
-    // Fallback
+
     $dbConfig = ['host' => 'mysql', 'user' => 'root', 'pass' => 'pw'];
 }
 
@@ -23,7 +19,6 @@ try {
     
     echo "Connected to database.\n";
     
-    // 1. Create shipping_methods table
     $sql = "
     CREATE TABLE IF NOT EXISTS shipping_methods (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -41,7 +36,6 @@ try {
     $pdo->exec($sql);
     echo "Created table: shipping_methods\n";
     
-    // 2. Create shipping_fees table
     $sql = "
     CREATE TABLE IF NOT EXISTS shipping_fees (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -61,7 +55,6 @@ try {
     $pdo->exec($sql);
     echo "Created table: shipping_fees\n";
     
-    // 3. Insert default shipping methods
     $methods = [
         ['standard', 'Giao hàng tiêu chuẩn', 'Giao hàng trong 3-5 ngày', '3-5 ngày', 1.0, 1],
         ['express', 'Giao hàng nhanh', 'Giao hàng trong 1-2 ngày', '1-2 ngày', 1.5, 2],
@@ -75,8 +68,6 @@ try {
     }
     echo "Inserted default shipping methods.\n";
     
-    // 4. Insert default shipping fee (National flat rate)
-    // Base fee: 30,000 VND, Free ship for orders > 500,000 VND
     $stmt = $pdo->prepare("INSERT IGNORE INTO shipping_fees (name, base_fee, fee_per_kg, min_order_free_ship) VALUES (?, ?, ?, ?)");
     $stmt->execute(['Mặc định toàn quốc', 30000, 5000, 500000]);
     echo "Inserted default shipping fee configuration.\n";

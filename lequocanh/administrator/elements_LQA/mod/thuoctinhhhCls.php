@@ -10,7 +10,6 @@ class ThuocTinhHH
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Lấy tất cả các thuộc tính
     public function thuoctinhhhGetAll()
     {
         $sql = 'SELECT * FROM thuoctinhhh';
@@ -25,7 +24,6 @@ class ThuocTinhHH
         return $getAll->fetchAll();
     }
 
-    // Thêm thuộc tính mới
     public function thuoctinhhhAdd($idhanghoa, $idThuocTinh, $tenThuocTinhHH,  $ghiChu)
     {
         $sql = "INSERT INTO thuoctinhhh (idhanghoa, idThuocTinh, tenThuocTinhHH,  ghiChu) VALUES (?, ?, ?, ?)";
@@ -41,7 +39,6 @@ class ThuocTinhHH
         return $add->rowCount();
     }
 
-    // Xóa thuộc tính theo ID
     public function thuoctinhhhDelete($idThuocTinhHH)
     {
         $sql = "DELETE FROM thuoctinhhh WHERE idThuocTinhHH = ?";
@@ -57,10 +54,9 @@ class ThuocTinhHH
         return $del->rowCount();
     }
 
-    // Cập nhật thông tin thuộc tính
     public function thuoctinhhhUpdate($idhanghoa, $idThuocTinh, $tenThuocTinhHH, $idThuocTinhHH)
     {
-        // Ghi log dữ liệu đầu vào
+
         $log_file = __DIR__ . '/../mthuoctinhhh/update_log.txt';
         $log_data = date('Y-m-d H:i:s') . " - Update parameters:\n";
         $log_data .= "idhanghoa: $idhanghoa (type: " . gettype($idhanghoa) . ")\n";
@@ -74,7 +70,6 @@ class ThuocTinhHH
                 WHERE idThuocTinhHH = ?";
         $data = array($idhanghoa, $idThuocTinh, $tenThuocTinhHH, $idThuocTinhHH);
 
-        // Ghi log SQL trước khi thực thi
         $log_data = date('Y-m-d H:i:s') . " - SQL Query: $sql\n";
         $log_data .= "Data: " . print_r($data, true) . "\n";
         file_put_contents($log_file, $log_data, FILE_APPEND);
@@ -83,7 +78,6 @@ class ThuocTinhHH
 
         $success = $update->execute($data);
 
-        // Ghi log kết quả
         if (!$success) {
             $error_info = $update->errorInfo();
             $log_data = date('Y-m-d H:i:s') . " - SQL Error:\n";
@@ -101,7 +95,6 @@ class ThuocTinhHH
         return $update->rowCount();
     }
 
-    // Lấy thông tin thuộc tính theo ID
     public function thuoctinhhhGetbyId($idThuocTinhHH)
     {
         $sql = 'SELECT * FROM thuoctinhhh WHERE idThuocTinhHH = ?';
@@ -134,7 +127,6 @@ class ThuocTinhHH
         return $getOne->fetchAll();
     }
 
-    // Thêm phương thức này vào lớp ThuocTinhHH
     public function thuoctinhhhGetbyIdHanghoa($idhanghoa)
     {
         $sql = 'SELECT * FROM thuoctinhhh WHERE idhanghoa = ?';

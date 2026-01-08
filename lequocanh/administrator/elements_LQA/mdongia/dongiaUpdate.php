@@ -1,5 +1,5 @@
 <?php
-// Tìm đường dẫn đúng đến dongiaCls.php
+
 $dongiaPaths = [
     '../../elements_LQA/mod/dongiaCls.php',
     '../mod/dongiaCls.php',

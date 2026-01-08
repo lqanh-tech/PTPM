@@ -1,18 +1,15 @@
 <?php
-/**
- * API xử lý đánh giá sản phẩm
- * Endpoints:
- * - POST /submit: Gửi đánh giá mới
- * - GET /list: Lấy danh sách đánh giá theo sản phẩm
- * - GET /check: Kiểm tra đã đánh giá chưa
- * - POST /helpful: Đánh dấu đánh giá hữu ích
- */
 
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 SessionManager::start();
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('product_reviews');
 
 class ProductReviewAPI {
     private $db;
@@ -23,12 +20,9 @@ class ProductReviewAPI {
         $this->conn = $this->db->getConnection();
     }
     
-    /**
-     * Gửi đánh giá mới
-     */
     public function submitReview() {
         try {
-            // Kiểm tra đăng nhập
+
             if (!isset($_SESSION['USER'])) {
                 return $this->error('Vui lòng đăng nhập để đánh giá', 401);
             }
@@ -39,7 +33,6 @@ class ProductReviewAPI {
             $rating = $_POST['rating'] ?? null;
             $comment = trim($_POST['comment'] ?? '');
             
-            // Validate
             if (!$orderId || !$productId || !$rating) {
                 return $this->error('Thiếu thông tin bắt buộc');
             }
@@ -48,7 +41,6 @@ class ProductReviewAPI {
                 return $this->error('Đánh giá phải từ 1-5 sao');
             }
             
-            // Kiểm tra đơn hàng có thuộc về user không
             $checkOrderSql = "SELECT id, trang_thai, trang_thai_thanh_toan 
                              FROM don_hang 
                              WHERE id = ? AND ma_nguoi_dung = ?";
@@ -60,12 +52,10 @@ class ProductReviewAPI {
                 return $this->error('Đơn hàng không tồn tại hoặc không thuộc về bạn');
             }
             
-            // Chỉ cho phép đánh giá đơn hàng đã duyệt hoặc đã thanh toán
             if ($order['trang_thai'] !== 'approved' && $order['trang_thai_thanh_toan'] !== 'paid') {
                 return $this->error('Chỉ có thể đánh giá đơn hàng đã được duyệt');
             }
             
-            // Kiểm tra sản phẩm có trong đơn hàng không
             $checkProductSql = "SELECT id FROM chi_tiet_don_hang 
                                WHERE ma_don_hang = ? AND ma_san_pham = ?";
             $stmt = $this->conn->prepare($checkProductSql);
@@ -75,7 +65,6 @@ class ProductReviewAPI {
                 return $this->error('Sản phẩm không có trong đơn hàng này');
             }
             
-            // Kiểm tra đã đánh giá chưa
             $checkReviewSql = "SELECT id FROM product_reviews 
                               WHERE ma_don_hang = ? AND ma_san_pham = ? AND ma_nguoi_dung = ?";
             $stmt = $this->conn->prepare($checkReviewSql);
@@ -85,7 +74,6 @@ class ProductReviewAPI {
                 return $this->error('Bạn đã đánh giá sản phẩm này rồi');
             }
             
-            // Thêm đánh giá
             $insertSql = "INSERT INTO product_reviews 
                          (ma_don_hang, ma_san_pham, ma_nguoi_dung, rating, comment, is_verified_purchase, is_approved)
                          VALUES (?, ?, ?, ?, ?, 1, 1)";
@@ -94,7 +82,6 @@ class ProductReviewAPI {
             
             $reviewId = $this->conn->lastInsertId();
             
-            // Cập nhật trạng thái đã đánh giá cho đơn hàng
             $this->updateOrderReviewStatus($orderId);
             
             return $this->success([
@@ -108,9 +95,6 @@ class ProductReviewAPI {
         }
     }
     
-    /**
-     * Lấy danh sách đánh giá theo sản phẩm
-     */
     public function getReviews() {
         try {
             $productId = $_GET['product_id'] ?? null;
@@ -122,13 +106,11 @@ class ProductReviewAPI {
                 return $this->error('Thiếu product_id');
             }
             
-            // Lấy thống kê
             $statsSql = "SELECT * FROM v_product_review_stats WHERE ma_san_pham = ?";
             $stmt = $this->conn->prepare($statsSql);
             $stmt->execute([$productId]);
             $stats = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Lấy danh sách đánh giá - chỉ hiển thị bình luận visible (không bị ẩn/xóa)
             $reviewsSql = "SELECT 
                             pr.*,
                             pr.ma_nguoi_dung as user_name,
@@ -146,7 +128,6 @@ class ProductReviewAPI {
             $stmt->execute();
             $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Đếm tổng số - chỉ đếm bình luận visible
             $countSql = "SELECT COUNT(*) as total FROM product_reviews 
                         WHERE ma_san_pham = ? AND is_approved = 1 
                         AND (status = 'visible' OR status IS NULL)";
@@ -180,9 +161,6 @@ class ProductReviewAPI {
         }
     }
     
-    /**
-     * Kiểm tra đã đánh giá chưa
-     */
     public function checkReviewed() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -196,7 +174,6 @@ class ProductReviewAPI {
                 return $this->error('Thiếu order_id');
             }
             
-            // Lấy danh sách sản phẩm trong đơn hàng
             $productsSql = "SELECT DISTINCT cdh.ma_san_pham, h.tenhanghoa as product_name
                            FROM chi_tiet_don_hang cdh
                            JOIN hanghoa h ON cdh.ma_san_pham = h.idhanghoa
@@ -205,7 +182,6 @@ class ProductReviewAPI {
             $stmt->execute([$orderId]);
             $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Kiểm tra từng sản phẩm đã đánh giá chưa
             $reviewStatus = [];
             foreach ($products as $product) {
                 $checkSql = "SELECT id FROM product_reviews 
@@ -231,9 +207,6 @@ class ProductReviewAPI {
         }
     }
     
-    /**
-     * Đánh dấu đánh giá hữu ích
-     */
     public function markHelpful() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -247,7 +220,6 @@ class ProductReviewAPI {
                 return $this->error('Thiếu review_id');
             }
             
-            // Kiểm tra đã đánh dấu chưa
             $checkSql = "SELECT id FROM review_helpful WHERE review_id = ? AND ma_nguoi_dung = ?";
             $stmt = $this->conn->prepare($checkSql);
             $stmt->execute([$reviewId, $userId]);
@@ -256,12 +228,10 @@ class ProductReviewAPI {
                 return $this->error('Bạn đã đánh dấu hữu ích rồi');
             }
             
-            // Thêm vào bảng helpful
             $insertSql = "INSERT INTO review_helpful (review_id, ma_nguoi_dung) VALUES (?, ?)";
             $stmt = $this->conn->prepare($insertSql);
             $stmt->execute([$reviewId, $userId]);
             
-            // Cập nhật số lượng helpful
             $updateSql = "UPDATE product_reviews SET helpful_count = helpful_count + 1 WHERE id = ?";
             $stmt = $this->conn->prepare($updateSql);
             $stmt->execute([$reviewId]);
@@ -274,26 +244,21 @@ class ProductReviewAPI {
         }
     }
     
-    /**
-     * Cập nhật trạng thái đã đánh giá cho đơn hàng
-     */
     private function updateOrderReviewStatus($orderId) {
         try {
-            // Đếm số sản phẩm trong đơn hàng
+
             $countProductsSql = "SELECT COUNT(DISTINCT ma_san_pham) as total 
                                 FROM chi_tiet_don_hang WHERE ma_don_hang = ?";
             $stmt = $this->conn->prepare($countProductsSql);
             $stmt->execute([$orderId]);
             $totalProducts = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             
-            // Đếm số sản phẩm đã đánh giá
             $countReviewsSql = "SELECT COUNT(DISTINCT ma_san_pham) as total 
                                FROM product_reviews WHERE ma_don_hang = ?";
             $stmt = $this->conn->prepare($countReviewsSql);
             $stmt->execute([$orderId]);
             $totalReviews = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             
-            // Nếu đã đánh giá hết tất cả sản phẩm
             if ($totalProducts == $totalReviews) {
                 $updateSql = "UPDATE don_hang SET is_reviewed = 1 WHERE id = ?";
                 $stmt = $this->conn->prepare($updateSql);
@@ -322,7 +287,6 @@ class ProductReviewAPI {
     }
 }
 
-// Router
 $api = new ProductReviewAPI();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 

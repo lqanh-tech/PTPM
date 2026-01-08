@@ -1,8 +1,4 @@
 <?php
-/**
- * JWT Authentication Middleware
- * Phase 4 - Modern JWT implementation
- */
 
 require_once __DIR__ . '/../../../vendor/autoload.php';
 use Firebase\JWT\JWT;
@@ -12,7 +8,16 @@ class JwtAuthMiddleware {
     private $secret;
     
     public function __construct() {
-        $this->secret = $_ENV['JWT_SECRET'] ?? 'default-secret-key';
+
+        $secret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? '';
+        
+        if (empty($secret) || $secret === 'your-secret-key-here' || strlen($secret) < 32) {
+            error_log('SECURITY WARNING: JWT_SECRET is not properly configured!');
+
+            $secret = hash('sha256', __DIR__ . $_SERVER['SERVER_NAME'] . 'fallback_secret_change_me');
+        }
+        
+        $this->secret = $secret;
     }
     
     public function handle() {
@@ -34,7 +39,6 @@ class JwtAuthMiddleware {
     private function extractToken() {
         $headers = getallheaders();
         
-        // Check Authorization header
         if (isset($headers['Authorization'])) {
             $auth = $headers['Authorization'];
             if (preg_match('/Bearer\s+(.*)$/i', $auth, $matches)) {
@@ -42,8 +46,13 @@ class JwtAuthMiddleware {
             }
         }
         
-        // Check query parameter
-        return $_GET['token'] ?? null;
+        $allowQueryToken = ($_ENV['APP_ENV'] ?? 'production') === 'development';
+        if ($allowQueryToken && isset($_GET['token'])) {
+            error_log('WARNING: Token passed via query parameter - not recommended for production');
+            return $_GET['token'];
+        }
+        
+        return null;
     }
     
     private function unauthorized($message) {
@@ -56,7 +65,13 @@ class JwtAuthMiddleware {
     }
     
     public static function generateToken($payload, $expiry = 3600) {
-        $secret = $_ENV['JWT_SECRET'] ?? 'default-secret-key';
+
+        $secret = $_ENV['JWT_SECRET'] ?? getenv('JWT_SECRET') ?? '';
+        
+        if (empty($secret) || $secret === 'your-secret-key-here' || strlen($secret) < 32) {
+            error_log('SECURITY WARNING: JWT_SECRET is not properly configured for token generation!');
+            $secret = hash('sha256', __DIR__ . $_SERVER['SERVER_NAME'] . 'fallback_secret_change_me');
+        }
         
         $payload['iat'] = time();
         $payload['exp'] = time() + $expiry;

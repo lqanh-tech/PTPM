@@ -1,8 +1,4 @@
 <?php
-/**
- * District Model - Quản lý Quận/Huyện
- * MVC Pattern - Model Layer
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -17,9 +13,6 @@ class DistrictModel
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Lấy tất cả quận/huyện
-     */
     public function getAll($activeOnly = true)
     {
         $sql = "SELECT d.*, p.name as province_name 
@@ -35,9 +28,6 @@ class DistrictModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy quận/huyện theo tỉnh
-     */
     public function getByProvinceId($provinceId, $activeOnly = true)
     {
         $sql = "SELECT * FROM districts WHERE province_id = ?";
@@ -51,9 +41,6 @@ class DistrictModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy quận/huyện theo ID
-     */
     public function getById($id)
     {
         $sql = "SELECT d.*, p.name as province_name 
@@ -65,9 +52,6 @@ class DistrictModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Thêm quận/huyện mới
-     */
     public function create($data)
     {
         $sql = "INSERT INTO districts (province_id, code, name, name_en, is_active) 
@@ -82,9 +66,6 @@ class DistrictModel
         ]);
     }
 
-    /**
-     * Cập nhật quận/huyện
-     */
     public function update($id, $data)
     {
         $sql = "UPDATE districts 
@@ -101,9 +82,6 @@ class DistrictModel
         ]);
     }
 
-    /**
-     * Xóa quận/huyện (soft delete)
-     */
     public function delete($id)
     {
         $sql = "UPDATE districts SET is_active = 0 WHERE id = ?";
@@ -111,9 +89,6 @@ class DistrictModel
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Tìm kiếm quận/huyện
-     */
     public function search($keyword, $provinceId = null)
     {
         $sql = "SELECT d.*, p.name as province_name 
@@ -136,9 +111,6 @@ class DistrictModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Đếm số lượng quận/huyện
-     */
     public function count($provinceId = null, $activeOnly = true)
     {
         $sql = "SELECT COUNT(*) as total FROM districts WHERE 1=1";

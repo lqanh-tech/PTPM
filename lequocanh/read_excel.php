@@ -1,11 +1,4 @@
 <?php
-/**
- * Script đọc file Excel (.xlsx)
- * Sử dụng PhpSpreadsheet library
- */
-
-// Cài đặt PhpSpreadsheet nếu chưa có:
-// composer require phpoffice/phpspreadsheet
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
@@ -13,13 +6,11 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 
 function readExcelFile($filePath) {
     try {
-        // Load file Excel
+
         $spreadsheet = IOFactory::load($filePath);
         
-        // Lấy sheet đầu tiên
         $sheet = $spreadsheet->getActiveSheet();
         
-        // Lấy tất cả dữ liệu
         $data = $sheet->toArray();
         
         return [
@@ -37,7 +28,6 @@ function readExcelFile($filePath) {
     }
 }
 
-// Sử dụng
 if (isset($_GET['file'])) {
     $filePath = $_GET['file'];
     $result = readExcelFile($filePath);

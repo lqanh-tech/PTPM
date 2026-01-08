@@ -1,7 +1,4 @@
 <?php
-/**
- * DEEP DEBUG - Kiểm tra chi tiết VIEW và rendering
- */
 
 session_start();
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
@@ -29,13 +26,11 @@ echo "<style>
 echo "<div class='container'>\n";
 echo "<h2>🔬 DEEP DEBUG - Shipping Methods</h2>\n";
 
-// 1. Check VIEW definition
 echo "<h3>1. VIEW Definition</h3>\n";
 $stmt = $db->query("SHOW CREATE VIEW v_shipping_methods_with_fees");
 $viewDef = $stmt->fetch(PDO::FETCH_ASSOC);
 echo "<pre>" . htmlspecialchars($viewDef['Create View']) . "</pre>\n";
 
-// 2. Direct query to shipping_methods table
 echo "<h3>2. Direct Query: shipping_methods Table</h3>\n";
 $stmt = $db->query("SELECT * FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order DESC");
 $directMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -54,7 +49,6 @@ foreach ($directMethods as $m) {
 }
 echo "</table>\n";
 
-// 3. Query VIEW
 echo "<h3>3. Query VIEW: v_shipping_methods_with_fees</h3>\n";
 $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees WHERE is_active = 1 ORDER BY sort_order DESC");
 $viewMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -74,7 +68,6 @@ foreach ($viewMethods as $m) {
 }
 echo "</table>\n";
 
-// 4. Check for code duplicates
 echo "<h3>4. Check Code Duplicates in shipping_methods</h3>\n";
 $stmt = $db->query("SELECT code, COUNT(*) as count FROM shipping_methods GROUP BY code HAVING count > 1");
 $codeDuplicates = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -93,7 +86,6 @@ if (empty($codeDuplicates)) {
     }
     echo "</table>\n";
     
-    // Show all records with duplicate codes
     foreach ($codeDuplicates as $dup) {
         echo "<h4>All records with code: " . htmlspecialchars($dup['code']) . "</h4>\n";
         $stmt = $db->prepare("SELECT * FROM shipping_methods WHERE code = ?");
@@ -116,7 +108,6 @@ if (empty($codeDuplicates)) {
     }
 }
 
-// 5. Check ALL shipping_methods (including inactive)
 echo "<h3>5. ALL Shipping Methods (Including Inactive)</h3>\n";
 $stmt = $db->query("SELECT * FROM shipping_methods ORDER BY sort_order DESC, id ASC");
 $allMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);

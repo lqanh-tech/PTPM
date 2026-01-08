@@ -1,23 +1,16 @@
 <?php
-/**
- * Performance Actions Handler
- * Phase 3 - Dashboard Actions
- */
 
 require_once './elements_LQA/mod/sessionManager.php';
 require_once './elements_LQA/mod/databaseOptimizer.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check admin access
 if (!isset($_SESSION['ADMIN'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
 }
 
-// Get JSON input
 $input = json_decode(file_get_contents('php://input'), true);
 $action = $input['action'] ?? '';
 

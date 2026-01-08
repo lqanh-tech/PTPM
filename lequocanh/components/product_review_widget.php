@@ -1,10 +1,5 @@
 <?php
-/**
- * Widget hiển thị form đánh giá sản phẩm
- * Sử dụng trong trang order success
- */
 
-// Kiểm tra session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -213,7 +208,6 @@ if (!$orderId || !$userId) {
         return;
     }
     
-    // Load danh sách sản phẩm cần đánh giá
     async function loadProducts() {
         try {
             const response = await fetch(`/lequocanh/api/product_reviews.php?action=check&order_id=${orderId}`);
@@ -295,7 +289,6 @@ if (!$orderId || !$userId) {
             `;
         }).join('');
         
-        // Add character counter
         document.querySelectorAll('.review-comment').forEach(textarea => {
             textarea.addEventListener('input', function() {
                 const counter = this.parentElement.querySelector('.char-counter .current');
@@ -310,7 +303,6 @@ if (!$orderId || !$userId) {
         const ratingInput = document.querySelector(`input[name="rating_${productId}"]:checked`);
         const commentTextarea = document.querySelector(`textarea[data-product-id="${productId}"]`);
         
-        // Validate
         if (!ratingInput) {
             messageDiv.innerHTML = '<div class="review-error">Vui lòng chọn số sao đánh giá</div>';
             return;
@@ -319,7 +311,6 @@ if (!$orderId || !$userId) {
         const rating = ratingInput.value;
         const comment = commentTextarea.value.trim();
         
-        // Disable button
         button.disabled = true;
         button.innerHTML = '<span class="loading-spinner"></span> Đang gửi...';
         messageDiv.innerHTML = '';
@@ -347,7 +338,6 @@ if (!$orderId || !$userId) {
                     </div>
                 `;
                 
-                // Disable form
                 setTimeout(() => {
                     const item = document.querySelector(`.product-review-item[data-product-id="${productId}"]`);
                     item.classList.add('reviewed');
@@ -377,7 +367,6 @@ if (!$orderId || !$userId) {
         return div.innerHTML;
     }
     
-    // Load products on page load
     loadProducts();
 })();
 </script>

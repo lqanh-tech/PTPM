@@ -1,19 +1,16 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 require_once '../mod/database.php';
 
-// Kiểm tra quyền admin
 if (!isset($_SESSION['ADMIN'])) {
     header('Location: ../../userLogin.php');
     exit();
 }
 
-// Thêm CSS để trang trông đẹp hơn
 echo '<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -46,12 +43,11 @@ echo '<!DOCTYPE html>
     <div class="container">
         <h2>Cập nhật cấu trúc bảng orders</h2>';
 
-// Kết nối database
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
 try {
-    // Kiểm tra xem bảng orders có tồn tại không
+
     $checkTableSql = "SHOW TABLES LIKE 'orders'";
     $checkTableStmt = $conn->prepare($checkTableSql);
     $checkTableStmt->execute();
@@ -61,7 +57,6 @@ try {
         exit();
     }
 
-    // Kiểm tra các cột đã tồn tại chưa
     $columns = [
         'pending_read' => 'TINYINT(1) NOT NULL DEFAULT 0',
         'approved_read' => 'TINYINT(1) NOT NULL DEFAULT 0',
@@ -76,7 +71,7 @@ try {
         $checkColumnStmt->execute();
 
         if ($checkColumnStmt->rowCount() == 0) {
-            // Cột chưa tồn tại, thêm vào
+
             $addColumnSql = "ALTER TABLE orders ADD COLUMN $column $definition";
             $conn->exec($addColumnSql);
             $columnsAdded++;
@@ -93,7 +88,6 @@ try {
         echo "<p>Không cần cập nhật cấu trúc bảng orders.</p>";
     }
 
-    // Cập nhật tất cả đơn hàng hiện tại thành đã đọc
     $updateSql = "UPDATE orders SET pending_read = 1, approved_read = 1, cancelled_read = 1";
     $conn->exec($updateSql);
 

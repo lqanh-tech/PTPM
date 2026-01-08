@@ -1,14 +1,15 @@
 <?php
-/**
- * API Chi tiết khách hàng
- * Trả về thông tin khách hàng, lịch sử mua hàng và thống kê
- */
 
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 SessionManager::start();
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle();
 
 class CustomerDetailAPI {
     private $db;
@@ -19,12 +20,9 @@ class CustomerDetailAPI {
         $this->conn = $this->db->getConnection();
     }
     
-    /**
-     * Lấy chi tiết khách hàng
-     */
     public function getCustomerDetail() {
         try {
-            // Kiểm tra quyền admin
+
             if (!isset($_SESSION['ADMIN'])) {
                 return $this->error('Không có quyền truy cập', 403);
             }
@@ -35,7 +33,6 @@ class CustomerDetailAPI {
                 return $this->error('Thiếu username');
             }
             
-            // Lấy thông tin khách hàng
             $customerSql = "SELECT u.iduser as id, u.username, u.hoten, u.gioitinh, u.ngaysinh, 
                                    u.diachi, u.dienthoai, u.email, u.ngaydangki as ngaytao, u.setlock
                             FROM user u
@@ -48,7 +45,6 @@ class CustomerDetailAPI {
                 return $this->error('Không tìm thấy khách hàng');
             }
             
-            // Kiểm tra không phải nhân viên
             $checkNvSql = "SELECT nv.idnhanvien FROM nhanvien nv 
                            INNER JOIN user u ON nv.iduser = u.iduser 
                            WHERE u.username = ?";
@@ -58,7 +54,6 @@ class CustomerDetailAPI {
                 return $this->error('Đây là tài khoản nhân viên');
             }
             
-            // Lấy lịch sử đơn hàng (10 đơn gần nhất)
             $ordersSql = "SELECT id, ma_don_hang_text, ngay_tao as ngay_dat, tong_tien, trang_thai, 
                                  trang_thai_thanh_toan, phuong_thuc_thanh_toan
                           FROM don_hang 
@@ -69,7 +64,6 @@ class CustomerDetailAPI {
             $stmt->execute([$username]);
             $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Thống kê
             $statsSql = "SELECT 
                             COUNT(*) as order_count,
                             COALESCE(SUM(CASE WHEN trang_thai = 'approved' THEN tong_tien ELSE 0 END), 0) as total_spent,
@@ -110,6 +104,5 @@ class CustomerDetailAPI {
     }
 }
 
-// Execute
 $api = new CustomerDetailAPI();
 $api->getCustomerDetail();

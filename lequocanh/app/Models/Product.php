@@ -1,17 +1,12 @@
 <?php
 
-/**
- * Product Model
- * Replaces hanghoaCls with modern MVC approach
- */
-
 require_once __DIR__ . '/BaseModel.php';
 
 class Product extends BaseModel
 {
     protected static $table = 'hanghoa';
     protected static $primaryKey = 'idhanghoa';
-    protected static $timestamps = false; // Table doesn't have created_at/updated_at
+    protected static $timestamps = false;
 
     protected static $fillable = [
         'tenhanghoa',
@@ -27,9 +22,6 @@ class Product extends BaseModel
 
     protected static $hidden = [];
 
-    /**
-     * Get all products with relationships
-     */
     public static function getAllWithRelations()
     {
         $sql = 'SELECT h.*,
@@ -63,25 +55,16 @@ class Product extends BaseModel
         return $results;
     }
 
-    /**
-     * Get products by category
-     */
     public static function getByCategory($categoryId)
     {
         return static::where('idloaihang', $categoryId);
     }
 
-    /**
-     * Get products by brand
-     */
     public static function getByBrand($brandId)
     {
         return static::where('idThuongHieu', $brandId);
     }
 
-    /**
-     * Search products
-     */
     public static function search($keyword)
     {
         $sql = "SELECT * FROM " . static::getTable() . " WHERE tenhanghoa LIKE ? OR mota LIKE ?";
@@ -100,9 +83,6 @@ class Product extends BaseModel
         return $results;
     }
 
-    /**
-     * Get featured products (with images)
-     */
     public static function getFeatured($limit = 10)
     {
         $sql = "SELECT * FROM " . static::getTable() . " 
@@ -123,9 +103,6 @@ class Product extends BaseModel
         return $results;
     }
 
-    /**
-     * Get image URL
-     */
     public function getImageUrl()
     {
         if (empty($this->hinhanh)) {
@@ -135,32 +112,22 @@ class Product extends BaseModel
         return "/lequocanh/administrator/elements_LQA/mhanghoa/displayImage.php?id=" . $this->hinhanh;
     }
 
-    /**
-     * Format price for display
-     */
     public function getFormattedPrice()
     {
         return number_format($this->giathamkhao, 0, ',', '.') . ' VNĐ';
     }
 
-    /**
-     * Check if product has image
-     */
     public function hasImage()
     {
         return !empty($this->hinhanh) && $this->hinhanh != 0;
     }
 
-    /**
-     * Get category relationship
-     */
     public function getCategory()
     {
         if (empty($this->idloaihang)) {
             return null;
         }
 
-        // This would use Category model when implemented
         $sql = "SELECT * FROM loaihang WHERE idloaihang = ?";
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare($sql);
@@ -169,9 +136,6 @@ class Product extends BaseModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get brand relationship
-     */
     public function getBrand()
     {
         if (empty($this->idThuongHieu)) {
@@ -186,9 +150,6 @@ class Product extends BaseModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get stock information
-     */
     public function getStock()
     {
         $sql = "SELECT * FROM tonkho WHERE idhanghoa = ?";
@@ -199,33 +160,24 @@ class Product extends BaseModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Check if product is in stock
-     */
     public function isInStock()
     {
         $stock = $this->getStock();
         return $stock && $stock->soLuong > 0;
     }
 
-    /**
-     * Save product with inventory creation
-     */
     public function save()
     {
         $result = parent::save();
 
         if ($result && !$this->exists) {
-            // Create initial inventory record for new products
+
             $this->createInitialInventory();
         }
 
         return $result;
     }
 
-    /**
-     * Create initial inventory record
-     */
     private function createInitialInventory()
     {
         $sql = "INSERT INTO tonkho (idhanghoa, soLuong, soLuongToiThieu, viTri) VALUES (?, 0, 0, NULL)";
@@ -234,41 +186,31 @@ class Product extends BaseModel
         $stmt->execute([$this->idhanghoa]);
     }
 
-    /**
-     * Delete product and related records
-     */
     public function delete()
     {
-        // Check for related data
+
         $relatedData = $this->checkRelatedData();
 
         if (!empty($relatedData)) {
             throw new Exception('Cannot delete product. Related data exists: ' . implode(', ', array_keys($relatedData)));
         }
 
-        // Delete inventory record first
         $this->deleteInventory();
 
-        // Delete the product
         return parent::delete();
     }
 
-    /**
-     * Check for related data that prevents deletion
-     */
     private function checkRelatedData()
     {
         $related = [];
         $db = Database::getInstance()->getConnection();
 
-        // Check orders
         $stmt = $db->prepare("SELECT COUNT(*) FROM chitietgiohang WHERE idhanghoa = ?");
         $stmt->execute([$this->idhanghoa]);
         if ($stmt->fetchColumn() > 0) {
             $related['orders'] = 'Product has order history';
         }
 
-        // Check import records
         $stmt = $db->prepare("SELECT COUNT(*) FROM chitietphieunhap WHERE idhanghoa = ?");
         $stmt->execute([$this->idhanghoa]);
         if ($stmt->fetchColumn() > 0) {
@@ -278,9 +220,6 @@ class Product extends BaseModel
         return $related;
     }
 
-    /**
-     * Delete inventory record
-     */
     private function deleteInventory()
     {
         $sql = "DELETE FROM tonkho WHERE idhanghoa = ?";
@@ -289,9 +228,6 @@ class Product extends BaseModel
         $stmt->execute([$this->idhanghoa]);
     }
 
-    /**
-     * Get validation rules
-     */
     public static function getValidationRules()
     {
         return [

@@ -170,12 +170,10 @@
                     return;
                 }
                 
-                // Disable button và hiển thị loading
                 submitBtn.prop('disabled', true).html(
                     '<span class="spinner-border spinner-border-sm" role="status"></span>Đang xử lý...'
                 );
                 
-                // Gửi request
                 $.ajax({
                     url: './elements_LQA/mUser/forgotPasswordAct.php',
                     type: 'POST',
@@ -211,7 +209,6 @@
                 `);
             }
             
-            // Auto focus
             $('#identifier').focus();
         });
     </script>

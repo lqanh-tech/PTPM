@@ -4,18 +4,16 @@ require_once 'errorTracker.php';
 require_once 'userActivityTracker.php';
 require_once 'alertSystem.php';
 
-// Initialize trackers and systems (in a real application, this would be done once in a bootstrap file)
 UserActivityTracker::init();
 ErrorTracker::registerErrorHandler();
 
-// Simulate some operations and errors for demonstration
 RealtimePerformanceMonitor::startOperation('Page Load');
-// Simulate some database query
-usleep(50000); // Simulate 50ms operation
+
+usleep(50000);
 RealtimePerformanceMonitor::endOperation('Page Load');
 
 RealtimePerformanceMonitor::startOperation('Database Query 1');
-usleep(120000); // Simulate 120ms operation
+usleep(120000);
 RealtimePerformanceMonitor::endOperation('Database Query 1');
 
 trigger_error("This is a test warning!", E_USER_WARNING);
@@ -24,31 +22,28 @@ trigger_error("This is a test error!", E_USER_ERROR);
 UserActivityTracker::logActivity('Page View', ['page_name' => 'Dashboard']);
 UserActivityTracker::logActivity('Button Click', ['button_id' => 'refresh_data']);
 
-// Define a sample alert rule
 AlertSystem::defineRule('High Memory Usage', [
     'type' => 'metric_threshold',
     'metric' => 'peak_memory_usage_mb',
-    'threshold' => 64, // MB
+    'threshold' => 64,
     'operator' => '>',
     'description' => 'Alert when peak memory usage exceeds 64MB.'
 ]);
 
 AlertSystem::defineRule('High Error Rate', [
     'type' => 'error_rate',
-    'threshold' => 1, // More than 1 error
+    'threshold' => 1,
     'description' => 'Alert when more than 1 error occurs.'
 ]);
 
-// Evaluate alerts
 $currentMetrics = [
     'page_load_duration' => RealtimePerformanceMonitor::getOperationDuration('Page Load'),
     'db_query_duration' => RealtimePerformanceMonitor::getOperationDuration('Database Query 1'),
     'memory_usage_mb' => RealtimePerformanceMonitor::getMemoryUsage() / (1024 * 1024),
     'peak_memory_usage_mb' => RealtimePerformanceMonitor::getPeakMemoryUsage() / (1024 * 1024),
-    'cpu_usage_mock' => RealtimePerformanceMonitor::getCpuUsage() // Mock data
+    'cpu_usage_mock' => RealtimePerformanceMonitor::getCpuUsage()
 ];
 AlertSystem::evaluateRules($currentMetrics, ErrorTracker::getErrors());
-
 
 ?>
 <!DOCTYPE html>

@@ -1,14 +1,15 @@
 <?php
-/**
- * API Hỗ Trợ Khách Hàng (Support Tickets)
- * Cho phép user tạo ticket và chat với admin
- */
 
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 SessionManager::start();
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('support_tickets');
 
 class SupportTicketAPI {
     private $db;
@@ -19,9 +20,6 @@ class SupportTicketAPI {
         $this->conn = $this->db->getConnection();
     }
     
-    /**
-     * Tạo ticket mới
-     */
     public function createTicket() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -39,7 +37,6 @@ class SupportTicketAPI {
                 return $this->error('Vui lòng nhập đầy đủ thông tin');
             }
             
-            // Create ticket
             $ticketNumber = 'TK' . date('Ymd') . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
             
             $sql = "INSERT INTO support_tickets 
@@ -51,7 +48,6 @@ class SupportTicketAPI {
             
             $ticketId = $this->conn->lastInsertId();
             
-            // Add first message
             $msgSql = "INSERT INTO support_messages (ticket_id, sender_id, sender_type, message)
                       VALUES (?, ?, 'user', ?)";
             $stmt = $this->conn->prepare($msgSql);
@@ -69,9 +65,6 @@ class SupportTicketAPI {
         }
     }
     
-    /**
-     * Lấy danh sách tickets của user
-     */
     public function getUserTickets() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -92,7 +85,6 @@ class SupportTicketAPI {
             $stmt->execute([$userId]);
             $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Count total
             $countSql = "SELECT COUNT(*) as total FROM support_tickets WHERE user_id = ?";
             $stmt = $this->conn->prepare($countSql);
             $stmt->execute([$userId]);
@@ -114,9 +106,6 @@ class SupportTicketAPI {
         }
     }
     
-    /**
-     * Lấy danh sách tickets cho admin
-     */
     public function getAdminTickets() {
         try {
             if (!isset($_SESSION['ADMIN'])) {
@@ -140,13 +129,11 @@ class SupportTicketAPI {
             $stmt->execute($params);
             $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Count total
             $countSql = "SELECT COUNT(*) as total FROM support_tickets {$where}";
             $stmt = $this->conn->prepare($countSql);
             $stmt->execute($params);
             $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             
-            // Get stats
             $statsSql = "SELECT 
                             COUNT(*) as total,
                             SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) as open_count,
@@ -175,9 +162,6 @@ class SupportTicketAPI {
         }
     }
     
-    /**
-     * Lấy chi tiết ticket và messages
-     */
     public function getTicketDetails() {
         try {
             $ticketId = $_GET['ticket_id'] ?? null;
@@ -186,7 +170,6 @@ class SupportTicketAPI {
                 return $this->error('Thiếu ticket_id');
             }
             
-            // Check permission - use intval for comparison
             $isAdmin = isset($_SESSION['ADMIN']);
             $userId = $_SESSION['USER'] ?? $_SESSION['ADMIN'] ?? null;
             
@@ -194,7 +177,6 @@ class SupportTicketAPI {
                 return $this->error('Vui lòng đăng nhập', 401);
             }
             
-            // Get ticket
             $sql = "SELECT * FROM support_tickets WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([$ticketId]);
@@ -204,12 +186,10 @@ class SupportTicketAPI {
                 return $this->error('Ticket không tồn tại');
             }
             
-            // Check permission - use intval for proper comparison
             if (!$isAdmin && intval($ticket['user_id']) !== intval($userId)) {
                 return $this->error('Không có quyền truy cập', 403);
             }
             
-            // Get messages
             $msgSql = "SELECT * FROM support_messages 
                       WHERE ticket_id = ? 
                       ORDER BY created_at ASC";
@@ -217,7 +197,6 @@ class SupportTicketAPI {
             $stmt->execute([$ticketId]);
             $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Mark messages as read
             $senderType = $isAdmin ? 'user' : 'admin';
             $updateSql = "UPDATE support_messages 
                          SET is_read = 1 
@@ -236,9 +215,6 @@ class SupportTicketAPI {
         }
     }
     
-    /**
-     * Gửi tin nhắn
-     */
     public function sendMessage() {
         try {
             $ticketId = $_POST['ticket_id'] ?? null;
@@ -255,7 +231,6 @@ class SupportTicketAPI {
                 return $this->error('Vui lòng đăng nhập', 401);
             }
             
-            // Check ticket exists and permission
             $sql = "SELECT * FROM support_tickets WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([$ticketId]);
@@ -269,7 +244,6 @@ class SupportTicketAPI {
                 return $this->error('Không có quyền truy cập', 403);
             }
             
-            // Insert message - use sender_id as string for admin (username) or int for user
             $senderType = $isAdmin ? 'admin' : 'user';
             $senderId = $isAdmin ? $_SESSION['ADMIN'] : $_SESSION['USER'];
             $msgSql = "INSERT INTO support_messages (ticket_id, sender_id, sender_type, message)
@@ -277,7 +251,6 @@ class SupportTicketAPI {
             $stmt = $this->conn->prepare($msgSql);
             $stmt->execute([$ticketId, $senderId, $senderType, $message]);
             
-            // Update ticket status
             if ($isAdmin && $ticket['status'] === 'open') {
                 $updateSql = "UPDATE support_tickets SET status = 'in_progress' WHERE id = ?";
                 $stmt = $this->conn->prepare($updateSql);
@@ -292,9 +265,6 @@ class SupportTicketAPI {
         }
     }
     
-    /**
-     * Cập nhật trạng thái ticket (admin only)
-     */
     public function updateTicketStatus() {
         try {
             if (!isset($_SESSION['ADMIN'])) {
@@ -320,9 +290,6 @@ class SupportTicketAPI {
         }
     }
     
-    /**
-     * Gán ticket cho admin (admin only)
-     */
     public function assignTicket() {
         try {
             if (!isset($_SESSION['ADMIN'])) {
@@ -366,7 +333,6 @@ class SupportTicketAPI {
     }
 }
 
-// Router
 $api = new SupportTicketAPI();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 

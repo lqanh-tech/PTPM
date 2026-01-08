@@ -1,21 +1,17 @@
 <?php
-// Script để thiết lập database
-// Bao gồm file quản lý cấu hình để load biến môi trường
+
 require_once 'config/ConfigManager.php';
 
-// Khởi tạo ConfigManager để đảm bảo biến môi trường được load
 $configManager = ConfigManager::getInstance();
 
-// Bao gồm file database từ module
 require_once 'administrator/elements_LQA/mod/database.php';
 
 echo "Đang thiết lập database...\n";
 
 try {
-    // Kết nối đến database
+
     $db = Database::getInstance()->getConnection();
     
-    // Tạo bảng news nếu chưa tồn tại
     $sql = "
     CREATE TABLE IF NOT EXISTS news (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,7 +31,6 @@ try {
     $db->exec($sql);
     echo "✓ Bảng 'news' đã được tạo hoặc đã tồn tại.\n";
     
-    // Tạo bảng banners nếu chưa tồn tại
     $bannersSql = "
     CREATE TABLE IF NOT EXISTS banners (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -53,7 +48,6 @@ try {
     $db->exec($bannersSql);
     echo "✓ Bảng 'banners' đã được tạo hoặc đã tồn tại.\n";
     
-    // Tạo bảng promotions nếu chưa tồn tại
     $promotionsSql = "
     CREATE TABLE IF NOT EXISTS promotions (
         id INT AUTO_INCREMENT PRIMARY KEY,

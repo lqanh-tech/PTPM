@@ -1,17 +1,11 @@
 <?php
-/**
- * Performance Dashboard
- * Phase 3 - Real-time Performance Monitoring
- */
 
 require_once './elements_LQA/mod/sessionManager.php';
 require_once './elements_LQA/mod/databaseOptimizer.php';
 require_once './elements_LQA/monitoring/ModernMonitoringSystem.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check admin access
 if (!isset($_SESSION['ADMIN'])) {
     header('Location: userLogin.php');
     exit();
@@ -20,14 +14,12 @@ if (!isset($_SESSION['ADMIN'])) {
 $optimizer = DatabaseOptimizer::getInstance();
 $monitor = ModernMonitoringSystem::getInstance();
 
-// Get performance data
 $performanceStats = $optimizer->getPerformanceStats();
 $systemHealth = $monitor->getSystemHealth();
 $slowQueries = $optimizer->analyzeSlowQueries(10);
 $indexSuggestions = $optimizer->suggestIndexes();
 $databaseSize = $optimizer->getDatabaseSize();
 
-// Get system metrics
 $currentTime = date('Y-m-d H:i:s');
 $uptime = $systemHealth['uptime'];
 $memoryUsage = $systemHealth['memory'];
@@ -368,7 +360,6 @@ $memoryUsage = $systemHealth['memory'];
             location.reload();
         }
 
-        // Auto-refresh every 30 seconds
         setInterval(function() {
             location.reload();
         }, 30000);

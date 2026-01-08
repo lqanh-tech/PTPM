@@ -1,15 +1,4 @@
 <?php
-/**
- * Password Reset Manager
- * Quản lý việc reset mật khẩu qua email
- * 
- * Flow:
- * 1. User nhập email/username
- * 2. Hệ thống tạo token và gửi email
- * 3. User click link trong email
- * 4. User nhập mật khẩu mới
- * 5. Hệ thống cập nhật mật khẩu
- */
 
 require_once __DIR__ . '/database.php';
 require_once __DIR__ . '/PasswordHelper.php';
@@ -17,7 +6,7 @@ require_once __DIR__ . '/PasswordHelper.php';
 class PasswordResetManager
 {
     private $db;
-    private $tokenExpiry = 3600; // Token hết hạn sau 1 giờ (3600 giây)
+    private $tokenExpiry = 3600;
     
     public function __construct()
     {
@@ -25,9 +14,6 @@ class PasswordResetManager
         $this->ensureTableExists();
     }
     
-    /**
-     * Tạo bảng password_resets nếu chưa tồn tại
-     */
     private function ensureTableExists()
     {
         $sql = "CREATE TABLE IF NOT EXISTS password_resets (
@@ -47,17 +33,10 @@ class PasswordResetManager
         $this->db->exec($sql);
     }
     
-    /**
-     * Tìm user theo email hoặc username
-     * 
-     * @param string $identifier Email hoặc username
-     * @return object|false User object hoặc false
-     */
     public function findUser($identifier)
     {
         $identifier = trim($identifier);
         
-        // Tìm theo email trước
         $sql = "SELECT * FROM user WHERE email = ? OR username = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$identifier, $identifier]);
@@ -65,28 +44,17 @@ class PasswordResetManager
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
     
-    /**
-     * Tạo token reset password
-     * 
-     * @param int $userId User ID
-     * @param string $email Email
-     * @return string Token
-     */
     public function createResetToken($userId, $email)
     {
-        // Xóa các token cũ của user này
+
         $this->invalidateOldTokens($userId);
         
-        // Tạo token mới (64 ký tự hex = 32 bytes random)
         $token = bin2hex(random_bytes(32));
         
-        // Tính thời gian hết hạn
         $expiresAt = date('Y-m-d H:i:s', time() + $this->tokenExpiry);
         
-        // Lấy IP address
         $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         
-        // Lưu vào database
         $sql = "INSERT INTO password_resets (user_id, email, token, expires_at, ip_address) 
                 VALUES (?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
@@ -95,9 +63,6 @@ class PasswordResetManager
         return $token;
     }
     
-    /**
-     * Xóa các token cũ của user
-     */
     private function invalidateOldTokens($userId)
     {
         $sql = "DELETE FROM password_resets WHERE user_id = ?";
@@ -105,12 +70,6 @@ class PasswordResetManager
         $stmt->execute([$userId]);
     }
     
-    /**
-     * Xác thực token
-     * 
-     * @param string $token Token cần xác thực
-     * @return object|false Reset record hoặc false
-     */
     public function validateToken($token)
     {
         $sql = "SELECT pr.*, u.username, u.hoten 
@@ -126,16 +85,9 @@ class PasswordResetManager
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
     
-    /**
-     * Đặt lại mật khẩu
-     * 
-     * @param string $token Token
-     * @param string $newPassword Mật khẩu mới
-     * @return bool Success
-     */
     public function resetPassword($token, $newPassword)
     {
-        // Validate token
+
         $resetRecord = $this->validateToken($token);
         
         if (!$resetRecord) {
@@ -145,22 +97,18 @@ class PasswordResetManager
         try {
             $this->db->beginTransaction();
             
-            // Hash mật khẩu mới
             $hashedPassword = PasswordHelper::hash($newPassword);
             
-            // Cập nhật mật khẩu
             $sql = "UPDATE user SET password = ? WHERE iduser = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$hashedPassword, $resetRecord->user_id]);
             
-            // Đánh dấu token đã sử dụng
             $sql = "UPDATE password_resets SET used_at = NOW() WHERE token = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$token]);
             
             $this->db->commit();
             
-            // Log
             error_log("Password reset successful for user ID: " . $resetRecord->user_id);
             
             return true;
@@ -172,36 +120,22 @@ class PasswordResetManager
         }
     }
     
-    /**
-     * Gửi email reset password
-     * 
-     * @param string $email Email người nhận
-     * @param string $token Token
-     * @param string $username Username
-     * @return bool Success
-     */
     public function sendResetEmail($email, $token, $username)
     {
-        // Load cấu hình từ .env
+
         $envPath = __DIR__ . '/../../../../.env';
         $config = $this->loadEnvConfig($envPath);
         
-        // Tạo reset URL
         $baseUrl = $this->getBaseUrl();
         $resetUrl = $baseUrl . "/lequocanh/administrator/reset_password.php?token=" . $token;
         
-        // Nội dung email
         $subject = "Đặt lại mật khẩu - LQA Shop";
         
         $htmlBody = $this->getEmailTemplate($username, $resetUrl);
         
-        // Gửi email
         return $this->sendEmail($email, $subject, $htmlBody, $config);
     }
     
-    /**
-     * Load cấu hình từ file .env
-     */
     private function loadEnvConfig($envPath)
     {
         $config = [
@@ -233,9 +167,6 @@ class PasswordResetManager
         return $config;
     }
     
-    /**
-     * Lấy base URL từ cấu hình
-     */
     private function getBaseUrl()
     {
         $envPath = __DIR__ . '/../../../../.env';
@@ -250,9 +181,6 @@ class PasswordResetManager
         return 'http://localhost:8081';
     }
     
-    /**
-     * Template email HTML
-     */
     private function getEmailTemplate($username, $resetUrl)
     {
         $expiryMinutes = $this->tokenExpiry / 60;
@@ -308,12 +236,9 @@ class PasswordResetManager
         </html>";
     }
     
-    /**
-     * Gửi email sử dụng PHPMailer hoặc mail() function
-     */
     private function sendEmail($to, $subject, $htmlBody, $config)
     {
-        // Tìm vendor/autoload.php - thử nhiều đường dẫn
+
         $possiblePaths = [
             __DIR__ . '/../../../../vendor/autoload.php',
             $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php',
@@ -334,7 +259,6 @@ class PasswordResetManager
             try {
                 $mail = new PHPMailer\PHPMailer\PHPMailer(true);
                 
-                // Server settings
                 $mail->isSMTP();
                 $mail->Host = $config['MAIL_HOST'];
                 $mail->SMTPAuth = true;
@@ -344,11 +268,9 @@ class PasswordResetManager
                 $mail->Port = (int)$config['MAIL_PORT'];
                 $mail->CharSet = 'UTF-8';
                 
-                // Recipients
                 $mail->setFrom($config['MAIL_FROM_ADDRESS'], $config['MAIL_FROM_NAME']);
                 $mail->addAddress($to);
                 
-                // Content
                 $mail->isHTML(true);
                 $mail->Subject = $subject;
                 $mail->Body = $htmlBody;
@@ -364,7 +286,6 @@ class PasswordResetManager
             }
         }
         
-        // Fallback to mail() function
         $headers = [
             'MIME-Version: 1.0',
             'Content-type: text/html; charset=UTF-8',
@@ -375,9 +296,6 @@ class PasswordResetManager
         return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
     }
     
-    /**
-     * Dọn dẹp các token hết hạn
-     */
     public function cleanupExpiredTokens()
     {
         $sql = "DELETE FROM password_resets WHERE expires_at < NOW() OR used_at IS NOT NULL";
@@ -387,13 +305,6 @@ class PasswordResetManager
         return $stmt->rowCount();
     }
     
-    /**
-     * Kiểm tra rate limit (chống spam)
-     * 
-     * @param string $email Email
-     * @param int $maxAttempts Số lần tối đa trong 1 giờ
-     * @return bool True nếu được phép, False nếu bị giới hạn
-     */
     public function checkRateLimit($email, $maxAttempts = 3)
     {
         $sql = "SELECT COUNT(*) FROM password_resets 

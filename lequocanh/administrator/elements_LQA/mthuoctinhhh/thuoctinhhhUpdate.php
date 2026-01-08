@@ -3,16 +3,13 @@ require_once __DIR__ . '/../mod/thuoctinhhhCls.php';
 require_once __DIR__ . '/../mod/thuoctinhCls.php';
 require_once __DIR__ . '/../mod/hanghoaCls.php';
 
-// Debugging - show all input
 $debug = [];
 $debug['POST'] = $_POST;
 $debug['GET'] = $_GET;
 $debug['REQUEST'] = $_REQUEST;
 
-// Try to get ID from various sources
 $idThuocTinhHH = isset($_POST['idThuocTinhHH']) ? $_POST['idThuocTinhHH'] : (isset($_GET['idThuocTinhHH']) ? $_GET['idThuocTinhHH'] : (isset($_REQUEST['idThuocTinhHH']) ? $_REQUEST['idThuocTinhHH'] : null));
 
-// If still no ID, try alternative forms
 if (!$idThuocTinhHH) {
     if (isset($_POST['data-id'])) {
         $idThuocTinhHH = $_POST['data-id'];
@@ -23,7 +20,6 @@ if (!$idThuocTinhHH) {
 
 $debug['ID detected'] = $idThuocTinhHH;
 
-// Output debug if requested
 if (isset($_GET['debug']) || isset($_POST['debug'])) {
     echo "<pre>";
     print_r($debug);
@@ -51,7 +47,6 @@ if (!$getThuocTinhHHUpdate) {
     exit;
 }
 
-// Lấy danh sách thuộc tính và hàng hóa
 $thuocTinhObj = new ThuocTinh();
 $thuocTinhList = $thuocTinhObj->thuoctinhGetAll();
 
@@ -162,20 +157,17 @@ $hangHoaList = $hangHoaObj->hanghoaGetAll();
 </style>
 
 <script>
-    // Event listener for form submission
+
     document.getElementById('updatethuoctinhhh').addEventListener('submit', function(e) {
         e.preventDefault();
 
-        // Show submitting state
         const submitBtn = document.getElementById('btnsubmit');
         const originalText = submitBtn.value;
         submitBtn.value = "Đang gửi...";
         submitBtn.disabled = true;
 
-        // Get form data
         const formData = new FormData(this);
 
-        // Send AJAX request
         fetch(this.action, {
                 method: 'POST',
                 body: formData
@@ -184,10 +176,10 @@ $hangHoaList = $hangHoaObj->hanghoaGetAll();
             .then(data => {
                 console.log("Response:", data);
                 if (data.success) {
-                    // Redirect to list page on success
+
                     window.top.location.href = "/administrator/index.php?req=thuoctinhhhview";
                 } else {
-                    // Show error message
+
                     document.getElementById('noteForm').innerHTML = '<span style="color:red">' + (data.message || 'Cập nhật thất bại') + '</span>';
                     submitBtn.value = originalText;
                     submitBtn.disabled = false;
@@ -195,12 +187,11 @@ $hangHoaList = $hangHoaObj->hanghoaGetAll();
             })
             .catch(error => {
                 console.error("Error:", error);
-                // Handle error
+
                 document.getElementById('noteForm').innerHTML = '<span style="color:red">Lỗi kết nối: Vui lòng thử lại</span>';
                 submitBtn.value = originalText;
                 submitBtn.disabled = false;
 
-                // If error is severe, redirect anyway after a delay
                 setTimeout(() => {
                     window.top.location.href = "/administrator/index.php?req=thuoctinhhhview";
                 }, 2000);

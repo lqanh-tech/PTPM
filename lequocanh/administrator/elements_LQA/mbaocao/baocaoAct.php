@@ -1,12 +1,10 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Kiểm tra quyền truy cập
 require_once '../mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -16,11 +14,9 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess($username, 'baocaovie
     exit;
 }
 
-// Khởi tạo đối tượng báo cáo
 require_once '../mbaocao/baocaoCls.php';
 $baoCao = new BaoCao();
 
-// Xác định hành động cần thực hiện
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 switch ($action) {

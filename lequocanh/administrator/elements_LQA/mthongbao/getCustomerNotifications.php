@@ -1,20 +1,14 @@
 <?php
 
-/**
- * API lấy thông báo cho khách hàng
- */
-
 header('Content-Type: application/json; charset=utf-8');
 
-// Allow requests from the same origin (including ngrok)
 if (isset($_SERVER['HTTP_ORIGIN'])) {
-    // Allow from any origin for ngrok compatibility
+
     header('Access-Control-Allow-Origin: ' . $_SERVER['HTTP_ORIGIN']);
     header('Access-Control-Allow-Credentials: true');
-    header('Access-Control-Max-Age: 86400');    // cache for 1 day
+    header('Access-Control-Max-Age: 86400');
 }
 
-// Access-Control headers are received during OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_METHOD']))
         header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -23,27 +17,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-// Tắt hiển thị lỗi
 ini_set('display_errors', 0);
 error_reporting(0);
 
-// Bắt đầu output buffering
 ob_start();
 
 try {
     require_once '../mod/sessionManager.php';
     require_once '../mod/CustomerNotificationManager.php';
 
-    // Start session safely
     SessionManager::start();
 
-    // Lấy tham số trước
     $action = $_GET['action'] ?? 'list';
 
-    // Kiểm tra đăng nhập
     $userId = isset($_SESSION['USER']) ? $_SESSION['USER'] : '';
 
-    // Debug log
     error_log("getCustomerNotifications: Session USER = " . $userId);
     error_log("getCustomerNotifications: Action = " . $action);
     error_log("getCustomerNotifications: Session ID = " . session_id());
@@ -59,11 +47,10 @@ try {
 
     switch ($action) {
         case 'list':
-            // Lấy danh sách thông báo
+
             $notifications = $notificationManager->getUserNotifications($userId, $limit, $unreadOnly);
             $unreadCount = $notificationManager->getUnreadCount($userId);
 
-            // Format thông báo
             $formattedNotifications = [];
             foreach ($notifications as $notification) {
                 $formattedNotifications[] = [
@@ -88,7 +75,7 @@ try {
             break;
 
         case 'mark_read':
-            // Đánh dấu thông báo đã đọc
+
             $notificationId = (int)($_POST['notification_id'] ?? 0);
 
             if ($notificationId > 0) {
@@ -103,7 +90,7 @@ try {
             break;
 
         case 'mark_all_read':
-            // Đánh dấu tất cả thông báo đã đọc
+
             $success = $notificationManager->markAllAsRead($userId);
             $response = [
                 'success' => $success,
@@ -112,7 +99,7 @@ try {
             break;
 
         case 'count':
-            // Chỉ lấy số lượng thông báo chưa đọc
+
             $unreadCount = $notificationManager->getUnreadCount($userId);
             $response = [
                 'success' => true,
@@ -121,7 +108,7 @@ try {
             break;
             
         case 'delete_read':
-            // Xóa tất cả thông báo đã đọc
+
             $success = $notificationManager->deleteReadNotifications($userId);
             $response = [
                 'success' => $success,
@@ -130,7 +117,7 @@ try {
             break;
             
         case 'delete_single':
-            // Xóa một thông báo cụ thể
+
             $notificationId = (int)($_POST['notification_id'] ?? 0);
 
             if ($notificationId > 0) {
@@ -154,13 +141,9 @@ try {
     ];
 }
 
-// Xóa output buffer và gửi JSON
 ob_clean();
 echo json_encode($response, JSON_UNESCAPED_UNICODE);
 
-/**
- * Lấy icon cho loại thông báo
- */
 function getNotificationIcon($type)
 {
     switch ($type) {
@@ -185,9 +168,6 @@ function getNotificationIcon($type)
     }
 }
 
-/**
- * Lấy màu cho loại thông báo
- */
 function getNotificationColor($type)
 {
     switch ($type) {

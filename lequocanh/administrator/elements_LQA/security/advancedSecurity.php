@@ -1,8 +1,4 @@
 <?php
-/**
- * Advanced Security Middleware
- * Improvement: Comprehensive security layer
- */
 
 class AdvancedSecurity {
     private static $instance = null;
@@ -27,41 +23,32 @@ class AdvancedSecurity {
     }
     
     public function middleware() {
-        // Check IP restrictions
+
         $this->checkIPRestrictions();
         
-        // Rate limiting
         $this->checkRateLimit();
         
-        // Security headers
         $this->setSecurityHeaders();
         
-        // Input sanitization
         $this->sanitizeInput();
         
-        // SQL injection detection
         $this->detectSQLInjection();
         
-        // XSS detection
         $this->detectXSS();
         
-        // File upload security
         $this->secureFileUploads();
         
-        // Session security
         $this->enhanceSessionSecurity();
     }
     
     private function checkIPRestrictions() {
         $clientIP = $this->getClientIP();
         
-        // Check blacklist
         if (in_array($clientIP, $this->ipBlacklist)) {
             $this->logger->warning('Blocked IP attempted access', ['ip' => $clientIP]);
             $this->blockAccess('IP blocked');
         }
         
-        // Check whitelist (if enabled)
         if (!empty($this->ipWhitelist) && !in_array($clientIP, $this->ipWhitelist)) {
             $this->logger->warning('Non-whitelisted IP attempted access', ['ip' => $clientIP]);
             $this->blockAccess('IP not whitelisted');
@@ -82,19 +69,15 @@ class AdvancedSecurity {
     }
     
     private function setSecurityHeaders() {
-        // Prevent clickjacking
+
         header('X-Frame-Options: DENY');
         
-        // Prevent MIME type sniffing
         header('X-Content-Type-Options: nosniff');
         
-        // XSS Protection
         header('X-XSS-Protection: 1; mode=block');
         
-        // Referrer Policy
         header('Referrer-Policy: strict-origin-when-cross-origin');
         
-        // Content Security Policy
         $csp = "default-src 'self'; " .
                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
@@ -104,24 +87,21 @@ class AdvancedSecurity {
                "frame-ancestors 'none';";
         header("Content-Security-Policy: $csp");
         
-        // HTTPS enforcement (if in production)
         if (AppConfig::isProduction()) {
             header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
         }
     }
     
     private function sanitizeInput() {
-        // Sanitize GET parameters
+
         foreach ($_GET as $key => $value) {
             $_GET[$key] = $this->sanitizeValue($value);
         }
         
-        // Sanitize POST parameters
         foreach ($_POST as $key => $value) {
             $_POST[$key] = $this->sanitizeValue($value);
         }
         
-        // Sanitize COOKIE parameters
         foreach ($_COOKIE as $key => $value) {
             $_COOKIE[$key] = $this->sanitizeValue($value);
         }
@@ -132,10 +112,8 @@ class AdvancedSecurity {
             return array_map([$this, 'sanitizeValue'], $value);
         }
         
-        // Remove null bytes
         $value = str_replace("\0", '', $value);
         
-        // Trim whitespace
         $value = trim($value);
         
         return $value;
@@ -201,7 +179,6 @@ class AdvancedSecurity {
                             'pattern' => $pattern
                         ]);
                         
-                        // Clean the value instead of blocking
                         $_GET[$key] = $this->cleanXSS($value);
                         $_POST[$key] = $this->cleanXSS($value);
                     }
@@ -211,16 +188,13 @@ class AdvancedSecurity {
     }
     
     private function cleanXSS($input) {
-        // Remove script tags
+
         $input = preg_replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/mi', '', $input);
         
-        // Remove javascript: protocol
         $input = preg_replace('/javascript:/i', '', $input);
         
-        // Remove on* event handlers
         $input = preg_replace('/on\w+\s*=/i', '', $input);
         
-        // Remove dangerous tags
         $input = preg_replace('/<(iframe|object|embed|form)\b[^>]*>/i', '', $input);
         
         return $input;
@@ -237,8 +211,8 @@ class AdvancedSecurity {
     }
     
     private function validateUploadedFile($file, $key) {
-        // Check file size
-        $maxSize = $this->config['max_file_size'] ?? 5242880; // 5MB default
+
+        $maxSize = $this->config['max_file_size'] ?? 5242880;
         if ($file['size'] > $maxSize) {
             $this->logger->warning('File upload size exceeded', [
                 'file' => $file['name'],
@@ -249,7 +223,6 @@ class AdvancedSecurity {
             return;
         }
         
-        // Check file type
         $allowedTypes = $this->config['allowed_file_types'] ?? ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         
@@ -263,7 +236,6 @@ class AdvancedSecurity {
             return;
         }
         
-        // Check MIME type
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
@@ -286,7 +258,6 @@ class AdvancedSecurity {
             return;
         }
         
-        // Scan for malicious content (basic check)
         $content = file_get_contents($file['tmp_name']);
         if (strpos($content, '<?php') !== false || strpos($content, '<script') !== false) {
             $this->logger->critical('Malicious file upload attempt', [
@@ -299,15 +270,14 @@ class AdvancedSecurity {
     }
     
     private function enhanceSessionSecurity() {
-        // Regenerate session ID periodically
+
         if (!isset($_SESSION['last_regeneration'])) {
             $_SESSION['last_regeneration'] = time();
-        } elseif (time() - $_SESSION['last_regeneration'] > 300) { // 5 minutes
+        } elseif (time() - $_SESSION['last_regeneration'] > 300) {
             session_regenerate_id(true);
             $_SESSION['last_regeneration'] = time();
         }
         
-        // Check for session hijacking
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
         $ipAddress = $this->getClientIP();
         
@@ -324,7 +294,6 @@ class AdvancedSecurity {
                     'current_ua' => $userAgent
                 ]);
                 
-                // Destroy session and force re-login
                 session_destroy();
                 $this->blockAccess('Session security violation');
             }
@@ -351,11 +320,10 @@ class AdvancedSecurity {
     }
     
     private function loadIPLists() {
-        // Load from configuration or database
+
         $this->ipWhitelist = $this->config['ip_whitelist'] ?? [];
         $this->ipBlacklist = $this->config['ip_blacklist'] ?? [];
         
-        // Load dynamic blacklist from database
         try {
             $db = Database::getInstance()->getConnection();
             $stmt = $db->query("SELECT ip_address FROM blocked_ips WHERE expires_at > NOW() OR expires_at IS NULL");
@@ -383,7 +351,6 @@ class AdvancedSecurity {
     private function blockAccess($reason) {
         http_response_code(403);
         
-        // Log the incident
         $this->logger->critical('Access blocked', [
             'reason' => $reason,
             'ip' => $this->getClientIP(),
@@ -392,10 +359,8 @@ class AdvancedSecurity {
             'referer' => $_SERVER['HTTP_REFERER'] ?? ''
         ]);
         
-        // Block IP temporarily
-        $this->blockIP($this->getClientIP(), 900); // 15 minutes
+        $this->blockIP($this->getClientIP(), 900);
         
-        // Show error page
         echo json_encode([
             'error' => 'Access Denied',
             'message' => 'Your request has been blocked for security reasons.',
@@ -425,30 +390,28 @@ class AdvancedSecurity {
 
 class RateLimiter {
     private $limits = [
-        'default' => ['requests' => 100, 'window' => 3600], // 100 requests per hour
-        'login' => ['requests' => 5, 'window' => 900],      // 5 login attempts per 15 minutes
-        'api' => ['requests' => 1000, 'window' => 3600]     // 1000 API requests per hour
+        'default' => ['requests' => 100, 'window' => 3600],
+        'login' => ['requests' => 5, 'window' => 900],
+        'api' => ['requests' => 1000, 'window' => 3600]
     ];
     
     public function attempt($identifier, $type = 'default') {
         $limit = $this->limits[$type] ?? $this->limits['default'];
         $key = "rate_limit_{$type}_{$identifier}";
         
-        // Get current count
         $current = $this->getCount($key);
         
         if ($current >= $limit['requests']) {
             return false;
         }
         
-        // Increment count
         $this->incrementCount($key, $limit['window']);
         
         return true;
     }
     
     private function getCount($key) {
-        // Use file-based storage for simplicity
+
         $file = sys_get_temp_dir() . '/' . md5($key) . '.rate';
         
         if (!file_exists($file)) {

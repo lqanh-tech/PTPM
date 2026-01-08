@@ -1,8 +1,4 @@
 <?php
-/**
- * Order Exporter Class
- * Xử lý xuất đơn hàng ra PDF/Excel
- */
 
 require_once __DIR__ . '/../../mod/database.php';
 
@@ -14,9 +10,6 @@ class OrderExporter {
         $this->conn = $db->getConnection();
     }
     
-    /**
-     * Lấy thông tin đơn hàng chi tiết
-     */
     public function getOrderDetails($orderId) {
         $sql = "SELECT 
                     dh.*,
@@ -32,7 +25,7 @@ class OrderExporter {
         $order = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($order) {
-            // Lấy chi tiết sản phẩm
+
             $sql = "SELECT 
                         ct.*,
                         hh.tenhanghoa,
@@ -49,9 +42,6 @@ class OrderExporter {
         return $order;
     }
     
-    /**
-     * Lấy danh sách đơn hàng theo bộ lọc
-     */
     public function getOrdersList($filters = []) {
         $where = ["1=1"];
         $params = [];
@@ -105,9 +95,6 @@ class OrderExporter {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Lấy chi tiết nhiều đơn hàng
-     */
     public function getMultipleOrdersDetails($orderIds) {
         if (empty($orderIds)) return [];
         
@@ -127,7 +114,6 @@ class OrderExporter {
         $stmt->execute($orderIds);
         $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        // Lấy chi tiết sản phẩm cho tất cả đơn
         foreach ($orders as &$order) {
             $sql = "SELECT 
                         ct.*,

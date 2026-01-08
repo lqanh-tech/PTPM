@@ -1,16 +1,11 @@
 <?php
 
-/**
- * API endpoint để lấy thông báo real-time
- */
-
 header('Content-Type: application/json');
 
 try {
     require_once '../../administrator/elements_LQA/mPDO.php';
     $pdo = new mPDO();
     
-    // Lấy 20 giao dịch gần nhất trong 24h
     $query = "SELECT order_id, amount, order_info, status, trans_id, message, created_at 
               FROM momo_transactions 
               WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR) 

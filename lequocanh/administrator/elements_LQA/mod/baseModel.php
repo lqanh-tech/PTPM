@@ -1,8 +1,4 @@
 <?php
-/**
- * Base Model Class with Active Record Pattern
- * Improvement: Modern ORM-like functionality
- */
 
 abstract class BaseModel {
     protected static $table;
@@ -26,7 +22,6 @@ abstract class BaseModel {
         $this->syncOriginal();
     }
     
-    // Static Query Methods
     public static function all() {
         $sql = "SELECT * FROM " . static::getTable();
         $results = self::$optimizer->executeQuery($sql, [], true);
@@ -64,7 +59,6 @@ abstract class BaseModel {
         return $instance;
     }
     
-    // Instance Methods
     public function save() {
         if ($this->exists) {
             return $this->update();
@@ -88,7 +82,6 @@ abstract class BaseModel {
         
         self::$optimizer->executeQuery($sql, array_values($attributes), false);
         
-        // Get the inserted ID
         $db = Database::getInstance()->getConnection();
         $this->attributes[static::getPrimaryKey()] = $db->lastInsertId();
         
@@ -102,7 +95,7 @@ abstract class BaseModel {
         $attributes = $this->getDirtyAttributes();
         
         if (empty($attributes)) {
-            return true; // No changes
+            return true;
         }
         
         if (static::$timestamps) {
@@ -138,7 +131,6 @@ abstract class BaseModel {
         return true;
     }
     
-    // Attribute Methods
     public function fill($attributes) {
         foreach ($attributes as $key => $value) {
             if ($this->isFillable($key)) {
@@ -173,7 +165,6 @@ abstract class BaseModel {
     public function toArray() {
         $attributes = $this->attributes;
         
-        // Remove hidden attributes
         foreach (static::$hidden as $hidden) {
             unset($attributes[$hidden]);
         }
@@ -185,7 +176,6 @@ abstract class BaseModel {
         return json_encode($this->toArray());
     }
     
-    // Helper Methods
     protected function getKey() {
         return $this->getAttribute(static::getPrimaryKey());
     }
@@ -197,7 +187,6 @@ abstract class BaseModel {
     protected function getAttributesForSave() {
         $attributes = $this->attributes;
         
-        // Remove primary key if it's auto-increment
         if (!$this->exists) {
             unset($attributes[static::getPrimaryKey()]);
         }
@@ -230,7 +219,6 @@ abstract class BaseModel {
     }
 }
 
-// Query Builder for more complex queries
 class QueryBuilder {
     private $model;
     private $wheres = [];

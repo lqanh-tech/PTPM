@@ -1,9 +1,4 @@
 <?php
-/**
- * Shipping Fee Model - Quản lý Phí vận chuyển
- * MVC Pattern - Model Layer
- * MIỄN PHÍ - Có thể mở rộng
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -18,9 +13,6 @@ class ShippingFeeModel
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Lấy tất cả cấu hình phí
-     */
     public function getAll($activeOnly = true)
     {
         $sql = "SELECT * FROM v_shipping_fees_detail";
@@ -33,9 +25,6 @@ class ShippingFeeModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy cấu hình phí theo ID
-     */
     public function getById($id)
     {
         $sql = "SELECT sf.*, 
@@ -52,11 +41,6 @@ class ShippingFeeModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Tính phí vận chuyển
-     * @param array $params ['province_id', 'district_id', 'weight', 'order_value', 'shipping_method_id']
-     * @return array ['base_fee', 'weight_fee', 'total_fee', 'is_free_ship', 'config']
-     */
     public function calculateFee($params)
     {
         $provinceId = $params['province_id'] ?? null;
@@ -65,7 +49,6 @@ class ShippingFeeModel
         $orderValue = $params['order_value'] ?? 0;
         $shippingMethodId = $params['shipping_method_id'] ?? null;
 
-        // Tìm cấu hình phí phù hợp (theo độ ưu tiên)
         $sql = "SELECT * FROM shipping_fees 
                 WHERE is_active = 1
                 AND (province_id IS NULL OR province_id = ?)
@@ -95,7 +78,7 @@ class ShippingFeeModel
         $config = $stmt->fetch(PDO::FETCH_OBJ);
 
         if (!$config) {
-            // Không tìm thấy cấu hình, trả về phí mặc định
+
             return [
                 'base_fee' => 30000,
                 'weight_fee' => 0,
@@ -107,21 +90,18 @@ class ShippingFeeModel
             ];
         }
 
-        // Tính phí
         $baseFee = $config->base_fee ?? 0;
         $weightFee = ($config->fee_per_kg ?? 0) * $weight;
-        $distanceFee = 0; // Để mở rộng sau
+        $distanceFee = 0;
 
         $totalFee = $baseFee + $weightFee + $distanceFee;
 
-        // Kiểm tra miễn phí vận chuyển
         $isFreeShip = false;
         if ($config->min_order_free_ship && $orderValue >= $config->min_order_free_ship) {
             $isFreeShip = true;
             $totalFee = 0;
         }
 
-        // Áp dụng hệ số nhân nếu có phương thức vận chuyển
         if ($shippingMethodId) {
             $methodSql = "SELECT price_multiplier FROM shipping_methods WHERE id = ?";
             $methodStmt = $this->conn->prepare($methodSql);
@@ -144,9 +124,6 @@ class ShippingFeeModel
         ];
     }
 
-    /**
-     * Thêm cấu hình phí mới
-     */
     public function create($data)
     {
         $sql = "INSERT INTO shipping_fees (
@@ -178,9 +155,6 @@ class ShippingFeeModel
         ]);
     }
 
-    /**
-     * Cập nhật cấu hình phí
-     */
     public function update($id, $data)
     {
         $sql = "UPDATE shipping_fees SET
@@ -213,9 +187,6 @@ class ShippingFeeModel
         ]);
     }
 
-    /**
-     * Xóa cấu hình phí (soft delete)
-     */
     public function delete($id)
     {
         $sql = "UPDATE shipping_fees SET is_active = 0 WHERE id = ?";
@@ -223,9 +194,6 @@ class ShippingFeeModel
         return $stmt->execute([$id]);
     }
 
-    /**
-     * Lấy cấu hình phí theo khu vực
-     */
     public function getByLocation($provinceId, $districtId = null)
     {
         $sql = "SELECT * FROM shipping_fees 

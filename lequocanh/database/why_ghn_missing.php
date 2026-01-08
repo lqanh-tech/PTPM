@@ -15,7 +15,6 @@ echo "<style>
 
 echo "<h2>WHY IS GHN MISSING?</h2>\n";
 
-// 1. Check if GHN exists and is active
 echo "<h3>1. Check GHN in shipping_methods</h3>\n";
 $stmt = $db->query("SELECT * FROM shipping_methods WHERE code = 'ghn'");
 $ghn = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -33,7 +32,6 @@ if ($ghn) {
     echo "<p style='color: red;'>❌ GHN does NOT exist in database!</p>\n";
 }
 
-// 2. Check GHN fee configs
 echo "<h3>2. Check GHN fee configs</h3>\n";
 if ($ghn) {
     $stmt = $db->prepare("SELECT * FROM shipping_fees WHERE shipping_method_id = ?");
@@ -65,7 +63,6 @@ if ($ghn) {
     echo "</table>\n";
 }
 
-// 3. Test direct query that shipping_method_selector uses
 echo "<h3>3. Test Direct Query (Same as shipping_method_selector_v2.php)</h3>\n";
 $stmt = $db->query("
     SELECT 

@@ -2,7 +2,6 @@
 require_once '../mod/sessionManager.php';
 SessionManager::start();
 
-// Check access rights using PhanQuyen system
 require_once '../mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -28,7 +27,6 @@ switch ($action) {
             $end_date = $_POST['end_date'] ?? date('Y-m-d', strtotime('+1 month'));
             $is_active = isset($_POST['is_active']) ? 1 : 0;
 
-            // Kiểm tra dữ liệu đầu vào
             if (empty($title)) {
                 $message = 'Lỗi: Tiêu đề không được để trống';
                 break;

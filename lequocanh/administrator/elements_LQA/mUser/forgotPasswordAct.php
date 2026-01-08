@@ -1,18 +1,13 @@
 <?php
-/**
- * API xử lý yêu cầu quên mật khẩu
- */
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Bắt đầu session
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 require_once __DIR__ . '/../mod/PasswordResetManager.php';
 
-// Chỉ chấp nhận POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode([
         'success' => false,
@@ -21,7 +16,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Lấy identifier từ request
 $identifier = isset($_POST['identifier']) ? trim($_POST['identifier']) : '';
 
 if (empty($identifier)) {
@@ -35,15 +29,12 @@ if (empty($identifier)) {
 try {
     $resetManager = new PasswordResetManager();
     
-    // Tìm user
     $user = $resetManager->findUser($identifier);
     
-    // Luôn trả về thông báo thành công để tránh lộ thông tin user tồn tại hay không
-    // (Security best practice)
     $successMessage = 'Nếu tài khoản tồn tại, chúng tôi đã gửi email hướng dẫn đặt lại mật khẩu. Vui lòng kiểm tra hộp thư (bao gồm cả thư rác).';
     
     if (!$user) {
-        // Log nhưng không tiết lộ cho user
+
         error_log("Password reset requested for non-existent user: " . $identifier);
         
         echo json_encode([
@@ -53,7 +44,6 @@ try {
         exit;
     }
     
-    // Kiểm tra user có email không
     if (empty($user->email)) {
         error_log("Password reset requested for user without email: " . $user->username);
         
@@ -64,7 +54,6 @@ try {
         exit;
     }
     
-    // Kiểm tra rate limit
     if (!$resetManager->checkRateLimit($user->email, 3)) {
         echo json_encode([
             'success' => false,
@@ -73,10 +62,8 @@ try {
         exit;
     }
     
-    // Tạo token
     $token = $resetManager->createResetToken($user->iduser, $user->email);
     
-    // Gửi email
     $emailSent = $resetManager->sendResetEmail($user->email, $token, $user->username);
     
     if ($emailSent) {

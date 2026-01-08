@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Logging Configuration
- */
-
 return [
     'default' => 'file',
 
@@ -12,7 +8,7 @@ return [
             'driver' => 'file',
             'path' => __DIR__ . '/../logs/application.log',
             'level' => $_ENV['LOG_LEVEL'] ?? 'info',
-            'max_files' => 14, // Keep logs for 14 days
+            'max_files' => 14,
             'bubble' => true
         ],
 
@@ -35,7 +31,6 @@ return [
         ]
     ],
 
-    // Log levels: emergency, alert, critical, error, warning, notice, info, debug
     'levels' => [
         'emergency' => 0,
         'alert' => 1,
@@ -47,7 +42,6 @@ return [
         'debug' => 7
     ],
 
-    // What to log
     'log_queries' => $_ENV['LOG_QUERIES'] ?? false,
     'log_requests' => $_ENV['LOG_REQUESTS'] ?? true,
     'log_errors' => true,

@@ -1,13 +1,9 @@
 <?php
-/**
- * Script kiểm tra và khắc phục các vấn đề với Banner
- */
 
 require_once '../mod/database.php';
 
 echo "<h2>Kiểm tra cấu hình Banner</h2>";
 
-// 1. Kiểm tra kết nối database
 echo "<h3>1. Kiểm tra kết nối Database</h3>";
 try {
     $db = Database::getInstance()->getConnection();
@@ -17,14 +13,12 @@ try {
     exit;
 }
 
-// 2. Kiểm tra bảng banners
 echo "<h3>2. Kiểm tra bảng banners</h3>";
 try {
     $stmt = $db->query("SHOW TABLES LIKE 'banners'");
     if ($stmt->rowCount() > 0) {
         echo "✓ Bảng 'banners' đã tồn tại<br>";
         
-        // Kiểm tra cấu trúc bảng
         $stmt = $db->query("DESCRIBE banners");
         $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo "<pre>";
@@ -34,7 +28,6 @@ try {
         echo "✗ Bảng 'banners' chưa tồn tại<br>";
         echo "<p>Bạn cần chạy file SQL: lequocanh/database/create_banner_news_promotion_tables.sql</p>";
         
-        // Tự động tạo bảng
         echo "<h4>Tạo bảng tự động?</h4>";
         if (isset($_GET['create_table'])) {
             $sql = "CREATE TABLE IF NOT EXISTS banners (
@@ -62,7 +55,6 @@ try {
     echo "✗ Lỗi kiểm tra bảng: " . $e->getMessage() . "<br>";
 }
 
-// 3. Kiểm tra thư mục upload
 echo "<h3>3. Kiểm tra thư mục upload</h3>";
 $uploadDir = __DIR__ . '/../../../administrator/uploads/';
 echo "Đường dẫn: " . $uploadDir . "<br>";
@@ -84,7 +76,6 @@ if (is_writable($uploadDir)) {
     echo "✗ Thư mục không có quyền ghi. Cần chmod 755 hoặc 777<br>";
 }
 
-// 4. Kiểm tra file BannerManager
 echo "<h3>4. Kiểm tra BannerManager</h3>";
 if (file_exists(__DIR__ . '/../mod/BannerManager.php')) {
     echo "✓ File BannerManager.php tồn tại<br>";
@@ -102,7 +93,6 @@ if (file_exists(__DIR__ . '/../mod/BannerManager.php')) {
     echo "✗ File BannerManager.php không tồn tại<br>";
 }
 
-// 5. Test upload
 echo "<h3>5. Kiểm tra cấu hình PHP Upload</h3>";
 echo "upload_max_filesize: " . ini_get('upload_max_filesize') . "<br>";
 echo "post_max_size: " . ini_get('post_max_size') . "<br>";

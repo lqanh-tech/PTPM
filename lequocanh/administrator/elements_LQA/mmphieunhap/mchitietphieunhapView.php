@@ -6,13 +6,11 @@ require_once './elements_LQA/mod/mchitietphieunhapCls.php';
 require_once './elements_LQA/mod/hanghoaCls.php';
 require_once './elements_LQA/mod/mtonkhoCls.php';
 
-// Khởi tạo các đối tượng
 $phieuNhapObj = new MPhieuNhap();
 $chiTietObj = new MChiTietPhieuNhap();
 $hanghoaObj = new hanghoa();
 $tonkhoObj = new MTonKho();
 
-// Lấy thông tin phiếu nhập
 if (isset($_GET['idpn'])) {
     $idPhieuNhap = $_GET['idpn'];
     $phieuNhap = $phieuNhapObj->getPhieuNhapById($idPhieuNhap);
@@ -23,17 +21,14 @@ if (isset($_GET['idpn'])) {
         exit;
     }
 
-    // Lấy danh sách chi tiết phiếu nhập
     $list_chitiet = $chiTietObj->getChiTietByPhieuNhapId($idPhieuNhap);
 
-    // Lấy danh sách hàng hóa cho form thêm mới
     $list_hanghoa = $hanghoaObj->HanghoaGetAll();
 } else {
     header("Location: index.php?req=mphieunhap");
     exit;
 }
 
-// Xác định trạng thái phiếu nhập
 $trangThai = "";
 $trangThaiClass = "";
 switch ($phieuNhap->trangThai) {
@@ -80,7 +75,7 @@ switch ($phieuNhap->trangThai) {
     </table>
 </div>
 
-<?php if ($phieuNhap->trangThai == 0) { // Chỉ hiển thị form thêm sản phẩm nếu phiếu nhập chưa được duyệt
+<?php if ($phieuNhap->trangThai == 0) {
 ?>
     <div class="admin-form">
         <h3>Thêm sản phẩm vào phiếu nhập</h3>
@@ -95,11 +90,10 @@ switch ($phieuNhap->trangThai) {
                             <?php
                             if (!empty($list_hanghoa)) {
                                 foreach ($list_hanghoa as $hh) {
-                                    // Lấy thông tin tồn kho của sản phẩm
+
                                     $tonkhoInfo = $tonkhoObj->getTonKhoByIdHangHoa($hh->idhanghoa);
                                     $soLuongTonKho = $tonkhoInfo ? $tonkhoInfo->soLuong : 0;
 
-                                    // Hiển thị tên sản phẩm kèm số lượng tồn kho
                                     echo "<option value='{$hh->idhanghoa}' data-gia='{$hh->giathamkhao}' data-tonkho='{$soLuongTonKho}'>{$hh->tenhanghoa} (Tồn kho: {$soLuongTonKho})</option>";
                                 }
                             }
@@ -146,7 +140,7 @@ switch ($phieuNhap->trangThai) {
                 <th>Đơn giá</th>
                 <th>Giá nhập</th>
                 <th>Thành tiền</th>
-                <?php if ($phieuNhap->trangThai == 0) { // Chỉ hiển thị cột thao tác nếu phiếu nhập chưa được duyệt
+                <?php if ($phieuNhap->trangThai == 0) {
                 ?>
                     <th>Thao tác</th>
                 <?php } ?>
@@ -166,7 +160,7 @@ switch ($phieuNhap->trangThai) {
                         <td><?php echo number_format($ct->donGia, 0, ',', '.') . ' VNĐ'; ?></td>
                         <td><?php echo number_format($ct->giaNhap, 0, ',', '.') . ' VNĐ'; ?></td>
                         <td><?php echo number_format($ct->thanhTien, 0, ',', '.') . ' VNĐ'; ?></td>
-                        <?php if ($phieuNhap->trangThai == 0) { // Chỉ hiển thị nút thao tác nếu phiếu nhập chưa được duyệt
+                        <?php if ($phieuNhap->trangThai == 0) {
                         ?>
                             <td align="center">
                                 <!-- Sửa chi tiết phiếu nhập -->
@@ -195,7 +189,7 @@ switch ($phieuNhap->trangThai) {
 <div class="button-group">
     <a href="index.php?req=mphieunhap" class="btn btn-secondary">Quay lại danh sách phiếu nhập</a>
 
-    <?php if ($phieuNhap->trangThai == 0) { // Chỉ hiển thị các nút này nếu phiếu nhập chưa được duyệt
+    <?php if ($phieuNhap->trangThai == 0) {
     ?>
         <a href="./elements_LQA/mmphieunhap/mphieunhapAct.php?reqact=approve&idpn=<?php echo $idPhieuNhap; ?>"
             class="btn btn-approve" onclick="return confirm('Bạn có chắc muốn duyệt phiếu nhập này?')">
@@ -210,14 +204,13 @@ switch ($phieuNhap->trangThai) {
 </div>
 
 <script>
-    // Thêm thông tin tồn kho
+
     var tonkhoInfoElement = document.createElement('div');
     tonkhoInfoElement.id = 'tonkho-info';
     tonkhoInfoElement.style.marginTop = '5px';
     tonkhoInfoElement.style.fontWeight = 'bold';
     document.querySelector('#idhanghoa').parentNode.appendChild(tonkhoInfoElement);
 
-    // Cập nhật đơn giá và hiển thị thông tin tồn kho khi chọn sản phẩm
     document.getElementById('idhanghoa').addEventListener('change', function() {
         var selectedOption = this.options[this.selectedIndex];
         var gia = selectedOption.getAttribute('data-gia');
@@ -226,7 +219,6 @@ switch ($phieuNhap->trangThai) {
         document.getElementById('donGia').value = gia || 0;
         document.getElementById('giaNhap').value = gia || 0;
 
-        // Hiển thị thông tin tồn kho
         if (selectedOption.value) {
             var tenSanPham = selectedOption.text.split(' (Tồn kho:')[0];
             tonkhoInfoElement.innerHTML = 'Sản phẩm: <span style="color: #2980b9;">' + tenSanPham + '</span> - Số lượng tồn kho: <span style="color: ' + (tonkho > 0 ? '#27ae60' : '#e74c3c') + ';">' + tonkho + '</span>';
@@ -237,7 +229,6 @@ switch ($phieuNhap->trangThai) {
         tinhThanhTien();
     });
 
-    // Tính thành tiền
     function tinhThanhTien() {
         var soLuong = document.getElementById('soLuong').value || 0;
         var giaNhap = document.getElementById('giaNhap').value || 0;
@@ -245,7 +236,6 @@ switch ($phieuNhap->trangThai) {
         document.getElementById('thanhTien').value = thanhTien;
     }
 
-    // Reset form
     function resetForm() {
         document.getElementById('donGia').value = 0;
         document.getElementById('giaNhap').value = 0;

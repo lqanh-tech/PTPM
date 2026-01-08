@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Quản lý thông báo khi có giao dịch MoMo
- */
-
 class NotificationManager 
 {
     private $adminEmail;
@@ -12,51 +8,36 @@ class NotificationManager
     
     public function __construct() 
     {
-        // Cấu hình thông tin admin (có thể đưa vào config file)
-        $this->adminEmail = 'admin@yourdomain.com'; // Thay bằng email của bạn
-        $this->adminPhone = '0123456789'; // Thay bằng SĐT của bạn
-        $this->webhookUrl = 'https://hooks.slack.com/your-webhook'; // Slack webhook (optional)
+
+        $this->adminEmail = 'admin@yourdomain.com';
+        $this->adminPhone = '0123456789';
+        $this->webhookUrl = 'https://hooks.slack.com/your-webhook';
     }
     
-    /**
-     * Gửi thông báo khi có giao dịch thành công
-     */
     public function notifyPaymentSuccess($transaction) 
     {
         $subject = "✅ Thanh toán thành công - " . number_format($transaction['amount']) . " VND";
         $message = $this->buildSuccessMessage($transaction);
         
-        // Gửi email
         $this->sendEmail($subject, $message);
         
-        // Gửi SMS (nếu có cấu hình)
         $this->sendSMS("Bạn vừa nhận được " . number_format($transaction['amount']) . " VND từ MoMo. Order: " . $transaction['order_id']);
         
-        // Gửi Slack notification (nếu có)
         $this->sendSlackNotification($subject, $message, 'good');
         
-        // Log notification
         $this->logNotification('SUCCESS', $transaction['order_id'], $message);
     }
     
-    /**
-     * Gửi thông báo khi có giao dịch thất bại
-     */
     public function notifyPaymentFailed($transaction) 
     {
         $subject = "❌ Thanh toán thất bại - " . $transaction['order_id'];
         $message = $this->buildFailedMessage($transaction);
         
-        // Chỉ gửi email cho trường hợp thất bại
         $this->sendEmail($subject, $message);
         
-        // Log notification
         $this->logNotification('FAILED', $transaction['order_id'], $message);
     }
     
-    /**
-     * Gửi thông báo tổng kết hàng ngày
-     */
     public function sendDailySummary() 
     {
         $summary = $this->getDailySummary();
@@ -67,9 +48,6 @@ class NotificationManager
         $this->logNotification('DAILY_SUMMARY', 'SYSTEM', $message);
     }
     
-    /**
-     * Xây dựng nội dung email thành công
-     */
     private function buildSuccessMessage($transaction) 
     {
         return "
@@ -94,9 +72,6 @@ class NotificationManager
         ";
     }
     
-    /**
-     * Xây dựng nội dung email thất bại
-     */
     private function buildFailedMessage($transaction) 
     {
         return "
@@ -117,9 +92,6 @@ class NotificationManager
         ";
     }
     
-    /**
-     * Gửi email
-     */
     private function sendEmail($subject, $message) 
     {
         $headers = [
@@ -140,35 +112,11 @@ class NotificationManager
         }
     }
     
-    /**
-     * Gửi SMS (cần tích hợp với SMS gateway)
-     */
     private function sendSMS($message) 
     {
-        // Ví dụ tích hợp với SMS gateway (cần cấu hình)
-        // Có thể sử dụng: Twilio, AWS SNS, hoặc SMS gateway Việt Nam
-        
+
         try {
-            // Ví dụ với cURL call tới SMS API
-            /*
-            $smsData = [
-                'phone' => $this->adminPhone,
-                'message' => $message,
-                'api_key' => 'YOUR_SMS_API_KEY'
-            ];
-            
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, 'https://sms-api.example.com/send');
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($smsData));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-            
-            $response = curl_exec($ch);
-            curl_close($ch);
-            */
-            
-            // Tạm thời log SMS thay vì gửi thật
+
             error_log("SMS Notification: $message");
             
         } catch (Exception $e) {
@@ -176,9 +124,6 @@ class NotificationManager
         }
     }
     
-    /**
-     * Gửi Slack notification
-     */
     private function sendSlackNotification($title, $message, $color = 'good') 
     {
         if (empty($this->webhookUrl)) {
@@ -213,9 +158,6 @@ class NotificationManager
         }
     }
     
-    /**
-     * Lấy thống kê hàng ngày
-     */
     private function getDailySummary() 
     {
         try {
@@ -224,13 +166,11 @@ class NotificationManager
             
             $today = date('Y-m-d');
             
-            // Tổng giao dịch thành công
             $successQuery = "SELECT COUNT(*) as count, SUM(amount) as total 
                            FROM momo_transactions 
                            WHERE DATE(created_at) = ? AND status = 'SUCCESS'";
             $success = $pdo->executeS($successQuery, [$today]);
             
-            // Tổng giao dịch thất bại
             $failedQuery = "SELECT COUNT(*) as count 
                           FROM momo_transactions 
                           WHERE DATE(created_at) = ? AND status = 'FAILED'";
@@ -249,9 +189,6 @@ class NotificationManager
         }
     }
     
-    /**
-     * Xây dựng nội dung báo cáo tổng kết
-     */
     private function buildSummaryMessage($summary) 
     {
         if (!$summary) {
@@ -274,9 +211,6 @@ class NotificationManager
         ";
     }
     
-    /**
-     * Log notification
-     */
     private function logNotification($type, $orderId, $message) 
     {
         $logEntry = [

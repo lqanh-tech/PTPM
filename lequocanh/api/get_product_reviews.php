@@ -1,11 +1,12 @@
 <?php
-/**
- * Get Product Reviews API
- */
 
 header('Content-Type: application/json');
 
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/ProductReviewCls.php';
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('get_product_reviews');
 
 try {
     $idhanghoa = isset($_GET['idhanghoa']) ? (int)$_GET['idhanghoa'] : 0;
@@ -23,10 +24,8 @@ try {
 
     $reviewCls = new ProductReview();
 
-    // Get reviews
     $reviews = $reviewCls->getProductReviews($idhanghoa, $limit, $offset, $rating);
 
-    // Get rating stats
     $stats = $reviewCls->getProductRatingStats($idhanghoa);
 
     echo json_encode([

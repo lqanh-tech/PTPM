@@ -1,17 +1,8 @@
 <?php
-/**
- * Batch Shipping Operations
- * 
- * Xử lý nhiều đơn hàng cùng lúc:
- * - Tạo nhiều vận đơn
- * - Cập nhật trạng thái hàng loạt
- * - In nhãn hàng loạt
- */
 
 require_once __DIR__ . '/../mod/database.php';
 require_once __DIR__ . '/../mod/GHNService.php';
 
-// Check admin permission - must be called from index.php with proper session
 if (!isset($_SESSION['ADMIN'])) {
     die('Access denied. Please login as admin.');
 }
@@ -20,7 +11,6 @@ $db = Database::getInstance()->getConnection();
 $message = '';
 $messageType = '';
 
-// Handle batch operations
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $orderIds = $_POST['order_ids'] ?? [];
@@ -61,7 +51,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get pending orders
 $stmt = $db->query("
     SELECT 
         id,
@@ -79,9 +68,6 @@ $stmt = $db->query("
 ");
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-/**
- * Create batch shipments
- */
 function createBatchShipments($orderIds, $db) {
     $ghn = new GHNService();
     $success = 0;
@@ -89,7 +75,7 @@ function createBatchShipments($orderIds, $db) {
     
     foreach ($orderIds as $orderId) {
         try {
-            // Get order details
+
             $stmt = $db->prepare("SELECT * FROM don_hang WHERE id = ?");
             $stmt->execute([$orderId]);
             $order = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -99,7 +85,6 @@ function createBatchShipments($orderIds, $db) {
                 continue;
             }
             
-            // Create shipment
             $orderData = [
                 'to_name' => $order['ten_khach_hang'],
                 'to_phone' => $order['so_dien_thoai'] ?? '0000000000',
@@ -115,7 +100,7 @@ function createBatchShipments($orderIds, $db) {
             $result = $ghn->createShippingOrder($orderData);
             
             if ($result['code'] === 200 && !empty($result['data']['order_code'])) {
-                // Update order with tracking code
+
                 $stmt = $db->prepare("
                     UPDATE don_hang 
                     SET tracking_code = ?,
@@ -140,9 +125,6 @@ function createBatchShipments($orderIds, $db) {
     return ['success' => $success, 'failed' => $failed];
 }
 
-/**
- * Update batch status
- */
 function updateBatchStatus($orderIds, $newStatus, $db) {
     $placeholders = str_repeat('?,', count($orderIds) - 1) . '?';
     
@@ -159,12 +141,8 @@ function updateBatchStatus($orderIds, $newStatus, $db) {
     return $stmt->rowCount();
 }
 
-/**
- * Print batch labels
- */
 function printBatchLabels($orderIds, $db) {
-    // This would integrate with GHN print API
-    // For now, just return count
+
     return count($orderIds);
 }
 ?>
@@ -301,20 +279,18 @@ function printBatchLabels($orderIds, $db) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Show/hide status field
+
         document.querySelector('select[name="action"]').addEventListener('change', function() {
             document.getElementById('statusField').style.display = 
                 this.value === 'update_status' ? 'block' : 'none';
         });
 
-        // Toggle all checkboxes
         function toggleAll(source) {
             document.querySelectorAll('.order-checkbox').forEach(checkbox => {
                 checkbox.checked = source.checked;
             });
         }
 
-        // Select all button
         function selectAll() {
             document.querySelectorAll('.order-checkbox').forEach(checkbox => {
                 checkbox.checked = true;
@@ -322,7 +298,6 @@ function printBatchLabels($orderIds, $db) {
             document.getElementById('selectAllCheckbox').checked = true;
         }
 
-        // Confirm before submit
         document.getElementById('batchForm').addEventListener('submit', function(e) {
             const checked = document.querySelectorAll('.order-checkbox:checked').length;
             if (checked === 0) {

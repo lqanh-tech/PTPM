@@ -7,7 +7,6 @@ $lhobj = new ThuocTinh();
 $list_lh = $lhobj->thuoctinhGetAll();
 $l = count($list_lh);
 
-// Hiển thị thông báo kết quả
 if (isset($_GET['result'])) {
     if ($_GET['result'] == 'ok') {
         echo '<div class="alert alert-success">';
@@ -20,7 +19,6 @@ if (isset($_GET['result'])) {
     } else if ($_GET['result'] == 'notok') {
         echo '<div class="alert alert-danger">';
 
-        // Xử lý lỗi foreign key constraint
         if (isset($_GET['error_type']) && $_GET['error_type'] == 'foreign_key_constraint') {
             echo '<div class="foreign-key-error">';
             echo '<h4><i class="fas fa-exclamation-triangle"></i> Không thể xóa thuộc tính</h4>';
@@ -63,7 +61,7 @@ if (isset($_GET['result'])) {
             echo '</div>';
             echo '</div>';
         } else {
-            // Xử lý các lỗi khác
+
             if (isset($_GET['message'])) {
                 echo '<strong>Lỗi!</strong> ' . htmlspecialchars(urldecode($_GET['message']));
             } else {
@@ -175,7 +173,6 @@ if (isset($_GET['result'])) {
         height: 24px;
     }
 
-    /* Popup styles */
     #w_update_tt {
         position: fixed;
         top: 50%;
@@ -214,7 +211,6 @@ if (isset($_GET['result'])) {
         background: #d32f2f;
     }
 
-    /* Alert styles */
     .alert {
         padding: 15px;
         margin: 15px 0;
@@ -234,7 +230,6 @@ if (isset($_GET['result'])) {
         color: #721c24;
     }
 
-    /* Foreign key error styles */
     .foreign-key-error {
         background: #fff3cd;
         border: 1px solid #ffeaa7;
@@ -303,13 +298,11 @@ if (isset($_GET['result'])) {
 
 <script>
     $(document).ready(function() {
-        // Đảm bảo popup ẩn khi trang tải
+
         $("#w_update_tt").hide();
 
-        // XÓA event handler cũ để tránh xung đột với jscript.js
         $(".w_update_btn_open_tt").off("click");
 
-        // Xử lý sự kiện click nút update - sử dụng namespace để tránh xung đột
         $(".w_update_btn_open_tt").on("click.thuoctinhview", function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -322,11 +315,9 @@ if (isset($_GET['result'])) {
                 return;
             }
 
-            // Hiển thị popup
             console.log("thuoctinhView.php: Showing popup");
             $("#w_update_tt").show();
 
-            // Load form update
             $("#w_update_form_tt").html('<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Đang tải...</div>');
 
             console.log("thuoctinhView.php: Making AJAX request");
@@ -349,13 +340,11 @@ if (isset($_GET['result'])) {
             });
         });
 
-        // Xử lý đóng popup
         $(document).on("click", "#w_close_btn_tt", function() {
             console.log("thuoctinhView.php: Close button clicked");
             $("#w_update_tt").hide();
         });
 
-        // Đóng popup khi click bên ngoài
         $(document).on("click", "#w_update_tt", function(e) {
             if (e.target === this) {
                 console.log("thuoctinhView.php: Clicked outside popup");

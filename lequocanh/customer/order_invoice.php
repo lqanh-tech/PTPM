@@ -1,15 +1,10 @@
 <?php
-/**
- * Trang xem hóa đơn và đánh giá sản phẩm
- * Hiển thị sau khi admin duyệt đơn
- */
 
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
 require_once '../administrator/elements_LQA/mod/database.php';
 
 SessionManager::start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER'])) {
     header('Location: ../administrator/userLogin.php');
     exit();
@@ -26,7 +21,6 @@ if (!$orderId) {
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Lấy thông tin đơn hàng
 $orderSql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
 $stmt = $conn->prepare($orderSql);
 $stmt->execute([$orderId, $userId]);
@@ -37,7 +31,6 @@ if (!$order) {
     exit();
 }
 
-// Lấy chi tiết sản phẩm
 $itemsSql = "SELECT cdh.*, hh.ten_hang_hoa, hh.hinh_anh 
              FROM chi_tiet_don_hang cdh
              JOIN tbl_hanghoa hh ON cdh.ma_san_pham = hh.id
@@ -46,7 +39,6 @@ $stmt = $conn->prepare($itemsSql);
 $stmt->execute([$orderId]);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Kiểm tra đơn hàng đã được duyệt chưa
 $isApproved = ($order['trang_thai'] == 'approved' || $order['trang_thai_thanh_toan'] == 'paid');
 ?>
 
@@ -231,7 +223,7 @@ $isApproved = ($order['trang_thai'] == 'approved' || $order['trang_thai_thanh_to
             <div class="mt-5 no-print">
                 <hr>
                 <?php 
-                $orderId = $orderId; // Pass to widget
+                $orderId = $orderId;
                 include '../components/product_review_widget.php'; 
                 ?>
             </div>

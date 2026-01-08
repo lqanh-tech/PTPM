@@ -19,7 +19,6 @@ class NhanVien
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Lấy tất cả các nhân viên
     public function nhanvienGetAll()
     {
         $sql = 'SELECT nv.*, u.hoten as ten_user, u.dienthoai as sdt_user, u.username as username_user
@@ -36,7 +35,6 @@ class NhanVien
         return $getAll->fetchAll();
     }
 
-    // Thêm nhân viên mới
     public function nhanvienAdd($tenNV, $SDT, $email, $luongCB, $phuCap, $chucVu, $iduser = null)
     {
         $sql = "INSERT INTO nhanvien (tenNV, SDT, email, luongCB, phuCap, chucVu, iduser) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -52,15 +50,11 @@ class NhanVien
         return $add->rowCount();
     }
 
-    /**
-     * Lấy ID của bản ghi vừa thêm vào
-     */
     public function getLastInsertId()
     {
         return $this->db->lastInsertId();
     }
 
-    // Xóa nhân viên theo ID
     public function nhanvienDelete($idNhanVien)
     {
         $sql = "DELETE FROM nhanvien WHERE idNhanVien = ?";
@@ -76,21 +70,18 @@ class NhanVien
         return $del->rowCount();
     }
 
-    // Cập nhật thông tin nhân viên
     public function nhanvienUpdate($tenNV, $SDT, $email, $luongCB, $phuCap, $chucVu, $idNhanVien, $iduser)
     {
         $db = Database::getInstance()->getConnection();
 
         try {
-            // Debug: Ghi giá trị vào log
+
             file_put_contents($_SERVER['DOCUMENT_ROOT'] . '/administrator/debug_log.txt', "idNhanVien: $idNhanVien\niduser: $iduser\ntenNV: $tenNV\nSDT: $SDT\nemail: $email\nluongCB: $luongCB\nphuCap: $phuCap\nchucVu: $chucVu\n", FILE_APPEND);
 
-            // Convert empty string to NULL for iduser
             if ($iduser === '') {
                 $iduser = null;
             }
 
-            // Nếu có iduser, cập nhật cả iduser
             if ($iduser !== null) {
                 $query = "UPDATE nhanvien
                         SET tennv = :tenNV,
@@ -132,7 +123,6 @@ class NhanVien
                 $statement->bindParam(':idNhanVien', $idNhanVien, PDO::PARAM_INT);
             }
 
-            // Thực hiện câu lệnh
             return $statement->execute();
         } catch (PDOException $e) {
             file_put_contents(
@@ -144,7 +134,6 @@ class NhanVien
         }
     }
 
-    // Lấy thông tin nhân viên theo ID
     public function nhanvienGetById($idNhanVien)
     {
         $sql = 'SELECT nv.*, u.hoten as ten_user, u.dienthoai as sdt_user, u.username as username_user

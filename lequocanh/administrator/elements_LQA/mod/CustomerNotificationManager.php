@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Customer Notification Manager
- * Quản lý thông báo cho khách hàng
- */
-
 require_once 'database.php';
 
 class CustomerNotificationManager
@@ -20,7 +15,6 @@ class CustomerNotificationManager
                 throw new Exception("Database connection failed");
             }
             
-            // Tự động tạo bảng nếu chưa tồn tại
             $this->ensureTableExists();
         } catch (Exception $e) {
             error_log("CustomerNotificationManager constructor error: " . $e->getMessage());
@@ -28,9 +22,6 @@ class CustomerNotificationManager
         }
     }
     
-    /**
-     * Đảm bảo bảng customer_notifications tồn tại
-     */
     private function ensureTableExists()
     {
         try {
@@ -39,7 +30,7 @@ class CustomerNotificationManager
             $stmt->execute();
             
             if ($stmt->rowCount() == 0) {
-                // Tạo bảng customer_notifications
+
                 $createTableSql = "CREATE TABLE customer_notifications (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     user_id VARCHAR(100) NOT NULL,
@@ -64,9 +55,6 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Gửi thông báo khi đơn hàng được duyệt
-     */
     public function notifyOrderApproved($orderId, $userId)
     {
         $order = $this->getOrderInfo($orderId);
@@ -75,12 +63,10 @@ class CustomerNotificationManager
             return false;
         }
 
-        // Debug log
         error_log("CustomerNotificationManager: Creating notification for order $orderId, user: $userId");
 
         $title = "✅ Đơn hàng #{$orderId} đã được duyệt";
         
-        // Tạo link xem hóa đơn và đánh giá
         $invoiceLink = "/lequocanh/customer/order_invoice.php?order_id={$orderId}";
         
         $message = "Đơn hàng #{$order['ma_don_hang_text']} của bạn đã được duyệt và đang được chuẩn bị. " .
@@ -89,18 +75,13 @@ class CustomerNotificationManager
 
         $result = $this->createInternalNotification($userId, $orderId, 'order_approved', $title, $message);
 
-        // Gửi email thông báo
         $this->sendEmailNotification($orderId, $userId, 'approved');
 
-        // Debug log
         error_log("CustomerNotificationManager: Notification creation result: " . ($result ? 'success' : 'failed'));
 
         return $result;
     }
 
-    /**
-     * Gửi thông báo khi đơn hàng bị hủy
-     */
     public function notifyOrderCancelled($orderId, $userId, $reason = '')
     {
         $order = $this->getOrderInfo($orderId);
@@ -113,15 +94,11 @@ class CustomerNotificationManager
 
         $result = $this->createInternalNotification($userId, $orderId, 'order_cancelled', $title, $message);
         
-        // Gửi email thông báo
         $this->sendEmailNotification($orderId, $userId, 'cancelled', $reason);
         
         return $result;
     }
 
-    /**
-     * Gửi thông báo xác nhận thanh toán
-     */
     public function notifyPaymentConfirmed($orderId, $userId)
     {
         $order = $this->getOrderInfo($orderId);
@@ -133,19 +110,15 @@ class CustomerNotificationManager
 
         $result = $this->createInternalNotification($userId, $orderId, 'payment_confirmed', $title, $message);
         
-        // Gửi email thông báo
         $this->sendEmailNotification($orderId, $userId, 'payment');
         
         return $result;
     }
 
-    /**
-     * Tạo thông báo mới (public method for external use)
-     */
     public function createNotification($userId, $title, $message, $type = 'general', $orderId = null)
     {
         try {
-            // Debug log
+
             error_log("CustomerNotificationManager: Creating notification - User: $userId, Type: $type, Order: $orderId, Title: $title");
 
             $sql = "INSERT INTO customer_notifications (user_id, order_id, type, title, message) 
@@ -166,17 +139,11 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Tạo thông báo nội bộ (private method for internal use)
-     */
     private function createInternalNotification($userId, $orderId, $type, $title, $message)
     {
         return $this->createNotification($userId, $title, $message, $type, $orderId);
     }
 
-    /**
-     * Lấy thông báo của user
-     */
     public function getUserNotifications($userId, $limit = 20, $unreadOnly = false)
     {
         try {
@@ -187,7 +154,6 @@ class CustomerNotificationManager
                 $whereClause .= " AND is_read = 0";
             }
 
-            // Ensure limit is integer and safe
             $limit = (int)$limit;
             if ($limit <= 0) $limit = 20;
             if ($limit > 100) $limit = 100;
@@ -197,7 +163,6 @@ class CustomerNotificationManager
                     ORDER BY created_at DESC
                     LIMIT $limit";
 
-            // Debug log
             error_log("getUserNotifications SQL: " . $sql);
             error_log("getUserNotifications params: " . json_encode($params));
 
@@ -205,7 +170,6 @@ class CustomerNotificationManager
             $stmt->execute($params);
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Debug log
             error_log("getUserNotifications result count: " . count($result));
 
             return $result;
@@ -215,9 +179,6 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Đếm thông báo chưa đọc
-     */
     public function getUnreadCount($userId)
     {
         try {
@@ -233,9 +194,6 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Đánh dấu thông báo đã đọc
-     */
     public function markAsRead($notificationId, $userId)
     {
         try {
@@ -250,9 +208,6 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Đánh dấu tất cả thông báo đã đọc
-     */
     public function markAllAsRead($userId)
     {
         try {
@@ -267,9 +222,6 @@ class CustomerNotificationManager
         }
     }
     
-    /**
-     * Xóa tất cả thông báo đã đọc của user
-     */
     public function deleteReadNotifications($userId)
     {
         try {
@@ -285,9 +237,6 @@ class CustomerNotificationManager
         }
     }
     
-    /**
-     * Xóa một thông báo cụ thể của user
-     */
     public function deleteNotification($notificationId, $userId)
     {
         try {
@@ -303,15 +252,10 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Gửi email thông báo
-     * LUÔN lấy email mới nhất từ database để đảm bảo gửi đúng email hiện tại
-     */
     private function sendEmailNotification($orderId, $userId, $type, $reason = '')
     {
         try {
-            // QUAN TRỌNG: Luôn lấy email MỚI NHẤT từ database
-            // Không cache email vì user có thể thay đổi email bất cứ lúc nào
+
             $sql = "SELECT email, hoten FROM user WHERE username = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$userId]);
@@ -322,14 +266,12 @@ class CustomerNotificationManager
                 return false;
             }
             
-            // Kiểm tra email
             if (empty($user['email'])) {
                 error_log("CustomerNotificationManager: No email for user $userId ({$user['hoten']})");
                 error_log("CustomerNotificationManager: User needs to update email in profile");
                 return false;
             }
             
-            // Validate email format
             if (!filter_var($user['email'], FILTER_VALIDATE_EMAIL)) {
                 error_log("CustomerNotificationManager: Invalid email format for user $userId: {$user['email']}");
                 return false;
@@ -337,11 +279,9 @@ class CustomerNotificationManager
             
             error_log("CustomerNotificationManager: Sending email to {$user['email']} (User: $userId, Type: $type)");
             
-            // Load EmailService
             require_once __DIR__ . '/EmailService.php';
             $emailService = new EmailService();
             
-            // Gửi email theo loại
             $result = false;
             switch ($type) {
                 case 'approved':
@@ -376,9 +316,6 @@ class CustomerNotificationManager
         }
     }
     
-    /**
-     * Gửi thông báo đơn hàng thành công (khi vừa đặt hàng)
-     */
     public function notifyOrderSuccess($orderId, $userId)
     {
         $order = $this->getOrderInfo($orderId);
@@ -391,15 +328,11 @@ class CustomerNotificationManager
 
         $result = $this->createInternalNotification($userId, $orderId, 'order_success', $title, $message);
         
-        // Gửi email thông báo
         $this->sendEmailNotification($orderId, $userId, 'success');
         
         return $result;
     }
     
-    /**
-     * Lấy thông tin đơn hàng
-     */
     private function getOrderInfo($orderId)
     {
         try {
@@ -413,9 +346,6 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Kiểm tra đơn hàng có thể hủy không
-     */
     public function canCancelOrder($orderId, $userId)
     {
         try {
@@ -432,32 +362,25 @@ class CustomerNotificationManager
         }
     }
 
-    /**
-     * Hủy đơn hàng với lý do
-     */
     public function cancelOrderWithReason($orderId, $userId, $reasonCode, $reasonText, $customReason = '')
     {
         try {
             $this->db->beginTransaction();
 
-            // Kiểm tra quyền hủy
             if (!$this->canCancelOrder($orderId, $userId)) {
                 throw new Exception("Không thể hủy đơn hàng này");
             }
 
-            // Cập nhật trạng thái đơn hàng
             $updateOrderSql = "UPDATE don_hang SET trang_thai = 'cancelled' WHERE id = ?";
             $stmt = $this->db->prepare($updateOrderSql);
             $stmt->execute([$orderId]);
 
-            // Lưu lý do hủy
             $insertReasonSql = "INSERT INTO order_cancel_reasons 
                                (order_id, user_id, reason_code, reason_text, custom_reason) 
                                VALUES (?, ?, ?, ?, ?)";
             $stmt = $this->db->prepare($insertReasonSql);
             $stmt->execute([$orderId, $userId, $reasonCode, $reasonText, $customReason]);
 
-            // Gửi thông báo
             $this->notifyOrderCancelled($orderId, $userId, $reasonText);
 
             $this->db->commit();

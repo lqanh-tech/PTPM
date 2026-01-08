@@ -1,7 +1,5 @@
 <?php
-/**
- * Trang danh sách bài viết Blog
- */
+
 require_once __DIR__ . '/administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/PageManager.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
@@ -13,7 +11,6 @@ $pageManager = new PageManager();
 $giohang = new GioHang();
 $cartItemCount = $giohang->getCartItemCount();
 
-// Lấy tất cả bài blog đã xuất bản
 $blogs = $pageManager->getAllBlogs(true);
 ?>
 <!DOCTYPE html>

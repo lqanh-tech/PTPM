@@ -339,9 +339,9 @@ class ProductFilter {
         params.append("reqView", reqView);
       }
 
-      // Make AJAX request
+      // Make AJAX request - sử dụng đường dẫn tương đối từ lequocanh/index.php
       const response = await fetch(
-        `./api/filter_products.php?${params.toString()}`
+        `api/filter_products.php?${params.toString()}`
       );
       const data = await response.json();
 
@@ -655,7 +655,7 @@ class ProductFilter {
       const reqView = urlParams.get("reqView");
 
       const params = reqView ? `?reqView=${reqView}` : "";
-      const response = await fetch(`./api/get_filter_options.php${params}`);
+      const response = await fetch(`api/get_filter_options.php${params}`);
       const data = await response.json();
 
       if (data.success) {

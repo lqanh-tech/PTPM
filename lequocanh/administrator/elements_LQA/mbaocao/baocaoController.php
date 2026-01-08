@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,7 +9,6 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('baocaoview', $userna
     exit;
 }
 
-// Xác định view cần hiển thị
 $view = isset($_GET['view']) ? $_GET['view'] : 'default';
 
 switch ($view) {

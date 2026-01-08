@@ -1,15 +1,10 @@
 <?php
-/**
- * Render bộ lọc màu sắc từ database
- * File này sẽ được include vào viewListLoaihang.php
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Lấy ID thuộc tính màu sắc
     $colorAttrStmt = $db->prepare("SELECT idThuocTinh, tenThuocTinh FROM thuoctinh WHERE tenThuocTinh LIKE '%màu%' OR tenThuocTinh LIKE '%color%' LIMIT 1");
     $colorAttrStmt->execute();
     $colorAttr = $colorAttrStmt->fetch(PDO::FETCH_ASSOC);
@@ -21,7 +16,6 @@ try {
     
     $colorAttributeId = $colorAttr['idThuocTinh'];
     
-    // Lấy danh sách màu sắc có sản phẩm
     $colorsStmt = $db->prepare("
         SELECT 
             LOWER(TRIM(tenThuocTinhHH)) as color_value,
@@ -41,7 +35,6 @@ try {
         return;
     }
     
-    // Mapping màu sắc
     $colorMapping = [
         'đỏ' => ['en' => 'red', 'css' => 'color-red', 'hex' => '#dc3545'],
         'xanh dương' => ['en' => 'blue', 'css' => 'color-blue', 'hex' => '#007bff'],
@@ -57,13 +50,11 @@ try {
         'bạc' => ['en' => 'silver', 'css' => 'color-silver', 'hex' => '#c0c0c0']
     ];
     
-    // Render màu sắc
     foreach ($colors as $color) {
         $colorValue = $color['color_value'];
         $colorDisplay = $color['color_display'];
         $productCount = $color['product_count'];
         
-        // Tìm mapping
         $mapping = null;
         foreach ($colorMapping as $vi => $data) {
             if ($colorValue == $vi || $colorValue == $data['en']) {
@@ -72,7 +63,6 @@ try {
             }
         }
         
-        // Nếu không tìm thấy mapping, tạo mặc định
         if (!$mapping) {
             $mapping = [
                 'en' => $colorValue,
@@ -81,7 +71,6 @@ try {
             ];
         }
         
-        // Render HTML
         ?>
         <label class="color-option" title="<?php echo htmlspecialchars($colorDisplay); ?> (<?php echo $productCount; ?> sản phẩm)">
             <input type="checkbox" value="<?php echo htmlspecialchars($mapping['en']); ?>">

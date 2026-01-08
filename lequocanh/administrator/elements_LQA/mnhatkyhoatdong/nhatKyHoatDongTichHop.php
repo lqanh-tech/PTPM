@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,7 +9,6 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('nhatKyHoatDongTichHo
     exit;
 }
 
-// Kết nối đến các lớp cần thiết
 require_once './elements_LQA/mod/nhatKyHoatDongCls.php';
 require_once './elements_LQA/mod/userCls.php';
 require_once './elements_LQA/mod/nhanvienCls.php';
@@ -18,28 +17,23 @@ $nhatKyObj = new NhatKyHoatDong();
 $userObj = new user();
 $nhanVienObj = new NhanVien();
 
-// Lấy danh sách nhân viên
 $nhanVienList = $nhanVienObj->nhanvienGetAll();
 $nhanVienUsernames = [];
 
-// Lấy danh sách username của nhân viên
 foreach ($nhanVienList as $nhanVien) {
     if (isset($nhanVien->username_user) && !empty($nhanVien->username_user)) {
         $nhanVienUsernames[] = $nhanVien->username_user;
     }
 }
 
-// Lấy thông tin admin từ bảng user
 $adminInfo = $userObj->UserGetbyUsername('admin');
 
-// Thêm admin vào danh sách nhân viên để thống kê
 $adminNhanVien = new stdClass();
 $adminNhanVien->username_user = 'admin';
 $adminNhanVien->tenNV = isset($adminInfo->hoten) ? $adminInfo->hoten : 'Quản trị viên';
 $adminNhanVien->idNhanVien = 0;
 $nhanVienList[] = $adminNhanVien;
 
-// Lấy danh sách người dùng là nhân viên
 $users = $userObj->UserGetAll();
 $nhanVienUsers = [];
 foreach ($users as $user) {
@@ -48,13 +42,11 @@ foreach ($users as $user) {
     }
 }
 
-// Thêm admin vào danh sách users
 $adminUser = new stdClass();
 $adminUser->username = 'admin';
 $adminUser->hoten = isset($adminInfo->hoten) ? $adminInfo->hoten : 'Quản trị viên';
 $nhanVienUsers[] = $adminUser;
 
-// Xử lý lọc dữ liệu chung
 $filters = [];
 $tuNgay = isset($_GET['tu_ngay']) ? $_GET['tu_ngay'] : date('Y-m-d', strtotime('-30 days'));
 $denNgay = isset($_GET['den_ngay']) ? $_GET['den_ngay'] : date('Y-m-d');
@@ -62,7 +54,6 @@ $selectedUsername = isset($_GET['username']) ? $_GET['username'] : '';
 $selectedHanhDong = isset($_GET['hanh_dong']) ? $_GET['hanh_dong'] : '';
 $selectedDoiTuong = isset($_GET['doi_tuong']) ? $_GET['doi_tuong'] : '';
 
-// Tab hiện tại (mặc định là thống kê)
 $currentTab = isset($_GET['tab']) ? $_GET['tab'] : 'thongke';
 
 $filters['tu_ngay'] = $tuNgay;
@@ -80,25 +71,20 @@ if (!empty($selectedDoiTuong)) {
     $filters['doi_tuong'] = $selectedDoiTuong;
 }
 
-// ===== PHẦN THỐNG KÊ =====
 $thongKeNhanVien = [];
 
-// Thống kê cho từng nhân viên
 foreach ($nhanVienList as $nhanVien) {
     if (isset($nhanVien->username_user) && !empty($nhanVien->username_user)) {
         $username = $nhanVien->username_user;
 
-        // Tạo filter cho nhân viên này
         $userFilters = [
             'username' => $username,
             'tu_ngay' => $tuNgay,
             'den_ngay' => $denNgay
         ];
 
-        // Đếm tổng số hoạt động
         $tongHoatDong = $nhatKyObj->demTongSoNhatKy($userFilters);
 
-        // Đếm số hoạt động theo loại
         $loginFilters = $userFilters;
         $loginFilters['hanh_dong'] = 'đăng nhập';
         $soLanDangNhap = $nhatKyObj->demTongSoNhatKy($loginFilters);
@@ -115,7 +101,6 @@ foreach ($nhanVienList as $nhanVien) {
         $deleteFilters['hanh_dong'] = 'xóa';
         $soLanXoa = $nhatKyObj->demTongSoNhatKy($deleteFilters);
 
-        // Lấy tên nhân viên an toàn
         $tenNhanVien = "Không xác định";
         if (isset($nhanVien->tenNV)) {
             $tenNhanVien = $nhanVien->tenNV;
@@ -127,13 +112,11 @@ foreach ($nhanVienList as $nhanVien) {
             $tenNhanVien = $nhanVien->hoten;
         }
 
-        // Lấy ID nhân viên an toàn
         $idNhanVien = 0;
         if (isset($nhanVien->idNhanVien)) {
             $idNhanVien = $nhanVien->idNhanVien;
         }
 
-        // Thêm vào mảng thống kê
         $thongKeNhanVien[] = [
             'idNhanVien' => $idNhanVien,
             'tenNhanVien' => $tenNhanVien,
@@ -147,12 +130,10 @@ foreach ($nhanVienList as $nhanVien) {
     }
 }
 
-// Sắp xếp theo tổng hoạt động giảm dần
 usort($thongKeNhanVien, function ($a, $b) {
     return $b['tongHoatDong'] - $a['tongHoatDong'];
 });
 
-// Lấy thống kê hoạt động theo ngày
 $thongKeNgay = [];
 $coDataThongKe = false;
 $startDate = new DateTime($tuNgay);
@@ -181,7 +162,6 @@ foreach ($dateRange as $date) {
     $dayFilters['hanh_dong'] = 'xóa';
     $soLanXoa = $nhatKyObj->demTongSoNhatKy($dayFilters);
 
-    // Kiểm tra xem có dữ liệu thực tế hay không
     if ($tongHoatDong > 0 || $soLanDangNhap > 0 || $soLanThemMoi > 0 || $soLanCapNhat > 0 || $soLanXoa > 0) {
         $coDataThongKe = true;
     }
@@ -197,24 +177,18 @@ foreach ($dateRange as $date) {
     ];
 }
 
-// ===== PHẦN NHẬT KÝ CHI TIẾT =====
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $limit = 20;
 $offset = ($page - 1) * $limit;
 
-// Lấy nhật ký hoạt động của tất cả user nếu không có filter cụ thể
 if (empty($filters['username'])) {
-    // Không giới hạn username, hiển thị tất cả
-    // $filters['username_in'] = $nhanVienUsernames;
-    // $filters['username_in'][] = 'admin';
+
 }
 
-// Lấy danh sách nhật ký hoạt động
 $nhatKyList = $nhatKyObj->layDanhSachNhatKy($filters, $limit, $offset);
 $totalRecords = $nhatKyObj->demTongSoNhatKy($filters);
 $totalPages = ceil($totalRecords / $limit);
 
-// Danh sách các hành động và đối tượng
 $danhSachHanhDong = [
     'đăng nhập' => 'Đăng nhập',
     'đăng xuất' => 'Đăng xuất',
@@ -485,7 +459,7 @@ $danhSachDoiTuong = [
                                         <td>
                                             <?php
                                             $displayName = $nhatKy['username'];
-                                            // Kiểm tra các cột tên có thể có trong bảng
+
                                             if (isset($nhatKy['ten_nhan_vien']) && !empty($nhatKy['ten_nhan_vien'])) {
                                                 $displayName .= ' (' . $nhatKy['ten_nhan_vien'] . ')';
                                             } elseif (isset($nhatKy['tenNhanVien']) && !empty($nhatKy['tenNhanVien'])) {
@@ -499,7 +473,7 @@ $danhSachDoiTuong = [
                                         <td><span class="badge badge-action"><?php echo htmlspecialchars($nhatKy['hanh_dong']); ?></span></td>
                                         <td><span class="badge badge-object"><?php echo htmlspecialchars($nhatKy['doi_tuong']); ?></span></td>
                                         <td class="detail-cell"><?php
-                                                                // Hiển thị chi tiết từ cột chi_tiet hoặc noi_dung
+
                                                                 $chiTiet = '';
                                                                 if (!empty($nhatKy['chi_tiet'])) {
                                                                     $chiTiet = $nhatKy['chi_tiet'];
@@ -604,7 +578,7 @@ $danhSachDoiTuong = [
 </div>
 
 <style>
-    /* Tab Navigation */
+
     .tab-navigation {
         margin-bottom: 20px;
     }
@@ -651,7 +625,6 @@ $danhSachDoiTuong = [
         margin-right: 8px;
     }
 
-    /* Filter Section */
     .filter-section {
         background-color: #f8f9fa;
         padding: 15px;
@@ -660,7 +633,6 @@ $danhSachDoiTuong = [
         border: 1px solid #dee2e6;
     }
 
-    /* Dashboard Cards */
     .dashboard-cards {
         margin-bottom: 30px;
     }
@@ -721,7 +693,6 @@ $danhSachDoiTuong = [
         opacity: 0.8;
     }
 
-    /* Chart Container */
     .chart-container {
         background-color: white;
         padding: 25px;
@@ -744,7 +715,6 @@ $danhSachDoiTuong = [
         height: 350px !important;
     }
 
-    /* No Data Container */
     .no-data-container {
         background-color: white;
         padding: 50px 20px;
@@ -777,7 +747,6 @@ $danhSachDoiTuong = [
         line-height: 1.6;
     }
 
-    /* Table Responsive */
     .table-responsive {
         background-color: white;
         border-radius: 8px;
@@ -845,7 +814,6 @@ $danhSachDoiTuong = [
         line-height: 1.5;
     }
 
-    /* Pagination */
     .pagination-container {
         display: flex;
         justify-content: center;
@@ -885,7 +853,6 @@ $danhSachDoiTuong = [
         border-color: #adb5bd;
     }
 
-    /* Buttons */
     .btn {
         padding: 6px 12px;
         border-radius: 4px;
@@ -922,7 +889,6 @@ $danhSachDoiTuong = [
         border-color: #004085;
     }
 
-    /* Form Controls */
     .form-control {
         width: 100%;
         padding: 8px 12px;
@@ -948,7 +914,6 @@ $danhSachDoiTuong = [
         color: #495057;
     }
 
-    /* Modal Styles */
     .modal {
         position: fixed;
         z-index: 1000;
@@ -1056,7 +1021,6 @@ $danhSachDoiTuong = [
         }
     }
 
-    /* Responsive */
     @media (max-width: 768px) {
         .nav-tabs {
             flex-direction: column;
@@ -1093,7 +1057,6 @@ $danhSachDoiTuong = [
         }
     }
 
-    /* Badge styles */
     .badge {
         padding: 4px 8px;
         border-radius: 4px;
@@ -1112,7 +1075,6 @@ $danhSachDoiTuong = [
         color: white;
     }
 
-    /* Detail cell styles */
     .detail-cell {
         max-width: 300px;
         word-wrap: break-word;
@@ -1123,7 +1085,6 @@ $danhSachDoiTuong = [
         cursor: help;
     }
 
-    /* IP code styles */
     .ip-code {
         background-color: #f8f9fa;
         padding: 2px 6px;
@@ -1134,7 +1095,6 @@ $danhSachDoiTuong = [
         border: 1px solid #dee2e6;
     }
 
-    /* Text muted */
     .text-muted {
         color: #6c757d !important;
         font-style: italic;
@@ -1144,12 +1104,11 @@ $danhSachDoiTuong = [
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Chỉ tạo biểu đồ khi có dữ liệu và đang ở tab thống kê
+
         <?php if ($coDataThongKe && $currentTab == 'thongke'): ?>
-            // Dữ liệu cho biểu đồ
+
             var thongKeNgay = <?php echo json_encode($thongKeNgay); ?>;
 
-            // Chuẩn bị dữ liệu cho biểu đồ
             var labels = thongKeNgay.map(function(item) {
                 return item.ngayHienThi;
             });
@@ -1174,7 +1133,6 @@ $danhSachDoiTuong = [
                 return item.soLanXoa;
             });
 
-            // Tạo biểu đồ
             var ctx = document.getElementById('activityChart').getContext('2d');
             var activityChart = new Chart(ctx, {
                 type: 'line',
@@ -1276,22 +1234,18 @@ $danhSachDoiTuong = [
         <?php endif; ?>
     });
 
-    // Functions for activity detail modal
     function viewActivityDetail(activityId) {
         const modal = document.getElementById('activityDetailModal');
         const content = document.getElementById('activityDetailContent');
 
-        // Show modal
         modal.style.display = 'block';
 
-        // Show loading
         content.innerHTML = `
             <div class="loading">
                 <i class="fas fa-spinner fa-spin"></i> Đang tải thông tin chi tiết...
             </div>
         `;
 
-        // Fetch activity detail
         fetch('elements_LQA/mnhatkyhoatdong/getActivityDetail.php?id=' + activityId)
             .then(response => response.text())
             .then(data => {
@@ -1312,7 +1266,6 @@ $danhSachDoiTuong = [
         modal.style.display = 'none';
     }
 
-    // Close modal when clicking outside
     window.onclick = function(event) {
         const modal = document.getElementById('activityDetailModal');
         if (event.target == modal) {

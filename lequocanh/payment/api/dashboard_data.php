@@ -1,9 +1,5 @@
 <?php
 
-/**
- * API endpoint để lấy dữ liệu dashboard
- */
-
 header('Content-Type: application/json');
 
 try {
@@ -12,20 +8,17 @@ try {
     
     $today = date('Y-m-d');
     
-    // Doanh thu hôm nay
     $revenueQuery = "SELECT COALESCE(SUM(amount), 0) as revenue 
                      FROM momo_transactions 
                      WHERE DATE(created_at) = ? AND status = 'SUCCESS'";
     $revenueResult = $pdo->executeS($revenueQuery, [$today]);
     
-    // Số lượng giao dịch theo trạng thái
     $statusQuery = "SELECT status, COUNT(*) as count 
                     FROM momo_transactions 
                     WHERE DATE(created_at) = ? 
                     GROUP BY status";
     $statusResults = $pdo->executeS($statusQuery, [$today], true) ?: [];
     
-    // Tổng hợp dữ liệu
     $data = [
         'revenue' => $revenueResult['revenue'] ?? 0,
         'success_count' => 0,
@@ -51,7 +44,6 @@ try {
         }
     }
     
-    // Thêm thống kê tuần và tháng
     $weekQuery = "SELECT COALESCE(SUM(amount), 0) as revenue, COUNT(*) as count 
                   FROM momo_transactions 
                   WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) AND status = 'SUCCESS'";

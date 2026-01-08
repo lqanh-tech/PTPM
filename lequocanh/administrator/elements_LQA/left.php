@@ -57,13 +57,12 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
             foreach ($menu_items as $req => $item) {
                 $shouldShow = false;
 
-                // Nếu là admin (bất kỳ tài khoản admin nào), hiển thị tất cả menu
                 if ($isAdmin) {
                     $shouldShow = true;
                 }
-                // GIẢI PHÁP TẠM THỜI: Hardcode quyền cho các manager/staff
+
                 else if ($username === 'manager1') {
-                    // Manager1: Chỉ được truy cập báo cáo
+
                     $manager1AllowedModules = [
                         'baocaoview',
                         'doanhThuView',
@@ -75,7 +74,7 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
                     ];
                     $shouldShow = in_array($req, $manager1AllowedModules);
                 } else if ($username === 'staff2') {
-                    // Staff2: Được truy cập hàng hóa và đơn giá
+
                     $staff2AllowedModules = [
                         'hanghoaview',
                         'dongiaview',
@@ -85,7 +84,7 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
                     ];
                     $shouldShow = in_array($req, $staff2AllowedModules);
                 } else if ($username === 'lequocanh05') {
-                    // lequocanh05: Được truy cập quản lý bán hàng
+
                     $lequocanhAllowedModules = [
                         'khachhangview',
                         'adminGiohangView',
@@ -96,13 +95,13 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
                     ];
                     $shouldShow = in_array($req, $lequocanhAllowedModules);
                 }
-                // Nếu là nhân viên khác, kiểm tra quyền bình thường
+
                 else if ($isNhanVien || strpos($username, 'manager') !== false) {
-                    // Bỏ qua các mục ẩn khỏi nhân viên
+
                     if ($item['hide_from_employee']) {
                         $shouldShow = false;
                     } else {
-                        // Kiểm tra quyền truy cập
+
                         try {
                             $shouldShow = $phanQuyen->checkAccess($req, $username);
                         } catch (Exception $e) {
@@ -111,14 +110,13 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
                         }
                     }
                 }
-                // Nếu là người dùng thông thường, chỉ hiển thị các menu cơ bản
+
                 else {
-                    // Danh sách các module cơ bản cho người dùng thông thường
+
                     $basicUserModules = ['userprofile', 'userUpdateProfile', 'lichsumuahang'];
                     $shouldShow = in_array($req, $basicUserModules);
                 }
 
-                // Chỉ hiển thị menu nếu có quyền
                 if ($shouldShow) {
                     $active_class = ($current_page === $req) ? 'active' : '';
                     $devBadge = isset($item['dev']) && $item['dev'] ? ' <span style="font-size:9px;background:#ff9800;color:#fff;padding:1px 4px;border-radius:3px;margin-left:3px;">DEV</span>' : '';
@@ -127,18 +125,16 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
             }
             ?>
             <?php
-            // Chỉ hiển thị "Trang mua hàng" cho user KHÔNG phải nhân viên
-            // Nếu là admin thật hoặc user thông thường (không có trong bảng nhân viên)
+
             $shouldShowShoppingPage = false;
 
             if ($isAdmin && $username === 'admin') {
-                // Admin thật có thể thấy trang mua hàng
+
                 $shouldShowShoppingPage = true;
             } else if (!$isNhanVien) {
-                // User thông thường (không phải nhân viên) có thể thấy trang mua hàng
+
                 $shouldShowShoppingPage = true;
             }
-            // Nhân viên (manager1, staff2, lequocanh05, v.v.) KHÔNG thấy trang mua hàng
 
             if ($shouldShowShoppingPage) {
                 echo '<li><a href="../index.php"><i class="fas fa-store"></i> Trang mua hàng</a></li>';

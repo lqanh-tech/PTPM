@@ -1,8 +1,4 @@
 <?php
-/**
- * Fix Duplicate Shipping Fees for "Giao hàng nhanh" (express)
- * Automatically detects and disables duplicate fee configs
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -34,7 +30,6 @@ try {
     echo "<div class='container'>\n";
     echo "<h2>🔧 Sửa Lỗi Trùng Lặp Shipping Fees</h2>\n";
     
-    // Step 1: Find all shipping methods with multiple active fee configs
     echo "<h3>Bước 1: Tìm Phương Thức Có Nhiều Fee Configs</h3>\n";
     
     $stmt = $db->query("
@@ -63,7 +58,6 @@ try {
     }
     echo "</div>\n";
     
-    // Step 2: Process each duplicate method
     echo "<h3>Bước 2: Xử Lý Từng Phương Thức</h3>\n";
     
     $db->beginTransaction();
@@ -72,7 +66,6 @@ try {
     foreach ($duplicateMethods as $method) {
         echo "<h4>Xử lý: " . htmlspecialchars($method['name']) . " (<code>" . htmlspecialchars($method['code']) . "</code>)</h4>\n";
         
-        // Get all active fee configs for this method
         $stmt = $db->prepare("
             SELECT * FROM shipping_fees 
             WHERE shipping_method_id = ? AND is_active = 1
@@ -90,16 +83,15 @@ try {
             $rowClass = '';
             
             if ($isFirst) {
-                // Keep the first one (highest priority)
+
                 $action = '✅ <strong>GIỮ LẠI</strong> (Priority cao nhất)';
                 $rowClass = 'keep';
                 $isFirst = false;
             } else {
-                // Disable others
+
                 $action = '❌ <strong>TẮT</strong> (Priority thấp hơn)';
                 $rowClass = 'disable';
                 
-                // Disable this fee
                 $updateStmt = $db->prepare("UPDATE shipping_fees SET is_active = 0 WHERE id = ?");
                 $updateStmt->execute([$fee['id']]);
                 $totalDisabled++;
@@ -119,7 +111,6 @@ try {
         echo "</table>\n";
     }
     
-    // Commit transaction
     $db->commit();
     
     echo "<div class='alert alert-success'>\n";
@@ -128,7 +119,6 @@ try {
     echo "<p>Mỗi phương thức giờ chỉ còn <strong>1 fee config active</strong> (có priority cao nhất).</p>\n";
     echo "</div>\n";
     
-    // Step 3: Verify results
     echo "<h3>Bước 3: Kiểm Tra Kết Quả</h3>\n";
     
     $stmt = $db->query("
@@ -177,7 +167,6 @@ try {
     
     echo "</table>\n";
     
-    // Step 4: Next steps
     echo "<h3>Bước 4: Các Bước Tiếp Theo</h3>\n";
     echo "<div class='alert alert-info'>\n";
     echo "<ol>\n";

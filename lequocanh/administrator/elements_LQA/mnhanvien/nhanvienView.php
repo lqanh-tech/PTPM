@@ -7,7 +7,6 @@ require_once './elements_LQA/mod/userCls.php';
 require_once './elements_LQA/mod/roleCls.php';
 require_once './elements_LQA/mod/phanHeQuanLyCls.php';
 
-// Tự động đồng bộ các module phân quyền mới khi admin truy cập
 if (isset($_SESSION['ADMIN'])) {
     $phanHeSync = new PhanHeQuanLy();
     $syncResult = $phanHeSync->syncModules();
@@ -16,7 +15,6 @@ if (isset($_SESSION['ADMIN'])) {
     }
 }
 
-// Hiển thị thông báo nếu có
 if (isset($_GET['notice']) && $_GET['notice'] == 'duplicate_user') {
     echo '<div class="alert alert-warning">Lưu ý: Người dùng này đã được gán cho một nhân viên khác.</div>';
 }
@@ -25,14 +23,11 @@ $lhobj = new NhanVien();
 $list_lh = $lhobj->nhanvienGetAll();
 $l = count($list_lh);
 
-// Lấy danh sách người dùng cho dropdown (trừ admin)
 $userObj = new user();
 $listUsers = $userObj->UserGetAllExceptAdmin();
 
-// Khởi tạo đối tượng Role để kiểm tra vai trò
 $roleObj = new Role();
 
-// Lấy danh sách id của những người dùng đã là nhân viên
 $existingUserIds = [];
 foreach ($list_lh as $employee) {
     if (isset($employee->iduser) && $employee->iduser) {
@@ -40,19 +35,14 @@ foreach ($list_lh as $employee) {
     }
 }
 
-// Lọc danh sách người dùng, chỉ giữ lại những người:
-// 1. Không phải khách hàng
-// 2. Không phải admin
-// 3. Chưa được gán cho nhân viên nào
 $filteredUsers = [];
 foreach ($listUsers as $user) {
-    // Kiểm tra xem người dùng có phải là admin hoặc khách hàng không
+
     $isAdmin = $roleObj->isAdmin($user->iduser);
     $isCustomer = $roleObj->isCustomer($user->iduser);
-    // Kiểm tra xem người dùng đã được gán cho nhân viên nào chưa
+
     $isAssignedToEmployee = in_array($user->iduser, $existingUserIds);
 
-    // Chỉ thêm vào danh sách nếu thỏa mãn tất cả điều kiện
     if (!$isAdmin && !$isCustomer && !$isAssignedToEmployee) {
         $filteredUsers[] = $user;
     }
@@ -115,7 +105,7 @@ foreach ($listUsers as $user) {
                         </div>
                         <div class="phan-he-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-top: 10px;">
                             <?php
-                            // Lấy danh sách phần hệ quản lý
+
                             require_once './elements_LQA/mod/phanHeQuanLyCls.php';
                             $phanHeObj = new PhanHeQuanLy();
                             $listPhanHe = $phanHeObj->getAllPhanHe();
@@ -187,7 +177,7 @@ foreach ($listUsers as $user) {
                         <td><?php echo isset($u->username_user) ? htmlspecialchars($u->username_user) : ''; ?></td>
                         <td>
                             <?php
-                            // Hiển thị danh sách phần hệ quản lý của nhân viên
+
                             require_once './elements_LQA/mod/phanHeQuanLyCls.php';
                             $phanHeObj = new PhanHeQuanLy();
                             $listPhanHe = $phanHeObj->getPhanHeByNhanVienId($u->idNhanVien);
@@ -236,18 +226,17 @@ foreach ($listUsers as $user) {
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        // Lưu danh sách user đã lọc
+
         var filteredUsers = <?php echo json_encode(array_map(function ($user) {
                                 return $user->iduser;
                             }, $filteredUsers)); ?>;
 
-        // Xử lý khi thay đổi user trong dropdown
         $('#iduser').change(function() {
             var userId = $(this).val();
             $('#noteForm').text('');
 
             if (userId) {
-                // Lấy thông tin user qua AJAX
+
                 $.ajax({
                     url: './elements_LQA/mUser/getUserInfo.php',
                     type: 'GET',
@@ -257,7 +246,7 @@ foreach ($listUsers as $user) {
                     dataType: 'json',
                     success: function(response) {
                         if (response.success) {
-                            // Điền thông tin vào form
+
                             var userData = response.data;
                             $('#tenNV').val(userData.hoten);
                             $('#SDT').val(userData.dienthoai);
@@ -273,20 +262,18 @@ foreach ($listUsers as $user) {
                     }
                 });
             } else {
-                // Xóa dữ liệu nếu không chọn user
+
                 $('#tenNV').val('');
                 $('#SDT').val('');
                 $('#email').val('');
             }
         });
 
-        // Xử lý chọn tất cả phần hệ
         $('#selectAllPhanHe').change(function() {
             var isChecked = $(this).prop('checked');
             $('.phan-he-checkbox').prop('checked', isChecked);
         });
 
-        // Cập nhật trạng thái "Chọn tất cả" khi thay đổi các checkbox riêng lẻ
         $('.phan-he-checkbox').change(function() {
             var totalCheckboxes = $('.phan-he-checkbox').length;
             var checkedCheckboxes = $('.phan-he-checkbox:checked').length;

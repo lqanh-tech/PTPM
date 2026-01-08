@@ -1,12 +1,10 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER'])) {
     header('Location: ../../userLogin.php');
     exit();
@@ -260,7 +258,6 @@ $notifications = $thongbao->getUserNotifications($userId);
     gap: 10px;
 }
 
-/* Modal chi tiết đơn hàng */
 .order-detail-modal {
     display: none;
     position: fixed;
@@ -450,7 +447,7 @@ $notifications = $thongbao->getUserNotifications($userId);
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Đánh dấu một thông báo đã đọc
+
     const markReadButtons = document.querySelectorAll('.mark-read-btn');
     markReadButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -458,7 +455,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const orderId = notificationItem.dataset.id;
             const status = notificationItem.dataset.status;
 
-            // Gửi yêu cầu đánh dấu đã đọc
             fetch('./elements_LQA/mthongbao/getNotifications.php', {
                 method: 'POST',
                 headers: {
@@ -469,11 +465,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Cập nhật giao diện
+
                     notificationItem.classList.remove('unread');
                     this.remove();
 
-                    // Cập nhật số lượng thông báo chưa đọc
                     updateNotificationCount();
                 }
             })
@@ -483,11 +478,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Đánh dấu tất cả thông báo đã đọc
     const markAllReadButton = document.getElementById('mark-all-read');
     if (markAllReadButton) {
         markAllReadButton.addEventListener('click', function() {
-            // Gửi yêu cầu đánh dấu tất cả đã đọc
+
             fetch('./elements_LQA/mthongbao/getNotifications.php', {
                 method: 'POST',
                 headers: {
@@ -498,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Cập nhật giao diện
+
                     document.querySelectorAll('.notification-item.unread').forEach(item => {
                         item.classList.remove('unread');
                     });
@@ -507,7 +501,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         btn.remove();
                     });
 
-                    // Cập nhật số lượng thông báo chưa đọc
                     updateNotificationCount();
                 }
             })
@@ -517,12 +510,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Xóa tất cả thông báo đã đọc
     const deleteReadNotificationsButton = document.getElementById('delete-read-notifications');
     if (deleteReadNotificationsButton) {
         deleteReadNotificationsButton.addEventListener('click', function() {
             if (confirm('Bạn có chắc chắn muốn xóa tất cả thông báo đã đọc?')) {
-                // Gửi yêu cầu xóa tất cả thông báo đã đọc
+
                 fetch('./elements_LQA/mthongbao/getNotifications.php', {
                     method: 'POST',
                     headers: {
@@ -533,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Tải lại trang để cập nhật danh sách thông báo
+
                         window.location.reload();
                     }
                 })
@@ -544,7 +536,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Xóa một thông báo cụ thể
     const deleteNotificationButtons = document.querySelectorAll('.delete-notification-btn');
     deleteNotificationButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -552,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const orderId = this.dataset.id;
 
             if (confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
-                // Gửi yêu cầu xóa thông báo
+
                 fetch('./elements_LQA/mthongbao/getNotifications.php', {
                     method: 'POST',
                     headers: {
@@ -563,10 +554,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Xóa thông báo khỏi giao diện
+
                         notificationItem.remove();
 
-                        // Kiểm tra xem còn thông báo nào không
                         const notificationList = document.querySelector('.notification-list');
                         if (notificationList && notificationList.children.length === 0) {
                             const notificationContainer = document.querySelector('.notification-container');
@@ -588,7 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             `;
                         }
 
-                        // Cập nhật số lượng thông báo chưa đọc
                         updateNotificationCount();
                     }
                 })
@@ -599,7 +588,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Xử lý nút xem chi tiết đơn hàng
     const viewOrderDetailButtons = document.querySelectorAll('.view-order-detail-btn');
     viewOrderDetailButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -608,24 +596,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Xử lý đóng modal chi tiết đơn hàng
     const orderDetailModal = document.querySelector('.order-detail-modal');
     const orderDetailClose = document.querySelector('.order-detail-close');
 
     if (orderDetailModal && orderDetailClose) {
-        // Đóng modal khi nhấn nút đóng
+
         orderDetailClose.addEventListener('click', function() {
             orderDetailModal.classList.remove('show');
         });
 
-        // Đóng modal khi nhấn ra ngoài
         orderDetailModal.addEventListener('click', function(e) {
             if (e.target === orderDetailModal) {
                 orderDetailModal.classList.remove('show');
             }
         });
 
-        // Đóng modal khi nhấn phím Escape
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && orderDetailModal.classList.contains('show')) {
                 orderDetailModal.classList.remove('show');
@@ -633,9 +618,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Hàm hiển thị chi tiết đơn hàng
     function showOrderDetail(orderId) {
-        // Hiển thị loading
+
         const orderDetailModal = document.querySelector('.order-detail-modal');
         const orderItems = document.getElementById('order-items');
 
@@ -647,15 +631,13 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr>
         `;
 
-        // Hiển thị modal
         orderDetailModal.classList.add('show');
 
-        // Lấy thông tin chi tiết đơn hàng
         fetch(`./elements_LQA/mthongbao/getOrderDetail.php?id=${orderId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Cập nhật thông tin đơn hàng
+
                     const order = data.order;
 
                     document.getElementById('order-id').textContent = order.id;
@@ -666,18 +648,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('order-status').textContent = order.status_text;
                     document.getElementById('order-status').className = `order-status ${order.status_class}`;
                     
-                    // Hiển thị chi tiết thanh toán
                     document.getElementById('order-subtotal').textContent = new Intl.NumberFormat('vi-VN').format(order.subtotal || 0) + ' đ';
                     document.getElementById('order-tax').textContent = new Intl.NumberFormat('vi-VN').format(order.tax_amount || 0) + ' đ';
                     document.getElementById('order-shipping').textContent = new Intl.NumberFormat('vi-VN').format(order.shipping_fee || 0) + ' đ';
                     document.getElementById('order-total').textContent = new Intl.NumberFormat('vi-VN').format(order.total_amount) + ' đ';
                     
-                    // Hiển thị trạng thái thanh toán
                     const paymentStatusEl = document.getElementById('order-payment-status');
                     paymentStatusEl.textContent = order.payment_status_text || 'Chờ thanh toán';
                     paymentStatusEl.className = `payment-status-badge ${order.payment_status || 'pending'}`;
 
-                    // Cập nhật danh sách sản phẩm
                     let itemsHtml = '';
 
                     if (order.items.length === 0) {
@@ -706,10 +685,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     orderItems.innerHTML = itemsHtml;
 
-                    // Cập nhật số lượng thông báo chưa đọc
                     updateNotificationCount();
                 } else {
-                    // Hiển thị thông báo lỗi
+
                     orderItems.innerHTML = `
                         <tr>
                             <td colspan="5" class="text-center text-danger">
@@ -731,13 +709,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Hàm cập nhật số lượng thông báo chưa đọc
     function updateNotificationCount() {
         fetch('./elements_LQA/mthongbao/getNotifications.php')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Cập nhật badge thông báo
+
                     const notificationBadge = document.querySelector('.notification-badge');
                     if (notificationBadge) {
                         if (data.unread_count > 0) {

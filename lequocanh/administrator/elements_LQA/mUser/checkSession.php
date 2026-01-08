@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Hàm để hiển thị thông tin session
 function displaySessionInfo() {
     echo "<h3>Thông tin Session</h3>";
     echo "<pre>";
@@ -17,7 +16,6 @@ function displaySessionInfo() {
     echo "</pre>";
 }
 
-// Hàm để hiển thị thông tin cookie
 function displayCookieInfo() {
     echo "<h3>Thông tin Cookie</h3>";
     echo "<pre>";
@@ -33,7 +31,6 @@ function displayCookieInfo() {
     echo "</pre>";
 }
 
-// Hàm để hiển thị thông tin server
 function displayServerInfo() {
     echo "<h3>Thông tin Server</h3>";
     echo "<pre>";
@@ -60,7 +57,6 @@ function displayServerInfo() {
     echo "</pre>";
 }
 
-// Xử lý đăng nhập test
 if (isset($_POST['action']) && $_POST['action'] === 'login') {
     $username = isset($_POST['username']) ? trim($_POST['username']) : '';
     $userType = isset($_POST['user_type']) ? $_POST['user_type'] : 'user';
@@ -76,14 +72,12 @@ if (isset($_POST['action']) && $_POST['action'] === 'login') {
     }
 }
 
-// Xử lý đăng xuất test
 if (isset($_GET['action']) && $_GET['action'] === 'logout') {
     session_unset();
     session_destroy();
     echo "<div class='alert alert-warning'>Đã xóa tất cả session</div>";
 }
 
-// Xử lý thiết lập cookie
 if (isset($_POST['action']) && $_POST['action'] === 'set_cookie') {
     $cookieName = isset($_POST['cookie_name']) ? trim($_POST['cookie_name']) : '';
     $cookieValue = isset($_POST['cookie_value']) ? trim($_POST['cookie_value']) : '';
@@ -94,7 +88,6 @@ if (isset($_POST['action']) && $_POST['action'] === 'set_cookie') {
     }
 }
 
-// Xử lý xóa cookie
 if (isset($_GET['action']) && $_GET['action'] === 'delete_cookie' && isset($_GET['name'])) {
     $cookieName = $_GET['name'];
     setcookie($cookieName, '', time() - 3600, '/');

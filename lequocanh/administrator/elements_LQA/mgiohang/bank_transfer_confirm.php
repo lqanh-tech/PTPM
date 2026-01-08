@@ -1,8 +1,4 @@
 <?php
-/**
- * Bank Transfer Confirmation Handler
- * Xử lý xác nhận chuyển khoản ngân hàng
- */
 
 session_start();
 require_once '../mod/database.php';
@@ -11,12 +7,11 @@ require_once '../mod/CustomerNotificationManager.php';
 header('Content-Type: application/json');
 
 try {
-    // Kiểm tra quyền admin
+
     if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['STAFF'])) {
         throw new Exception('Không có quyền truy cập');
     }
 
-    // Lấy dữ liệu POST
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
 
@@ -34,7 +29,6 @@ try {
     $db = Database::getInstance();
     $conn = $db->getConnection();
 
-    // Lấy thông tin đơn hàng
     $orderSql = "SELECT * FROM don_hang WHERE id = ? OR ma_don_hang_text = ?";
     $orderStmt = $conn->prepare($orderSql);
     $orderStmt->execute([$orderId, $orderId]);
@@ -47,7 +41,7 @@ try {
     $conn->beginTransaction();
 
     if ($action === 'confirm_payment') {
-        // Xác nhận thanh toán chuyển khoản
+
         $updateSql = "UPDATE don_hang SET 
                      trang_thai_thanh_toan = 'completed',
                      ngay_cap_nhat = NOW()
@@ -57,7 +51,7 @@ try {
         $result = $stmt->execute([$order['id']]);
 
         if ($result) {
-            // Gửi thông báo cho khách hàng
+
             $notificationManager = new CustomerNotificationManager();
             if ($order['ma_nguoi_dung']) {
                 $notificationManager->notifyPaymentConfirmed($order['id'], $order['ma_nguoi_dung']);
@@ -75,7 +69,7 @@ try {
         }
 
     } elseif ($action === 'reject_payment') {
-        // Từ chối thanh toán
+
         $updateSql = "UPDATE don_hang SET 
                      trang_thai_thanh_toan = 'failed',
                      ngay_cap_nhat = NOW()
@@ -85,7 +79,7 @@ try {
         $result = $stmt->execute([$order['id']]);
 
         if ($result) {
-            // Gửi thông báo từ chối cho khách hàng
+
             $notificationManager = new CustomerNotificationManager();
             if ($order['ma_nguoi_dung']) {
                 $title = "❌ Thanh toán bị từ chối";

@@ -1,30 +1,18 @@
 <?php
-/**
- * Shipping Report
- * 
- * Báo cáo chi tiết về vận chuyển
- * - Báo cáo theo thời gian
- * - Báo cáo theo phương thức
- * - Báo cáo theo khu vực
- * - Xuất Excel/PDF
- */
 
 require_once __DIR__ . '/../mod/database.php';
 
-// Check permission - must be called from index.php with proper session
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     die('Access denied. Please login.');
 }
 
 $db = Database::getInstance()->getConnection();
 
-// Get filter parameters
 $startDate = $_GET['start_date'] ?? date('Y-m-01');
 $endDate = $_GET['end_date'] ?? date('Y-m-d');
 $shippingMethod = $_GET['shipping_method'] ?? '';
 $shippingStatus = $_GET['shipping_status'] ?? '';
 
-// Build query
 $query = "
     SELECT 
         dh.id,
@@ -65,12 +53,10 @@ try {
     $stmt->execute($params);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Calculate summary
     $totalOrders = count($orders);
     $totalShippingFee = array_sum(array_column($orders, 'phi_van_chuyen'));
     $avgShippingFee = $totalOrders > 0 ? $totalShippingFee / $totalOrders : 0;
     
-    // Get shipping methods for filter
     $stmt = $db->query("SELECT DISTINCT shipping_method_name FROM don_hang WHERE shipping_method_name IS NOT NULL");
     $shippingMethods = $stmt->fetchAll(PDO::FETCH_COLUMN);
     

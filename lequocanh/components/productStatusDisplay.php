@@ -1,17 +1,5 @@
 <?php
-/**
- * Component hiển thị trạng thái sản phẩm
- * Sử dụng trong trang chi tiết sản phẩm và danh sách sản phẩm
- */
 
-/**
- * Hiển thị badge trạng thái sản phẩm
- * 
- * @param string $trangthai Trạng thái sản phẩm (dang_ban, ngung_ban, het_hang)
- * @param int $tonkho Số lượng tồn kho
- * @param string $size Kích thước badge (small, medium, large)
- * @return string HTML của badge
- */
 function displayProductStatusBadge($trangthai, $tonkho = 0, $size = 'medium') {
     $sizeClasses = [
         'small' => 'badge-sm',
@@ -21,7 +9,6 @@ function displayProductStatusBadge($trangthai, $tonkho = 0, $size = 'medium') {
     
     $sizeClass = isset($sizeClasses[$size]) ? $sizeClasses[$size] : $sizeClasses['medium'];
     
-    // Xác định trạng thái hiển thị
     $statusConfig = [
         'dang_ban' => [
             'label' => 'Còn hàng',
@@ -43,14 +30,12 @@ function displayProductStatusBadge($trangthai, $tonkho = 0, $size = 'medium') {
         ]
     ];
     
-    // Tự động chuyển sang hết hàng nếu tồn kho = 0
     if ($trangthai === 'dang_ban' && $tonkho == 0) {
         $trangthai = 'het_hang';
     }
     
     $config = isset($statusConfig[$trangthai]) ? $statusConfig[$trangthai] : $statusConfig['dang_ban'];
     
-    // Không hiển thị badge nếu đang bán và còn hàng
     if ($trangthai === 'dang_ban' && $tonkho > 0) {
         return '';
     }
@@ -71,15 +56,8 @@ function displayProductStatusBadge($trangthai, $tonkho = 0, $size = 'medium') {
     );
 }
 
-/**
- * Hiển thị thông tin chi tiết trạng thái sản phẩm
- * 
- * @param string $trangthai Trạng thái sản phẩm
- * @param int $tonkho Số lượng tồn kho
- * @return string HTML của thông tin trạng thái
- */
 function displayProductStatusInfo($trangthai, $tonkho = 0) {
-    // Tự động chuyển sang hết hàng nếu tồn kho = 0
+
     if ($trangthai === 'dang_ban' && $tonkho == 0) {
         $trangthai = 'het_hang';
     }
@@ -123,24 +101,14 @@ function displayProductStatusInfo($trangthai, $tonkho = 0) {
     return $html;
 }
 
-/**
- * Kiểm tra xem sản phẩm có thể mua được không
- * 
- * @param string $trangthai Trạng thái sản phẩm
- * @param int $tonkho Số lượng tồn kho
- * @return bool
- */
 function canPurchaseProduct($trangthai, $tonkho = 0) {
     return $trangthai === 'dang_ban' && $tonkho > 0;
 }
 
-/**
- * Lấy CSS cho component
- */
 function getProductStatusCSS() {
     return '
     <style>
-        /* Product Status Badge */
+
         .product-status-badge {
             display: inline-flex;
             align-items: center;
@@ -181,7 +149,6 @@ function getProductStatusCSS() {
             border: 1px solid #f5c6cb;
         }
         
-        /* Product Status Info */
         .product-status-info {
             margin: 15px 0;
             padding: 15px;
@@ -240,14 +207,12 @@ function getProductStatusCSS() {
             font-weight: 600;
         }
         
-        /* Disable add to cart button for unavailable products */
         .product-unavailable .add-to-cart-btn {
             opacity: 0.5;
             cursor: not-allowed;
             pointer-events: none;
         }
         
-        /* Product card overlay for discontinued products */
         .product-card.status-discontinued {
             position: relative;
             opacity: 0.7;
@@ -267,7 +232,6 @@ function getProductStatusCSS() {
     ';
 }
 
-// Auto-include CSS if this file is included
 if (!defined('PRODUCT_STATUS_CSS_LOADED')) {
     define('PRODUCT_STATUS_CSS_LOADED', true);
     echo getProductStatusCSS();

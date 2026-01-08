@@ -1,14 +1,15 @@
 <?php
-/**
- * API Báo Cáo Bình Luận
- * Cho phép user báo cáo bình luận vi phạm
- */
 
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 SessionManager::start();
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('report_review');
 
 class ReportReviewAPI {
     private $db;
@@ -19,9 +20,6 @@ class ReportReviewAPI {
         $this->conn = $this->db->getConnection();
     }
     
-    /**
-     * Báo cáo bình luận
-     */
     public function reportReview() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -37,7 +35,6 @@ class ReportReviewAPI {
                 return $this->error('Vui lòng chọn lý do báo cáo');
             }
             
-            // Check if review exists
             $checkSql = "SELECT id FROM product_reviews WHERE id = ?";
             $stmt = $this->conn->prepare($checkSql);
             $stmt->execute([$reviewId]);
@@ -46,7 +43,6 @@ class ReportReviewAPI {
                 return $this->error('Bình luận không tồn tại');
             }
             
-            // Check if already reported by this user
             $checkReportSql = "SELECT id FROM review_reports 
                               WHERE review_id = ? AND reporter_id = ?";
             $stmt = $this->conn->prepare($checkReportSql);
@@ -56,7 +52,6 @@ class ReportReviewAPI {
                 return $this->error('Bạn đã báo cáo bình luận này rồi');
             }
             
-            // Insert report
             $sql = "INSERT INTO review_reports 
                     (review_id, reporter_id, reason, description, status)
                     VALUES (?, ?, ?, ?, 'pending')";
@@ -77,9 +72,6 @@ class ReportReviewAPI {
         }
     }
     
-    /**
-     * Lấy danh sách báo cáo của user
-     */
     public function getUserReports() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -129,7 +121,6 @@ class ReportReviewAPI {
     }
 }
 
-// Router
 $api = new ReportReviewAPI();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 

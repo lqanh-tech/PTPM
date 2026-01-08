@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Database Configuration
- */
-
 return [
     'default' => 'mysql',
 
@@ -24,7 +20,6 @@ return [
             ]
         ],
 
-        // Docker MySQL connection
         'mysql_docker' => [
             'driver' => 'mysql',
             'host' => 'mysql',
@@ -37,18 +32,16 @@ return [
         ]
     ],
 
-    // Connection fallback order
     'fallback_connections' => [
         ['host' => 'mysql', 'port' => 3306],
         ['host' => 'localhost', 'port' => 3306],
         ['host' => '127.0.0.1', 'port' => 3306]
     ],
 
-    // Query optimization
     'query' => [
         'cache_enabled' => true,
-        'cache_duration' => 300, // 5 minutes
+        'cache_duration' => 300,
         'slow_query_log' => true,
-        'slow_query_threshold' => 1.0 // 1 second
+        'slow_query_threshold' => 1.0
     ]
 ];

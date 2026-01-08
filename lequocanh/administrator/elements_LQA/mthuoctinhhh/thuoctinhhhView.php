@@ -6,15 +6,12 @@ require_once './elements_LQA/mod/thuoctinhCls.php';
 require_once './elements_LQA/mod/thuoctinhhhCls.php';
 require_once './elements_LQA/mod/csrfProtection.php';
 
-// Lấy danh sách hàng hóa
 $hangHoaObj = new HangHoa();
 $list_hh = $hangHoaObj->HanghoaGetAll();
 
-// Lấy danh sách thuộc tính
 $thuocTinhObj = new ThuocTinh();
 $list_lh_thuoctinh = $thuocTinhObj->thuoctinhGetAll();
 
-// Lấy danh sách thuộc tính hàng hóa
 $thuocTinhHHObj = new ThuocTinhHH();
 $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
 ?>
@@ -24,7 +21,7 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
     <form name="newthuoctinhhh" id="formaddthuoctinhhh" method="post"
         action='./elements_LQA/mthuoctinhhh/thuoctinhhhAct.php?reqact=addnew'>
         <?php
-        // Add CSRF protection
+
         if (class_exists('CSRFProtection')) {
             echo CSRFProtection::getHiddenField();
         }
@@ -140,7 +137,7 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
 </div>
 
 <style>
-    /* Scrollable Table Container */
+
     .table-scroll-container {
         max-height: 60vh;
         min-height: 300px;
@@ -190,7 +187,6 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
         border-bottom: 2px solid #007bff;
     }
 
-    /* Color Picker Styles */
     .color-picker-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -304,7 +300,6 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
         visibility: visible;
     }
 
-    /* Tooltip */
     .back-to-top-button .tooltip {
         position: absolute;
         top: -40px;
@@ -340,13 +335,12 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Color Picker Logic
+
         const thuocTinhSelect = document.getElementById('idThuocTinh');
         const tenThuocTinhInput = document.getElementById('tenThuocTinhHH');
         const colorPickerContainer = document.getElementById('colorPickerContainer');
         const colorPickerGrid = colorPickerContainer.querySelector('.color-picker-grid');
 
-        // Danh sách màu chuẩn
         const standardColors = [{
                 vi: 'Đỏ',
                 en: 'red',
@@ -409,7 +403,6 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
             }
         ];
 
-        // Render color picker
         function renderColorPicker() {
             colorPickerGrid.innerHTML = '';
             standardColors.forEach(color => {
@@ -427,14 +420,12 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
                 `;
 
                 item.addEventListener('click', function() {
-                    // Remove selected from all
+
                     document.querySelectorAll('.color-picker-item').forEach(i => i.classList.remove(
                         'selected'));
 
-                    // Add selected to this
                     this.classList.add('selected');
 
-                    // Update input value
                     tenThuocTinhInput.value = color.vi;
                     tenThuocTinhInput.classList.add('color-mode');
                 });
@@ -443,56 +434,48 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
             });
         }
 
-        // Check if selected attribute is "Màu sắc"
         function checkColorAttribute() {
             const selectedOption = thuocTinhSelect.options[thuocTinhSelect.selectedIndex];
             const attributeName = selectedOption.text.toLowerCase();
 
             if (attributeName.includes('màu') || attributeName.includes('color')) {
-                // Show color picker
+
                 colorPickerContainer.style.display = 'block';
                 tenThuocTinhInput.placeholder = 'Chọn màu từ bảng màu bên dưới';
                 tenThuocTinhInput.classList.add('color-mode');
                 renderColorPicker();
             } else {
-                // Hide color picker
+
                 colorPickerContainer.style.display = 'none';
                 tenThuocTinhInput.placeholder = '';
                 tenThuocTinhInput.classList.remove('color-mode');
             }
         }
 
-        // Listen to attribute selection change
         thuocTinhSelect.addEventListener('change', checkColorAttribute);
 
-        // Check on page load
         checkColorAttribute();
 
-        // Back to top button
         const backToTopButton = document.getElementById('back-to-top');
 
-        // Kiểm tra vị trí cuộn khi trang tải
         checkScrollPosition();
 
-        // Hiển thị nút khi người dùng cuộn xuống 300px
         window.addEventListener('scroll', checkScrollPosition);
 
-        // Xử lý sự kiện khi nhấp vào nút
         backToTopButton.addEventListener('click', function() {
-            // Kiểm tra hỗ trợ cuộn mượt
+
             if ('scrollBehavior' in document.documentElement.style) {
-                // Trình duyệt hỗ trợ cuộn mượt
+
                 window.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
             } else {
-                // Trình duyệt không hỗ trợ cuộn mượt, sử dụng JavaScript
+
                 smoothScrollToTop();
             }
         });
 
-        // Hàm kiểm tra vị trí cuộn
         function checkScrollPosition() {
             if (window.pageYOffset > 300) {
                 backToTopButton.classList.add('visible');
@@ -501,7 +484,6 @@ $list_lh_thuoctinhhh = $thuocTinhHHObj->thuoctinhhhGetAll();
             }
         }
 
-        // Hàm cuộn mượt cho các trình duyệt không hỗ trợ scrollBehavior
         function smoothScrollToTop() {
             const currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
             if (currentScroll > 0) {

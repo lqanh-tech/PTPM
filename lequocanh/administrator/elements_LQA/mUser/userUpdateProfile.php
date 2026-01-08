@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-// Check if user is logged in
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     header('location: ../../userLogin.php');
     exit();
 }
 
-// Tìm đường dẫn đúng đến các file cần thiết
 $configPaths = [
     "../../config/config.php",
     "./config/config.php",
@@ -20,7 +18,6 @@ $userClsPaths = [
     "../mod/userCls.php"
 ];
 
-// Tìm và include file config.php
 $configFound = false;
 foreach ($configPaths as $path) {
     if (file_exists($path)) {
@@ -35,7 +32,6 @@ if (!$configFound) {
     error_log("userUpdateProfile.php - Không tìm thấy file config.php");
 }
 
-// Tìm và include file userCls.php
 $userClsFound = false;
 foreach ($userClsPaths as $path) {
     if (file_exists($path)) {
@@ -50,23 +46,18 @@ if (!$userClsFound) {
     error_log("userUpdateProfile.php - Không tìm thấy file userCls.php");
 }
 
-// Get username from session
 $username = isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : $_SESSION['USER'];
 
-// Initialize user class
 $userObj = new user();
 
-// Kiểm tra xem đối tượng user đã được khởi tạo đúng chưa
 if (!isset($userObj) || !is_object($userObj)) {
     error_log("userUpdateProfile.php - Lỗi: Đối tượng userObj không tồn tại hoặc không phải là object");
     echo '<div class="alert alert-danger">Lỗi: Không thể khởi tạo đối tượng user. Vui lòng thử lại sau.</div>';
     exit();
 }
 
-// Thêm debug
 error_log("userUpdateProfile.php - Đang lấy danh sách người dùng");
 
-// Get all users to find current user ID
 try {
     $allUsers = $userObj->UserGetAll();
     error_log("userUpdateProfile.php - Số lượng người dùng: " . count($allUsers));
@@ -86,30 +77,27 @@ foreach ($allUsers as $user) {
     }
 }
 
-// Check if user was found
 if (!$currentUser) {
     error_log("userUpdateProfile.php - Không tìm thấy người dùng: " . $username);
     echo '<div class="alert alert-danger">Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.</div>';
-    // Thêm nút quay lại
+
     echo '<div style="text-align: center; margin-top: 20px;">
             <a href="/administrator/index.php" class="btn btn-primary">Quay lại trang chính</a>
           </div>';
     exit();
 }
 
-// Process form submission
 $success_message = "";
 $error_message = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
+
     $hoten = isset($_POST['hoten']) ? trim($_POST['hoten']) : '';
     $gioitinh = isset($_POST['gioitinh']) ? (int)$_POST['gioitinh'] : 1;
     $ngaysinh = isset($_POST['ngaysinh']) ? $_POST['ngaysinh'] : '';
     $diachi = isset($_POST['diachi']) ? trim($_POST['diachi']) : '';
     $dienthoai = isset($_POST['dienthoai']) ? trim($_POST['dienthoai']) : '';
 
-    // Validate input
     $isValid = true;
 
     if (empty($hoten)) {
@@ -129,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $isValid = false;
     }
 
-    // Update user information if valid
     if ($isValid) {
         $result = $userObj->UserUpdate(
             $currentUser->username,
@@ -144,13 +131,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($result) {
             $success_message = "Cập nhật thông tin thành công";
-            // Refresh user data
+
             $currentUser = $userObj->UserGetbyId($currentUser->iduser);
 
-            // Thêm log để debug
             error_log("Cập nhật thông tin thành công cho user: " . $username);
 
-            // Chuyển hướng về trang profile sau 2 giây
             echo '<script>
                 setTimeout(function() {
                     window.location.href = "../../index.php?req=userprofile";

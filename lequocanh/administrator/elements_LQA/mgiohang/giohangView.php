@@ -1,9 +1,10 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
+require_once __DIR__ . '/../../../includes/csrf_helper.php';
+
 SessionManager::start();
 require_once '../../elements_LQA/mod/giohangCls.php';
 require_once '../../elements_LQA/mod/hanghoaCls.php';
@@ -11,7 +12,6 @@ require_once '../../elements_LQA/mod/hanghoaCls.php';
 $giohang = new GioHang();
 $hanghoa = new hanghoa();
 
-// Kiểm tra xem người dùng có thể sử dụng giỏ hàng không
 if (!$giohang->canUseCart()) {
     if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
         $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
@@ -25,7 +25,6 @@ if (!$giohang->canUseCart()) {
 ini_set('display_errors', 0);
 error_reporting(0);
 
-// Get cart items
 $cart = $giohang->getCart();
 $cartDetails = [];
 $totalAmount = 0;
@@ -90,7 +89,6 @@ if (!empty($cart)) {
     }
 }
 
-// Order History Logic
 $orderHistory = [];
 if (isset($_SESSION['USER'])) {
     try {
@@ -114,7 +112,7 @@ if (isset($_SESSION['USER'])) {
             $orderHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     } catch (PDOException $e) {
-        // Silent error
+
     }
 }
 ?>
@@ -122,6 +120,7 @@ if (isset($_SESSION['USER'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <?= csrf_meta() ?>
     <title>Giỏ hàng</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -372,6 +371,17 @@ if (isset($_SESSION['USER'])) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = 'checkout.php';
+            
+            // Add CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfToken) {
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = csrfToken.getAttribute('content');
+                form.appendChild(csrfInput);
+            }
+            
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'selected_products';
@@ -533,5 +543,8 @@ if (isset($_SESSION['USER'])) {
             });
         });
     </script>
+    
+    <!-- CSRF Protection Helper -->
+    <script src="../../../public_files/js/csrf-helper.js"></script>
 </body>
 </html>

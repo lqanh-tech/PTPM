@@ -1,8 +1,4 @@
 <?php
-/**
- * Test Shipping Access
- * File test để kiểm tra quyền truy cập shipping modules
- */
 
 session_start();
 

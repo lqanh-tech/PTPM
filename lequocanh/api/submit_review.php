@@ -1,15 +1,17 @@
 <?php
-/**
- * Submit Product Review API
- */
 
 header('Content-Type: application/json');
-session_start();
 
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/ProductReviewCls.php';
 
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle();
+
+session_start();
+
 try {
-    // Check if user is logged in
+
     if (!isset($_SESSION['USER'])) {
         echo json_encode([
             'success' => false,
@@ -18,7 +20,6 @@ try {
         exit;
     }
 
-    // Get user ID
     require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
     $db = Database::getInstance()->getConnection();
     $stmt = $db->prepare("SELECT iduser FROM user WHERE username = ?");
@@ -35,7 +36,6 @@ try {
 
     $iduser = $user->iduser;
 
-    // Get POST data
     $input = json_decode(file_get_contents('php://input'), true);
     
     $idhanghoa = isset($input['idhanghoa']) ? (int)$input['idhanghoa'] : 0;
@@ -43,7 +43,6 @@ try {
     $title = isset($input['title']) ? trim($input['title']) : '';
     $text = isset($input['text']) ? trim($input['text']) : '';
 
-    // Validate input
     if (!$idhanghoa || !$rating || !$title || !$text) {
         echo json_encode([
             'success' => false,
@@ -52,10 +51,8 @@ try {
         exit;
     }
 
-    // Initialize review class
     $reviewCls = new ProductReview();
 
-    // Check if user can review
     $canReview = $reviewCls->canUserReview($iduser, $idhanghoa);
     
     if (!$canReview['can_review']) {
@@ -66,11 +63,9 @@ try {
         exit;
     }
 
-    //Sanitize inputs
     $title = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
     $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 
-    // Add review
     $idhoadon = isset($canReview['idhoadon']) ? $canReview['idhoadon'] : null;
     $result = $reviewCls->addReview($idhanghoa, $iduser, $idhoadon, $rating, $title, $text);
 

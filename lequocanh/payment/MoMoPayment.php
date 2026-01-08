@@ -2,10 +2,6 @@
 
 require_once 'MoMoConfig.php';
 
-/**
- * MoMo Payment Integration Class
- * Class chính để xử lý tích hợp thanh toán MoMo
- */
 class MoMoPayment
 {
     private $partnerCode;
@@ -23,33 +19,21 @@ class MoMoPayment
         $this->queryEndpoint = MoMoConfig::getQueryEndpoint();
     }
 
-    /**
-     * Tạo chữ ký (signature) cho request
-     */
     private function generateSignature($rawData)
     {
         return hash_hmac('sha256', $rawData, $this->secretKey);
     }
 
-    /**
-     * Tạo request ID duy nhất
-     */
     private function generateRequestId()
     {
         return time() . '_' . uniqid();
     }
 
-    /**
-     * Tạo order ID duy nhất
-     */
     private function generateOrderId()
     {
         return 'ORDER_' . time() . '_' . rand(1000, 9999);
     }
 
-    /**
-     * Gửi HTTP POST request
-     */
     private function sendPostRequest($url, $data)
     {
         $ch = curl_init();
@@ -75,14 +59,6 @@ class MoMoPayment
         return json_decode($response, true);
     }
 
-    /**
-     * Tạo payment request tới MoMo
-     * 
-     * @param int $amount Số tiền thanh toán (VND)
-     * @param string $orderInfo Thông tin đơn hàng
-     * @param string $extraData Dữ liệu bổ sung (optional)
-     * @return array Response từ MoMo API
-     */
     public function createPayment($amount, $orderInfo, $extraData = '')
     {
         $orderId = $this->generateOrderId();
@@ -91,7 +67,6 @@ class MoMoPayment
         $notifyUrl = MoMoConfig::getNotifyUrl();
         $requestType = 'captureWallet';
 
-        // Tạo raw signature string theo thứ tự alphabet
         $rawSignature = "accessKey=" . $this->accessKey .
             "&amount=" . $amount .
             "&extraData=" . $extraData .
@@ -122,17 +97,13 @@ class MoMoPayment
         ];
 
         try {
-            // Log request data để debug
+
             error_log('MoMo API Request: ' . json_encode($requestData));
             error_log('MoMo API Endpoint: ' . $this->endpoint);
             
             $response = $this->sendPostRequest($this->endpoint, $requestData);
             
-            // Log response để debug
             error_log('MoMo API Response: ' . json_encode($response));
-
-            // Lưu thông tin giao dịch vào database (tạm thời comment để tránh lỗi)
-            // $this->saveTransaction($orderId, $requestId, $amount, $orderInfo, 'PENDING');
 
             return $response;
         } catch (Exception $e) {
@@ -141,9 +112,6 @@ class MoMoPayment
         }
     }
 
-    /**
-     * Verify callback từ MoMo
-     */
     public function verifyCallback($data)
     {
         $partnerCode = $data['partnerCode'] ?? '';
@@ -160,7 +128,6 @@ class MoMoPayment
         $extraData = $data['extraData'] ?? '';
         $signature = $data['signature'] ?? '';
 
-        // Tạo raw signature để verify
         $rawSignature = "accessKey=" . $this->accessKey .
             "&amount=" . $amount .
             "&extraData=" . $extraData .
@@ -177,7 +144,6 @@ class MoMoPayment
 
         $expectedSignature = $this->generateSignature($rawSignature);
 
-        // Verify signature
         if ($signature !== $expectedSignature) {
             return [
                 'success' => false,
@@ -185,7 +151,6 @@ class MoMoPayment
             ];
         }
 
-        // Cập nhật trạng thái giao dịch
         $status = ($resultCode == 0) ? 'SUCCESS' : 'FAILED';
         $this->updateTransactionStatus($orderId, $status, $transId, $message);
 
@@ -198,12 +163,9 @@ class MoMoPayment
         ];
     }
 
-    /**
-     * Lưu thông tin giao dịch vào database
-     */
     private function saveTransaction($orderId, $requestId, $amount, $orderInfo, $status)
     {
-        // Kết nối database (sử dụng connection có sẵn)
+
         require_once __DIR__ . '/../administrator/elements_LQA/mPDO.php';
 
         try {
@@ -216,9 +178,6 @@ class MoMoPayment
         }
     }
 
-    /**
-     * Cập nhật trạng thái giao dịch
-     */
     private function updateTransactionStatus($orderId, $status, $transId = null, $message = null)
     {
         require_once __DIR__ . '/../administrator/elements_LQA/mPDO.php';
@@ -229,23 +188,18 @@ class MoMoPayment
                     WHERE order_id = ?";
             $pdo->execute($sql, [$status, $transId, $message, $orderId]);
 
-            // Gửi thông báo khi cập nhật trạng thái
             $this->sendNotification($orderId, $status);
         } catch (Exception $e) {
             error_log('Error updating transaction: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Gửi thông báo khi có giao dịch
-     */
     private function sendNotification($orderId, $status)
     {
         try {
             require_once 'NotificationManager.php';
             $notificationManager = new NotificationManager();
 
-            // Lấy thông tin giao dịch
             $transaction = $this->getTransaction($orderId);
 
             if ($transaction) {
@@ -260,9 +214,6 @@ class MoMoPayment
         }
     }
 
-    /**
-     * Lấy thông tin giao dịch theo order ID
-     */
     public function getTransaction($orderId)
     {
         require_once __DIR__ . '/../administrator/elements_LQA/mPDO.php';

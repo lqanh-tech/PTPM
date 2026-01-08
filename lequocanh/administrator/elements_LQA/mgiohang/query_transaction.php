@@ -1,19 +1,13 @@
 <?php
-/**
- * MoMo Query Transaction
- * Dựa trên official MoMo PHP SDK - query_transaction.php
- */
 
 header('Content-type: application/json');
 
-// MoMo API configuration
 $endpoint = "https://test-payment.momo.vn/v2/gateway/api/query";
 
 $partnerCode = 'MOMO';
 $accessKey = 'F8BBA842ECF85';
 $secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
 
-// Get query parameters
 $orderId = $_POST['orderId'] ?? $_GET['orderId'] ?? "";
 $requestId = time() . "";
 
@@ -25,7 +19,6 @@ if (empty($orderId)) {
     exit;
 }
 
-// Create raw signature string
 $rawHash = "accessKey=" . $accessKey . "&orderId=" . $orderId . "&partnerCode=" . $partnerCode . "&requestId=" . $requestId;
 $signature = hash_hmac("sha256", $rawHash, $secretKey);
 
@@ -40,13 +33,11 @@ $data = array(
 $result = execPostRequest($endpoint, json_encode($data));
 $jsonResult = json_decode($result, true);
 
-// Log the query
 logMoMoTransaction('QUERY_TRANSACTION', [
     'request' => $data,
     'response' => $jsonResult
 ]);
 
-// Return result
 echo json_encode($jsonResult);
 
 function execPostRequest($url, $data)

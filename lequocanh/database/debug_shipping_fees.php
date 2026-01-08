@@ -1,7 +1,4 @@
 <?php
-/**
- * Debug shipping_fees table - Tìm Nguyên Nhân Trùng Lặp
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -21,7 +18,6 @@ try {
     
     echo "<h2>Shipping Fees Analysis</h2>\n";
     
-    // 1. Kiểm tra tất cả shipping_fees
     echo "<h3>1. Tất Cả Shipping Fees</h3>\n";
     $stmt = $db->query("SELECT sf.*, sm.code as method_code, sm.name as method_name FROM shipping_fees sf LEFT JOIN shipping_methods sm ON sf.shipping_method_id = sm.id ORDER BY sf.shipping_method_id, sf.priority DESC");
     $fees = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -44,7 +40,6 @@ try {
     }
     echo "</table>\n";
     
-    // 2. Đếm số fee config per shipping method
     echo "<h3>2. Số Lượng Fee Config Per Shipping Method</h3>\n";
     $stmt = $db->query("
         SELECT 
@@ -74,7 +69,6 @@ try {
     }
     echo "</table>\n";
     
-    // 3. Kiểm tra phương thức nào có nhiều hơn 1 fee config
     $multipleFeeMethods = array_filter($methodCounts, function($m) {
         return $m['active_fee_count'] > 1;
     });
@@ -88,7 +82,6 @@ try {
         echo "<br>Điều này có thể gây ra vấn đề trong frontend nếu logic không xử lý đúng!\n";
         echo "</div>\n";
         
-        // Show details for each method with multiple fees
         foreach ($multipleFeeMethods as $m) {
             echo "<h4>Chi Tiết Fee Configs Cho: " . htmlspecialchars($m['name']) . "</h4>\n";
             $stmt = $db->prepare("
@@ -119,7 +112,6 @@ try {
         echo "<div class='alert alert-info'>✅ Tất cả các phương thức chỉ có 1 fee config active hoặc không có fee config.</div>\n";
     }
     
-    // 4. Test query giống frontend
     echo "<h3>3. Test Query Frontend (shipping_method_selector_v2.php)</h3>\n";
     
     echo "< pre>\n";

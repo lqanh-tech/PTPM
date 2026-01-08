@@ -1,23 +1,12 @@
 <?php
-/**
- * Calculate Shipping Fee API Endpoint
- * 
- * AJAX endpoint to calculate shipping fee and delivery time
- * Supports both GHN API and fallback pricing
- * 
- * @method POST
- * @return JSON
- */
 
 header('Content-Type: application/json');
 
-// Use SessionManager for safe session handling
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/ShippingCls.php';
 
 SessionManager::start();
 
-// Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode([
@@ -28,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    // Get request data
+
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
 
@@ -36,11 +25,8 @@ try {
         throw new Exception('Invalid JSON input');
     }
 
-    // Validate required fields
     $errors = [];
 
-    // For GHN: need district_id and ward_code
-    // For fallback: need province_name or lat/lng
     if (empty($data['to_district_id']) && empty($data['to_province_name'])) {
         $errors[] = 'Missing destination information (district_id or province_name required)';
     }
@@ -54,10 +40,8 @@ try {
         exit;
     }
 
-    // Initialize Shipping class
     $shipping = new Shipping();
 
-    // Prepare parameters
     $params = [
         'to_district_id' => isset($data['to_district_id']) ? intval($data['to_district_id']) : null,
         'to_ward_code' => $data['to_ward_code'] ?? null,
@@ -69,12 +53,10 @@ try {
         'insurance_value' => isset($data['insurance_value']) ? floatval($data['insurance_value']) : 0,
     ];
 
-    // Get insurance value from session if not provided
     if ($params['insurance_value'] == 0 && isset($_SESSION['total_amount'])) {
         $params['insurance_value'] = floatval($_SESSION['total_amount']);
     }
 
-    // Calculate shipping (fee + delivery time)
     $result = $shipping->calculateShippingComplete($params);
 
     if (!$result['success']) {
@@ -85,7 +67,6 @@ try {
         exit;
     }
 
-    // Update session with shipping info
     $_SESSION['shipping_fee'] = $result['shipping_fee'];
     $_SESSION['shipping_method'] = $result['method'];
     $_SESSION['shipping_method_name'] = $result['method_name'];
@@ -93,7 +74,6 @@ try {
     $_SESSION['estimated_days'] = $result['estimated_days'];
     $_SESSION['shipping_distance_km'] = $result['distance_km'];
 
-    // If we have district/ward info, save to session
     if (!empty($params['to_district_id'])) {
         $_SESSION['to_district_id'] = $params['to_district_id'];
     }
@@ -104,25 +84,20 @@ try {
         $_SESSION['to_province_id'] = $params['to_province_id'];
     }
 
-    // Recalculate total amount
     $subtotal = $_SESSION['subtotal'] ?? 0;
     $vatAmount = $_SESSION['vat_amount'] ?? 0;
     $shippingFee = $result['shipping_fee'];
     
-    // QUAN TRỌNG: Phải trừ coupon discount!
     $couponDiscount = $_SESSION['coupon_discount'] ?? 0;
     
-    // Công thức đúng: Subtotal + VAT + Shipping - Coupon
     $totalAmount = $subtotal + $vatAmount + $shippingFee - $couponDiscount;
     $_SESSION['total_amount'] = $totalAmount;
     
-    // Log để debug
     error_log("=== CALCULATE SHIPPING API ===");
     error_log("Subtotal: $subtotal, VAT: $vatAmount, Shipping: $shippingFee, Coupon: $couponDiscount");
     error_log("Total: $totalAmount");
     error_log("==============================");
 
-    // Prepare response
     $response = [
         'success' => true,
         'shipping_fee' => $result['shipping_fee'],
@@ -142,7 +117,6 @@ try {
         'total_amount_formatted' => number_format($totalAmount, 0, ',', '.') . ' ₫',
         'message' => $result['message'],
         
-        // Additional info
         'breakdown' => [
             'subtotal' => $subtotal,
             'subtotal_formatted' => number_format($subtotal, 0, ',', '.') . ' ₫',
@@ -157,7 +131,6 @@ try {
         ]
     ];
 
-    // If GHN, include service fee breakdown
     if ($result['method'] === 'GHN') {
         $response['service_fee'] = $result['service_fee'] ?? 0;
         $response['insurance_fee'] = $result['insurance_fee'] ?? 0;

@@ -1,9 +1,5 @@
 <?php
-/**
- * viewListLoaihang với Cache - Tối ưu hiệu suất
- */
 
-// Load cache system
 require_once __DIR__ . '/../cache/CacheManager.php';
 require_once __DIR__ . '/../cache/QueryCache.php';
 
@@ -19,15 +15,12 @@ require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
 $hanghoa = new hanghoa();
 $cache = CacheManager::getInstance();
 
-// Check for filter parameters in URL
 $hasFilters = isset($_GET['min_price']) || isset($_GET['max_price']) ||
     isset($_GET['colors']) || isset($_GET['sizes']) || isset($_GET['min_rating']);
 
-// Generate cache key based on request
 $cacheKey = 'products_' . md5(serialize($_GET) . (isset($_SESSION['USER']) ? '1' : '0'));
-$cacheTTL = 180; // 3 phút
+$cacheTTL = 180;
 
-// Không cache khi có filters (dynamic content)
 if ($hasFilters) {
     $filters = [
         'min_price' => isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0,
@@ -39,7 +32,7 @@ if ($hasFilters) {
     ];
     $list_hanghoa = $hanghoa->filterProducts($filters);
 } else {
-    // Sử dụng cache cho danh sách sản phẩm
+
     $list_hanghoa = $cache->remember($cacheKey, $cacheTTL, function() use ($hanghoa) {
         if (isset($_GET['reqView'])) {
             return $hanghoa->HanghoaGetbyIdloaihang($_GET['reqView']);
@@ -48,7 +41,6 @@ if ($hasFilters) {
     });
 }
 
-// Cache carousel items
 $carousel_items = array_slice($list_hanghoa, 0, 5);
 ?>
 
@@ -62,19 +54,17 @@ $carousel_items = array_slice($list_hanghoa, 0, 5);
 <script src="administrator/elements_LQA/js_LQA/jscript.js" defer></script>
 
 <?php
-// Cache News và Promotions
+
 require_once __DIR__ . '/../administrator/elements_LQA/mod/NewsManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/PromotionManager.php';
 
 $newsManager = new NewsManager();
 $promotionManager = new PromotionManager();
 
-// Cache news 10 phút
 $latestNews = $cache->remember('latest_news_3', 600, function() use ($newsManager) {
     return $newsManager->getPublishedNews(3);
 });
 
-// Cache promotions 5 phút
 $activePromotions = $cache->remember('active_promotions', 300, function() use ($promotionManager) {
     return $promotionManager->getActivePromotions();
 });
@@ -249,7 +239,7 @@ $activePromotions = $cache->remember('active_promotions', 300, function() use ($
                         <h5 class="card-title"><?php echo htmlspecialchars($v->tenhanghoa); ?></h5>
                         
                         <?php
-                        // Cache rating per product
+
                         $ratingKey = 'rating_' . $v->idhanghoa;
                         $ratingInfo = $cache->remember($ratingKey, 600, function() use ($hanghoa, $v) {
                             return $hanghoa->getAverageRating($v->idhanghoa);

@@ -2,18 +2,8 @@
 require_once 'securityMonitor.php';
 require_once 'intrusionDetector.php';
 
-/**
- * Threat Analyzer
- * 
- * Analyzes detected threats, categorizes them, and suggests mitigation strategies.
- */
 class ThreatAnalyzer {
 
-    /**
-     * Analyzes a security event and categorizes it.
-     * @param array $event The security event data from SecurityMonitor.
-     * @return array An associative array with analysis results including category and severity.
-     */
     public static function analyzeEvent($event) {
         $analysis = [
             'category' => 'Unknown',
@@ -65,12 +55,6 @@ class ThreatAnalyzer {
         return $analysis;
     }
 
-    /**
-     * Analyzes a collection of events to identify broader threats or campaigns.
-     * This is a placeholder for more advanced correlation logic.
-     * @param array $events An array of security events.
-     * @return array An array of identified threats.
-     */
     public static function analyzeMultipleEvents($events) {
         $threats = [];
         $failedLoginIps = [];
@@ -79,7 +63,6 @@ class ThreatAnalyzer {
         foreach ($events as $event) {
             $analysis = self::analyzeEvent($event);
             
-            // Simple correlation example: multiple failed logins from different IPs but same user
             if ($analysis['event_type'] === 'Failed Login' && isset($event['details']['username'])) {
                 if (!isset($failedLoginIps[$event['details']['username']])) {
                     $failedLoginIps[$event['details']['username']] = [];
@@ -95,7 +78,7 @@ class ThreatAnalyzer {
         }
 
         foreach ($failedLoginIps as $username => $ips) {
-            if (count($ips) > 3) { // More than 3 IPs trying to login as one user
+            if (count($ips) > 3) {
                 $threats[] = [
                     'type' => 'Credential Stuffing',
                     'severity' => 'High',
@@ -105,7 +88,7 @@ class ThreatAnalyzer {
             }
         }
 
-        if ($csrfAttempts > 5) { // More than 5 CSRF attempts
+        if ($csrfAttempts > 5) {
             $threats[] = [
                 'type' => 'Persistent CSRF Attacks',
                 'severity' => 'Critical',

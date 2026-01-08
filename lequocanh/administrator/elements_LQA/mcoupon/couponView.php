@@ -1,7 +1,4 @@
 <?php
-/**
- * Trang quản lý mã Coupon (Giảm giá) - Admin
- */
 
 require_once __DIR__ . '/../mod/database.php';
 require_once __DIR__ . '/../mod/CouponCls.php';
@@ -9,7 +6,6 @@ require_once __DIR__ . '/../mod/sessionManager.php';
 
 SessionManager::start();
 
-// Kiểm tra quyền admin
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     header('Location: ../../userLogin.php');
     exit();
@@ -19,7 +15,6 @@ $couponManager = new Coupon();
 $message = '';
 $messageType = 'success';
 
-// Xử lý actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
@@ -85,11 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy danh sách coupon
 $coupons = $couponManager->getAllCoupons(true);
 $stats = $couponManager->getCouponStats();
 
-// Lấy coupon để edit (nếu có)
 $editCoupon = null;
 if (isset($_GET['edit'])) {
     $editCoupon = $couponManager->getCouponById(intval($_GET['edit']));
@@ -427,7 +420,7 @@ if (isset($_GET['edit'])) {
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle hiển thị max_discount dựa trên loại giảm
+
         document.getElementById('discount_type').addEventListener('change', function() {
             const maxDiscountGroup = document.getElementById('max_discount_group');
             const discountUnit = document.getElementById('discount_unit');
@@ -441,7 +434,6 @@ if (isset($_GET['edit'])) {
             }
         });
         
-        // Trigger on load
         document.getElementById('discount_type').dispatchEvent(new Event('change'));
     </script>
 </body>

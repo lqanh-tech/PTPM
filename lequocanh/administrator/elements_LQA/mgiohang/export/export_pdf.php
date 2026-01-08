@@ -1,19 +1,14 @@
 <?php
-/**
- * Export PDF - Sử dụng TCPDF
- * Xuất hóa đơn đơn hàng ra PDF
- */
 
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Tắt display để không làm hỏng PDF
+ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 require_once __DIR__ . '/OrderExporter.php';
-require_once __DIR__ . '/../../../../../vendor/autoload.php'; // Composer autoload
+require_once __DIR__ . '/../../../../../vendor/autoload.php';
 
 use TCPDF;
 
-// Kiểm tra quyền admin
 session_start();
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     http_response_code(403);
@@ -23,8 +18,7 @@ if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
 try {
     $exporter = new OrderExporter();
 
-    // Xác định loại export
-    $type = $_GET['type'] ?? 'single'; // single, multiple, summary
+    $type = $_GET['type'] ?? 'single';
     $orderIds = [];
 
     if ($type === 'single') {
@@ -39,24 +33,21 @@ try {
         $orderIds = array_map('intval', explode(',', $_GET['order_ids']));
     }
 
-    // Tạo PDF
     $pdf = new TCPDF('P', 'mm', 'A4', true, 'UTF-8');
     $pdf->SetCreator('LeQuocAnh Shop');
     $pdf->SetAuthor('LeQuocAnh Shop');
     $pdf->SetTitle('Hóa đơn đơn hàng');
 
-    // Font hỗ trợ tiếng Việt
     $pdf->SetFont('dejavusans', '', 10);
 
-    // Xóa header/footer mặc định
     $pdf->setPrintHeader(false);
     $pdf->setPrintFooter(false);
 
     if ($type === 'summary') {
-        // Xuất tổng hợp
+
         exportSummary($pdf, $exporter, $_GET);
     } else {
-        // Xuất chi tiết từng đơn
+
         $orders = $exporter->getMultipleOrdersDetails($orderIds);
         
         if (empty($orders)) {
@@ -74,22 +65,17 @@ try {
         }
     }
 
-    // Output PDF
     $filename = 'hoa_don_' . date('YmdHis') . '.pdf';
-    $pdf->Output($filename, 'D'); // D = Download
+    $pdf->Output($filename, 'D');
     
 } catch (Exception $e) {
     error_log('Export PDF Error: ' . $e->getMessage());
     die('Error creating PDF: ' . $e->getMessage());
 }
 
-/**
- * Render hóa đơn chi tiết
- */
 function renderInvoice($pdf, $order) {
     $y = 15;
     
-    // Logo và thông tin công ty
     $pdf->SetFont('dejavusans', 'B', 16);
     $pdf->SetXY(15, $y);
     $pdf->Cell(0, 10, 'LEQUOCANH SHOP', 0, 1, 'C');
@@ -101,14 +87,12 @@ function renderInvoice($pdf, $order) {
     
     $y += 15;
     
-    // Tiêu đề hóa đơn
     $pdf->SetFont('dejavusans', 'B', 14);
     $pdf->SetXY(15, $y);
     $pdf->Cell(0, 10, 'HÓA ĐƠN BÁN HÀNG', 0, 1, 'C');
     
     $y += 12;
     
-    // Thông tin đơn hàng
     $pdf->SetFont('dejavusans', '', 10);
     $pdf->SetXY(15, $y);
     $pdf->Cell(50, 6, 'Mã đơn hàng:', 0, 0);
@@ -123,7 +107,6 @@ function renderInvoice($pdf, $order) {
     
     $y += 10;
     
-    // Thông tin khách hàng
     $pdf->SetFont('dejavusans', 'B', 11);
     $pdf->SetXY(15, $y);
     $pdf->Cell(0, 6, 'THÔNG TIN KHÁCH HÀNG', 0, 1);
@@ -151,7 +134,6 @@ function renderInvoice($pdf, $order) {
     
     $y = $pdf->GetY() + 5;
     
-    // Bảng sản phẩm
     $pdf->SetFont('dejavusans', 'B', 10);
     $pdf->SetFillColor(240, 240, 240);
     $pdf->SetXY(15, $y);
@@ -164,7 +146,6 @@ function renderInvoice($pdf, $order) {
     
     $y = $pdf->GetY();
     
-    // Chi tiết sản phẩm
     $pdf->SetFont('dejavusans', '', 9);
     $stt = 1;
     foreach ($order['items'] as $item) {
@@ -177,7 +158,6 @@ function renderInvoice($pdf, $order) {
         $y = $pdf->GetY();
     }
     
-    // Tổng tiền
     $y += 5;
     $pdf->SetFont('dejavusans', '', 10);
     $pdf->SetXY(130, $y);
@@ -197,40 +177,29 @@ function renderInvoice($pdf, $order) {
     $pdf->Cell(30, 8, number_format($order['tong_tien']) . 'đ', 0, 1, 'R');
     $pdf->SetTextColor(0, 0, 0);
     
-    // Phương thức thanh toán
     $y += 12;
     $pdf->SetFont('dejavusans', '', 10);
     $pdf->SetXY(15, $y);
     $pdf->Cell(0, 6, 'Phương thức thanh toán: ' . strtoupper($order['phuong_thuc_thanh_toan']), 0, 1);
     
-    // Footer
     $y = 260;
     $pdf->SetFont('dejavusans', 'I', 8);
     $pdf->SetXY(15, $y);
     $pdf->Cell(0, 5, 'Cảm ơn quý khách đã mua hàng tại LeQuocAnh Shop!', 0, 1, 'C');
 }
 
-/**
- * Xuất báo cáo tổng hợp
- */
 function exportSummary($pdf, $exporter, $filters) {
     $orders = $exporter->getOrdersList($filters);
     
-    // Tính toán thống kê
     $stats = calculateStats($orders);
     
-    // Page 1: Thống kê tổng quan
     $pdf->AddPage();
     renderStatisticsPage($pdf, $stats, $filters);
     
-    // Page 2+: Danh sách chi tiết
-    $pdf->AddPage('L'); // Landscape để có nhiều cột hơn
+    $pdf->AddPage('L');
     renderDetailedList($pdf, $orders);
 }
 
-/**
- * Tính toán thống kê
- */
 function calculateStats($orders) {
     $stats = [
         'total_orders' => count($orders),
@@ -242,10 +211,9 @@ function calculateStats($orders) {
     ];
     
     foreach ($orders as $order) {
-        // Tổng doanh thu
+
         $stats['total_revenue'] += $order['tong_tien'];
         
-        // Theo trạng thái
         $status = $order['trang_thai'];
         if (!isset($stats['by_status'][$status])) {
             $stats['by_status'][$status] = ['count' => 0, 'revenue' => 0];
@@ -253,7 +221,6 @@ function calculateStats($orders) {
         $stats['by_status'][$status]['count']++;
         $stats['by_status'][$status]['revenue'] += $order['tong_tien'];
         
-        // Theo phương thức thanh toán
         $payment = $order['phuong_thuc_thanh_toan'];
         if (!isset($stats['by_payment'][$payment])) {
             $stats['by_payment'][$payment] = ['count' => 0, 'revenue' => 0];
@@ -261,7 +228,6 @@ function calculateStats($orders) {
         $stats['by_payment'][$payment]['count']++;
         $stats['by_payment'][$payment]['revenue'] += $order['tong_tien'];
         
-        // Theo trạng thái thanh toán
         $paymentStatus = $order['trang_thai_thanh_toan'] ?? 'unknown';
         if (!isset($stats['by_payment_status'][$paymentStatus])) {
             $stats['by_payment_status'][$paymentStatus] = ['count' => 0, 'revenue' => 0];
@@ -269,7 +235,6 @@ function calculateStats($orders) {
         $stats['by_payment_status'][$paymentStatus]['count']++;
         $stats['by_payment_status'][$paymentStatus]['revenue'] += $order['tong_tien'];
         
-        // Theo ngày
         $date = date('Y-m-d', strtotime($order['ngay_tao']));
         if (!isset($stats['by_date'][$date])) {
             $stats['by_date'][$date] = ['count' => 0, 'revenue' => 0];
@@ -281,13 +246,9 @@ function calculateStats($orders) {
     return $stats;
 }
 
-/**
- * Render trang thống kê
- */
 function renderStatisticsPage($pdf, $stats, $filters) {
     $y = 15;
     
-    // Tiêu đề
     $pdf->SetFont('dejavusans', 'B', 20);
     $pdf->SetTextColor(52, 73, 94);
     $pdf->SetXY(15, $y);
@@ -299,7 +260,6 @@ function renderStatisticsPage($pdf, $stats, $filters) {
     $pdf->SetXY(15, $y);
     $pdf->Cell(0, 6, 'Ngày xuất: ' . date('d/m/Y H:i:s'), 0, 1, 'C');
     
-    // Bộ lọc đang áp dụng
     if (!empty($filters)) {
         $y += 8;
         $pdf->SetFont('dejavusans', 'I', 9);
@@ -313,7 +273,6 @@ function renderStatisticsPage($pdf, $stats, $filters) {
     
     $y += 15;
     
-    // Box tổng quan
     $pdf->SetFillColor(52, 152, 219);
     $pdf->SetTextColor(255, 255, 255);
     $pdf->SetFont('dejavusans', 'B', 12);
@@ -332,7 +291,6 @@ function renderStatisticsPage($pdf, $stats, $filters) {
     
     $y += 40;
     
-    // Thống kê theo trạng thái
     $pdf->SetTextColor(52, 73, 94);
     $pdf->SetFont('dejavusans', 'B', 12);
     $pdf->SetXY(15, $y);
@@ -363,7 +321,6 @@ function renderStatisticsPage($pdf, $stats, $filters) {
     
     $y += 10;
     
-    // Thống kê theo phương thức thanh toán
     $pdf->SetFont('dejavusans', 'B', 12);
     $pdf->SetTextColor(52, 73, 94);
     $pdf->SetXY(15, $y);
@@ -393,13 +350,9 @@ function renderStatisticsPage($pdf, $stats, $filters) {
     }
 }
 
-/**
- * Render danh sách chi tiết
- */
 function renderDetailedList($pdf, $orders) {
     $y = 15;
     
-    // Tiêu đề
     $pdf->SetFont('dejavusans', 'B', 14);
     $pdf->SetTextColor(52, 73, 94);
     $pdf->SetXY(15, $y);
@@ -407,7 +360,6 @@ function renderDetailedList($pdf, $orders) {
     
     $y += 12;
     
-    // Header bảng
     $pdf->SetFont('dejavusans', 'B', 7);
     $pdf->SetFillColor(52, 152, 219);
     $pdf->SetTextColor(255, 255, 255);
@@ -426,7 +378,6 @@ function renderDetailedList($pdf, $orders) {
     
     $y = $pdf->GetY();
     
-    // Dữ liệu
     $pdf->SetFont('dejavusans', '', 6);
     $pdf->SetTextColor(0, 0, 0);
     $stt = 1;
@@ -436,7 +387,6 @@ function renderDetailedList($pdf, $orders) {
             $pdf->AddPage('L');
             $y = 15;
             
-            // Re-render header
             $pdf->SetFont('dejavusans', 'B', 7);
             $pdf->SetFillColor(52, 152, 219);
             $pdf->SetTextColor(255, 255, 255);

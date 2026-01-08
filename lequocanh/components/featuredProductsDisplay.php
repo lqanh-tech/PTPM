@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Featured Products Display Component
- * Hiển thị 3 phần: Sản phẩm nổi bật, Sản phẩm mới, Khuyến mãi
- */
-
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 class FeaturedProductsDisplay
@@ -16,9 +11,6 @@ class FeaturedProductsDisplay
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Lấy sản phẩm nổi bật (is_featured = 1)
-     */
     public function getFeaturedProducts($limit = 8)
     {
         $sql = "SELECT h.*, 
@@ -39,9 +31,6 @@ class FeaturedProductsDisplay
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy sản phẩm mới (30 ngày gần đây)
-     */
     public function getNewProducts($limit = 8)
     {
         $sql = "SELECT h.*, 
@@ -62,9 +51,6 @@ class FeaturedProductsDisplay
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy sản phẩm khuyến mãi
-     */
     public function getPromotionProducts($limit = 8)
     {
         $sql = "SELECT h.*, 
@@ -89,7 +75,6 @@ class FeaturedProductsDisplay
     }
 }
 
-// Khởi tạo
 $featuredDisplay = new FeaturedProductsDisplay();
 $featuredProducts = $featuredDisplay->getFeaturedProducts(8);
 $newProducts = $featuredDisplay->getNewProducts(8);
@@ -175,7 +160,6 @@ $promotionProducts = $featuredDisplay->getPromotionProducts(8);
         transform: scale(1.1);
     }
 
-    /* Badge styles */
     .product-badge {
         position: absolute;
         top: 10px;
@@ -340,7 +324,6 @@ $promotionProducts = $featuredDisplay->getPromotionProducts(8);
         opacity: 0.5;
     }
 
-    /* Section specific colors */
     .section-featured .section-header h2 {
         color: #667eea;
     }
@@ -370,7 +353,7 @@ $promotionProducts = $featuredDisplay->getPromotionProducts(8);
                             <i class="fas fa-star"></i> Nổi bật
                         </span>
                         <?php
-                        // Kiểm tra trạng thái sản phẩm
+
                         $statusClass = '';
                         $statusText = '';
                         if (isset($product->trang_thai)) {
@@ -529,7 +512,7 @@ $promotionProducts = $featuredDisplay->getPromotionProducts(8);
 <script src="administrator/js_LQA/toast-notification.js"></script>
 <script>
     function addToCart(productId) {
-        // AJAX thêm vào giỏ hàng
+
         fetch('?p=giohang&action=add', {
                 method: 'POST',
                 headers: {
@@ -541,7 +524,7 @@ $promotionProducts = $featuredDisplay->getPromotionProducts(8);
             .then(data => {
                 if (data.success) {
                     Toast.success('Đã thêm vào giỏ hàng!');
-                    // Cập nhật số lượng giỏ hàng
+
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     Toast.error('Có lỗi xảy ra!');

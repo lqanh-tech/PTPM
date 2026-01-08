@@ -1,7 +1,4 @@
 <?php
-/**
- * Trang thống kê hoạt động nhân viên cải thiện
- */
 
 require_once './elements_LQA/mod/database.php';
 require_once './elements_LQA/mod/nhatKyHoatDongCls.php';
@@ -11,18 +8,15 @@ require_once './elements_LQA/mod/nhanvienCls.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Khởi tạo các đối tượng
 $nhatKyObj = new NhatKyHoatDong();
 $phanHeObj = new PhanHeQuanLy();
 $nhanVienObj = new NhanVien();
 
-// Lấy tham số từ URL
 $tuNgay = isset($_GET['tu_ngay']) ? $_GET['tu_ngay'] : date('Y-m-d', strtotime('-7 days'));
 $denNgay = isset($_GET['den_ngay']) ? $_GET['den_ngay'] : date('Y-m-d');
 $selectedNhanVien = isset($_GET['nhan_vien']) ? $_GET['nhan_vien'] : '';
 $selectedPhanHe = isset($_GET['phan_he']) ? $_GET['phan_he'] : '';
 
-// Lấy danh sách nhân viên có username
 $stmt = $conn->query("
     SELECT nv.idNhanVien, nv.tenNV, u.username 
     FROM nhanvien nv 
@@ -32,10 +26,8 @@ $stmt = $conn->query("
 ");
 $danhSachNhanVien = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Lấy danh sách phân hệ
 $danhSachPhanHe = $phanHeObj->getAllPhanHe();
 
-// Tạo filters
 $filters = [
     'tu_ngay' => $tuNgay,
     'den_ngay' => $denNgay
@@ -45,22 +37,18 @@ if (!empty($selectedNhanVien)) {
     $filters['username'] = $selectedNhanVien;
 }
 
-// Lấy dữ liệu thống kê
 $thongKeNhanVien = [];
 foreach ($danhSachNhanVien as $nv) {
     $username = $nv['username'];
     
-    // Tạo filter cho nhân viên này
     $userFilters = [
         'username' => $username,
         'tu_ngay' => $tuNgay,
         'den_ngay' => $denNgay
     ];
     
-    // Lấy tổng hoạt động
     $tongHoatDong = $nhatKyObj->demSoLuongNhatKy($userFilters);
     
-    // Lấy chi tiết theo loại hành động
     $userFilters['hanh_dong'] = 'Đăng nhập';
     $soLanDangNhap = $nhatKyObj->demSoLuongNhatKy($userFilters);
     
@@ -73,7 +61,6 @@ foreach ($danhSachNhanVien as $nv) {
     $userFilters['hanh_dong'] = 'Xóa';
     $soLanXoa = $nhatKyObj->demSoLuongNhatKy($userFilters);
     
-    // Lấy phân hệ được gán
     $phanHeGan = $phanHeObj->getPhanHeByNhanVienId($nv['idNhanVien']);
     
     $thongKeNhanVien[] = [
@@ -89,12 +76,10 @@ foreach ($danhSachNhanVien as $nv) {
     ];
 }
 
-// Sắp xếp theo tổng hoạt động
 usort($thongKeNhanVien, function($a, $b) {
     return $b['tongHoatDong'] - $a['tongHoatDong'];
 });
 
-// Lọc theo nhân viên nếu được chọn
 if (!empty($selectedNhanVien)) {
     $thongKeNhanVien = array_filter($thongKeNhanVien, function($item) use ($selectedNhanVien) {
         return $item['username'] == $selectedNhanVien;

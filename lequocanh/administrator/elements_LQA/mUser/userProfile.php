@@ -5,26 +5,20 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Kiểm tra xem người dùng đã đăng nhập hay chưa
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     header('location: ../../userLogin.php');
     exit();
 }
 
-// Ghi log để debug
 error_log("userProfile.php: Người dùng đã đăng nhập với SESSION: " . (isset($_SESSION['USER']) ? "USER=" . $_SESSION['USER'] : "ADMIN=" . $_SESSION['ADMIN']));
 
-// Lấy username từ session
 $username = isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : $_SESSION['USER'];
 
-// Khởi tạo đối tượng user
 $userObj = new user();
 
-// Lấy ID của user từ username
 $allUsers = $userObj->UserGetAll();
 $currentUser = null;
 
-// Ghi log để debug
 error_log("userProfile.php: Đang tìm user với username: '$username'");
 
 foreach ($allUsers as $user) {
@@ -35,20 +29,16 @@ foreach ($allUsers as $user) {
     }
 }
 
-// Nếu không tìm thấy user, chuyển hướng về trang chính
 if (!$currentUser) {
     error_log("userProfile.php: Không tìm thấy user với username: '$username'");
     header('location: ../../index.php');
     exit();
 }
 
-// Format giới tính để hiển thị
 $genderText = ($currentUser->gioitinh == 1) ? 'Nam' : 'Nữ';
 
-// Format ngày đăng nhập cuối
 $lastLogin = isset($_COOKIE[$username]) ? $_COOKIE[$username] : 'Không có thông tin';
 
-// Tính thời gian sử dụng tài khoản (nếu có thông tin ngày đăng ký)
 $accountAge = '';
 if (isset($currentUser->ngaydangki)) {
     $registerDate = new DateTime($currentUser->ngaydangki);
@@ -72,14 +62,12 @@ if (isset($currentUser->ngaydangki)) {
     $accountAge = 'Không có thông tin';
 }
 
-// Kiểm tra xem người dùng có trong bảng nhân viên hay không
 function isNhanVien($iduser)
 {
     try {
-        // Log để debug
+
         error_log("Checking isNhanVien for user ID: " . $iduser);
 
-        // Sử dụng path tương đối để đảm bảo tìm được file database.php
         $possiblePaths = [
             __DIR__ . '/../../elements_LQA/mod/database.php',
             __DIR__ . '/../mod/database.php',
@@ -102,7 +90,6 @@ function isNhanVien($iduser)
 
         $db = Database::getInstance()->getConnection();
 
-        // Query cụ thể hơn
         $sql = "SELECT COUNT(*) FROM nhanvien WHERE iduser = ? AND iduser IS NOT NULL";
         $stmt = $db->prepare($sql);
         $stmt->execute([$iduser]);
@@ -117,11 +104,9 @@ function isNhanVien($iduser)
     }
 }
 
-// Kiểm tra nếu là Admin thì không cần kiểm tra nhân viên
 $isAdmin = isset($_SESSION['ADMIN']);
 $isNhanVien = $isAdmin || isNhanVien($currentUser->iduser);
 
-// Debug thông tin
 error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ? 'true' : 'false'));
 
 ?>
@@ -459,7 +444,6 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                 }
             }
 
-            /* Modal styles */
             .modal {
                 display: none;
                 position: fixed;
@@ -536,7 +520,6 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                 gap: 10px;
             }
 
-            /* Alert styles */
             .alert {
                 padding: 12px 15px;
                 margin-bottom: 15px;
@@ -568,7 +551,7 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
 
         <script>
             $(document).ready(function() {
-                // Xử lý hiển thị/ẩn mật khẩu
+
                 $('.toggle-password').click(function() {
                     var passwordField = $(this).prev('.password-dots');
                     var eyeIcon = $(this);
@@ -582,9 +565,8 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                     }
                 });
 
-                // Xử lý mở modal đổi mật khẩu
                 $('#change-password-btn').click(function() {
-                    // Reset form và thông báo
+
                     $('#changePasswordForm')[0].reset();
                     $('#password-mismatch').hide();
                     $('#password-result-message').hide();
@@ -593,19 +575,16 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                     $('#changePasswordModal').addClass('show');
                 });
 
-                // Xử lý đóng modal
                 $('#modalCloseBtn, #cancelBtn').click(function() {
                     $('#changePasswordModal').removeClass('show');
                 });
 
-                // Đóng modal khi click bên ngoài
                 $(window).click(function(event) {
                     if ($(event.target).is('#changePasswordModal')) {
                         $('#changePasswordModal').removeClass('show');
                     }
                 });
 
-                // Kiểm tra mật khẩu mới và xác nhận mật khẩu
                 $('#confirm-password, #new-password').on('keyup', function() {
                     if ($('#new-password').val() !== '' && $('#confirm-password').val() !== '') {
                         if ($('#new-password').val() !== $('#confirm-password').val()) {
@@ -618,34 +597,28 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                     }
                 });
 
-                // Xử lý submit form đổi mật khẩu với AJAX
                 $('#changePasswordForm').submit(function(e) {
                     e.preventDefault();
 
-                    // Kiểm tra lại mật khẩu mới và xác nhận
                     if ($('#new-password').val() !== $('#confirm-password').val()) {
                         $('#password-mismatch').show();
                         return false;
                     }
 
-                    // Hiển thị thông báo đang xử lý ngay lập tức
                     $('#password-result-message')
                         .removeClass('alert-danger alert-success')
                         .addClass('alert-info')
                         .html('Đang xử lý yêu cầu...')
                         .show();
 
-                    // Disable nút submit để tránh click nhiều lần
                     $('#submit-change-password').prop('disabled', true).text('Đang xử lý...');
 
-                    // Lấy dữ liệu từ form
                     var iduser = $('input[name="iduser"]').val();
                     var passwordold = $('#old-password').val();
                     var passwordnew = $('#new-password').val();
 
                     console.log("Đang gửi yêu cầu đổi mật khẩu cho user ID: " + iduser);
 
-                    // Gửi AJAX request
                     $.ajax({
                         url: 'userAct.php?reqact=changepassword',
                         type: 'POST',
@@ -658,17 +631,15 @@ error_log("User ID: " . $currentUser->iduser . ", isNhanVien: " . ($isNhanVien ?
                         success: function(response) {
                             console.log("Nhận phản hồi: ", response);
 
-                            // Luôn hiển thị phản hồi thành công, vì userAct.php có thể không trả về JSON
                             $('#password-result-message')
                                 .removeClass('alert-danger alert-info')
                                 .addClass('alert-success')
                                 .html('Đổi mật khẩu thành công!')
                                 .show();
 
-                            // Đóng modal sau 2 giây
                             setTimeout(function() {
                                 $('#changePasswordModal').removeClass('show');
-                                // Cập nhật lại hiển thị mật khẩu nếu người dùng đang xem
+
                                 if ($('.password-dots').text() !== '••••••••') {
                                     $('.password-dots').text(passwordnew);
                                 }

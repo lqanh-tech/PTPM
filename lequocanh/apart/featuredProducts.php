@@ -1,28 +1,17 @@
 <?php
-/**
- * Widget hiển thị sản phẩm đặc biệt
- * Include file này vào trang chủ
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/FeaturedProductsCls.php';
 
 $featuredMgr = new FeaturedProducts();
 
-// Lấy dữ liệu
 $featuredProducts = $featuredMgr->getFeaturedProducts(8);
 $newProducts = $featuredMgr->getNewProducts(8);
 $saleProducts = $featuredMgr->getSaleProducts(8);
 
-/**
- * Helper function để format giá
- */
 function formatPrice($price) {
     return number_format($price, 0, ',', '.') . ' đ';
 }
 
-/**
- * Helper function để lấy URL hình ảnh
- */
 function getProductImage($product) {
     if (!empty($product->hinhanh) && $product->hinhanh != 0) {
         return "administrator/elements_LQA/mhanghoa/displayImage.php?id=" . $product->hinhanh;
@@ -376,7 +365,7 @@ function getProductImage($product) {
 
 <script>
 function addToCart(productId) {
-    // Implement add to cart functionality
+
     window.location.href = '?addcart=' + productId;
 }
 </script>

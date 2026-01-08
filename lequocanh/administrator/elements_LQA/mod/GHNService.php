@@ -1,10 +1,4 @@
 <?php
-/**
- * GHN (Giao Hàng Nhanh) Service
- * 
- * Service to integrate with GHN Shipping API
- * Automatically falls back to Mock Service if API token is not configured
- */
 
 require_once __DIR__ . '/GHNMockService.php';
 
@@ -16,33 +10,25 @@ class GHNService {
     private $useMock = false;
     private $mockService;
     
-    // Default shop location (Hanoi)
-    private $fromDistrictId = 1001; // Ba Dinh, Hanoi
+    private $fromDistrictId = 1001;
     private $fromWardCode = '10001';
     
     public function __construct() {
-        // Load config from environment
+
         $this->apiToken = getenv('GHN_API_TOKEN') ?: '';
         $this->shopId = getenv('GHN_SHOP_ID') ?: '';
         $this->apiEndpoint = getenv('GHN_API_ENDPOINT') ?: 'https://dev-online-gateway.ghn.vn/shiip/public-api/v2';
         
-        // Check if we should use mock
         if (empty($this->apiToken) || $this->apiToken === 'your_ghn_api_token_here') {
             $this->useMock = true;
             $this->mockService = new GHNMockService();
         }
     }
     
-    /**
-     * Check if using mock service
-     */
     public function isUsingMock() {
         return $this->useMock;
     }
     
-    /**
-     * Make API request to GHN
-     */
     private function makeRequest($endpoint, $method = 'GET', $data = null) {
         if ($this->useMock) {
             return $this->handleMockRequest($endpoint, $method, $data);
@@ -98,11 +84,8 @@ class GHNService {
         return $result;
     }
     
-    /**
-     * Handle mock requests
-     */
     private function handleMockRequest($endpoint, $method, $data) {
-        // Route to appropriate mock method
+
         if (strpos($endpoint, '/master-data/province') !== false) {
             return $this->mockService->getProvinces();
         } elseif (strpos($endpoint, '/master-data/district') !== false) {
@@ -130,34 +113,22 @@ class GHNService {
         ];
     }
     
-    /**
-     * Get list of provinces
-     */
     public function getProvinces() {
         return $this->makeRequest('/master-data/province', 'GET');
     }
     
-    /**
-     * Get districts by province
-     */
     public function getDistricts($provinceId) {
         return $this->makeRequest('/master-data/district', 'POST', [
             'province_id' => $provinceId
         ]);
     }
     
-    /**
-     * Get wards by district
-     */
     public function getWards($districtId) {
         return $this->makeRequest('/master-data/ward', 'POST', [
             'district_id' => $districtId
         ]);
     }
     
-    /**
-     * Get available services
-     */
     public function getAvailableServices($toDistrictId) {
         return $this->makeRequest('/shipping-order/available-services', 'POST', [
             'shop_id' => (int)$this->shopId,
@@ -166,19 +137,8 @@ class GHNService {
         ]);
     }
     
-    /**
-     * Calculate shipping fee
-     * 
-     * @param array $params [
-     *   'to_district_id' => int,
-     *   'to_ward_code' => string,
-     *   'weight' => int (grams),
-     *   'insurance_value' => int (VND),
-     *   'service_type_id' => int (optional)
-     * ]
-     */
     public function calculateShippingFee($params) {
-        $serviceTypeId = $params['service_type_id'] ?? 2; // 2 = Standard
+        $serviceTypeId = $params['service_type_id'] ?? 2;
         
         $requestData = [
             'service_type_id' => $serviceTypeId,
@@ -198,14 +158,9 @@ class GHNService {
         return $this->makeRequest('/shipping-order/fee', 'POST', $requestData);
     }
     
-    /**
-     * Create shipping order
-     * 
-     * @param array $orderData Full order information
-     */
     public function createShippingOrder($orderData) {
         $requestData = [
-            'payment_type_id' => $orderData['payment_type_id'] ?? 1, // 1=Shop pays, 2=Customer pays
+            'payment_type_id' => $orderData['payment_type_id'] ?? 1,
             'note' => $orderData['note'] ?? '',
             'required_note' => $orderData['required_note'] ?? 'KHONGCHOXEMHANG',
             'from_name' => $orderData['from_name'] ?? 'Shop',
@@ -237,18 +192,12 @@ class GHNService {
         return $this->makeRequest('/shipping-order/create', 'POST', $requestData);
     }
     
-    /**
-     * Get order tracking info
-     */
     public function getOrderInfo($orderCode) {
         return $this->makeRequest('/shipping-order/detail', 'POST', [
             'order_code' => $orderCode
         ]);
     }
     
-    /**
-     * Cancel order
-     */
     public function cancelOrder($orderCodes) {
         if (!is_array($orderCodes)) {
             $orderCodes = [$orderCodes];
@@ -259,9 +208,6 @@ class GHNService {
         ]);
     }
     
-    /**
-     * Get print token for shipping label
-     */
     public function getPrintToken($orderCodes) {
         if (!is_array($orderCodes)) {
             $orderCodes = [$orderCodes];
@@ -272,10 +218,6 @@ class GHNService {
         ]);
     }
     
-    /**
-     * Calculate shipping fee with full details
-     * Returns formatted response for easy use
-     */
     public function calculateShippingComplete($params) {
         try {
             $result = $this->calculateShippingFee($params);
@@ -299,7 +241,7 @@ class GHNService {
                 'method_name' => 'Giao Hàng Nhanh (GHN)',
                 'estimated_delivery' => $data['expected_delivery_time'] ?? null,
                 'estimated_days' => $this->calculateEstimatedDays($data['expected_delivery_time'] ?? null),
-                'distance_km' => null, // GHN doesn't provide this
+                'distance_km' => null,
                 'message' => 'Calculated successfully',
                 'using_mock' => $this->useMock
             ];
@@ -313,12 +255,9 @@ class GHNService {
         }
     }
     
-    /**
-     * Calculate estimated days from delivery time
-     */
     private function calculateEstimatedDays($deliveryTime) {
         if (empty($deliveryTime)) {
-            return 3; // Default 3 days
+            return 3;
         }
         
         try {
@@ -331,9 +270,6 @@ class GHNService {
         }
     }
     
-    /**
-     * Set shop location
-     */
     public function setShopLocation($districtId, $wardCode) {
         $this->fromDistrictId = $districtId;
         $this->fromWardCode = $wardCode;

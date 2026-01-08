@@ -2,6 +2,9 @@
 require_once './elements_LQA/mod/userCls.php';
 require_once './elements_LQA/mod/userRoleCls.php';
 require_once './elements_LQA/mod/database.php';
+require_once './elements_LQA/mod/EmailService.php';
+
+require_once __DIR__ . '/../includes/csrf_helper.php';
 
 $errors = [];
 $success = false;
@@ -11,6 +14,9 @@ $formData = [
     'gender' => '',
     'birthdate' => '',
     'address' => '',
+    'province' => 0,
+    'district' => 0,
+    'ward' => 0,
     'phone' => '',
     'email' => ''
 ];
@@ -20,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userRole = new UserRole();
     $db = Database::getInstance()->getConnection();
 
-    // Lấy dữ liệu từ form
     $formData['username'] = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
@@ -28,12 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formData['gender'] = $_POST['gender'] ?? '';
     $formData['birthdate'] = $_POST['birthdate'] ?? '';
     $formData['address'] = trim($_POST['address'] ?? '');
+    $formData['province'] = intval($_POST['province'] ?? 0);
+    $formData['district'] = intval($_POST['district'] ?? 0);
+    $formData['ward'] = intval($_POST['ward'] ?? 0);
     $formData['phone'] = trim($_POST['phone'] ?? '');
     $formData['email'] = trim($_POST['email'] ?? '');
 
-    // === VALIDATION ===
-    
-    // 1. Username (BẮT BUỘC)
     if (empty($formData['username'])) {
         $errors['username'] = 'Vui lòng nhập tên đăng nhập';
     } elseif (strlen($formData['username']) < 4) {
@@ -48,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['username'] = 'Tên đăng nhập đã được sử dụng';
     }
 
-    // 2. Password (BẮT BUỘC)
     if (empty($password)) {
         $errors['password'] = 'Vui lòng nhập mật khẩu';
     } elseif (strlen($password) < 6) {
@@ -57,14 +61,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['password'] = 'Mật khẩu không được quá 50 ký tự';
     }
     
-    // 3. Confirm Password (BẮT BUỘC)
     if (empty($confirmPassword)) {
         $errors['confirm_password'] = 'Vui lòng xác nhận mật khẩu';
     } elseif ($password !== $confirmPassword) {
         $errors['confirm_password'] = 'Mật khẩu xác nhận không khớp';
     }
     
-    // 4. Họ tên (BẮT BUỘC)
     if (empty($formData['fullname'])) {
         $errors['fullname'] = 'Vui lòng nhập họ tên';
     } elseif (strlen($formData['fullname']) < 2) {
@@ -73,8 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['fullname'] = 'Họ tên không được quá 100 ký tự';
     }
     
-    // 5. Giới tính (KHÔNG BẮT BUỘC)
-    $genderValue = '1'; // Mặc định Nam
+    $genderValue = '1';
     if (!empty($formData['gender'])) {
         if (!in_array($formData['gender'], ['male', 'female'])) {
             $errors['gender'] = 'Giới tính không hợp lệ';
@@ -83,11 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // 6. Ngày sinh (KHÔNG BẮT BUỘC nhưng phải hợp lệ nếu nhập)
     if (!empty($formData['birthdate'])) {
         $birthDate = strtotime($formData['birthdate']);
         $minAge = strtotime('-100 years');
-        $maxAge = strtotime('-10 years'); // Tối thiểu 10 tuổi
+        $maxAge = strtotime('-10 years');
         
         if ($birthDate === false) {
             $errors['birthdate'] = 'Ngày sinh không hợp lệ';
@@ -98,12 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // 7. Địa chỉ (KHÔNG BẮT BUỘC)
     if (!empty($formData['address']) && strlen($formData['address']) > 255) {
         $errors['address'] = 'Địa chỉ không được quá 255 ký tự';
     }
     
-    // 8. Số điện thoại (BẮT BUỘC)
     if (empty($formData['phone'])) {
         $errors['phone'] = 'Vui lòng nhập số điện thoại';
     } elseif (!preg_match('/^[0-9]{10,11}$/', $formData['phone'])) {
@@ -111,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!preg_match('/^(0[3|5|7|8|9])[0-9]{8}$/', $formData['phone'])) {
         $errors['phone'] = 'Số điện thoại không đúng định dạng Việt Nam (VD: 0912345678)';
     } else {
-        // Kiểm tra trùng số điện thoại
+
         $stmt = $db->prepare("SELECT COUNT(*) FROM user WHERE dienthoai = ?");
         $stmt->execute([$formData['phone']]);
         if ($stmt->fetchColumn() > 0) {
@@ -119,23 +117,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // 9. Email (KHÔNG BẮT BUỘC nhưng phải hợp lệ và không trùng nếu nhập)
-    if (!empty($formData['email'])) {
-        if (!filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
-            $errors['email'] = 'Email không đúng định dạng';
-        } elseif (strlen($formData['email']) > 100) {
-            $errors['email'] = 'Email không được quá 100 ký tự';
-        } else {
-            // Kiểm tra trùng email
-            $stmt = $db->prepare("SELECT COUNT(*) FROM user WHERE email = ? AND email != ''");
-            $stmt->execute([$formData['email']]);
-            if ($stmt->fetchColumn() > 0) {
-                $errors['email'] = 'Email đã được đăng ký bởi tài khoản khác';
-            }
+    if (empty($formData['email'])) {
+        $errors['email'] = 'Vui lòng nhập địa chỉ email';
+    } elseif (!filter_var($formData['email'], FILTER_VALIDATE_EMAIL)) {
+        $errors['email'] = 'Email không đúng định dạng';
+    } elseif (strlen($formData['email']) > 100) {
+        $errors['email'] = 'Email không được quá 100 ký tự';
+    } else {
+
+        $stmt = $db->prepare("SELECT COUNT(*) FROM user WHERE email = ? AND email != ''");
+        $stmt->execute([$formData['email']]);
+        if ($stmt->fetchColumn() > 0) {
+            $errors['email'] = 'Email đã được đăng ký bởi tài khoản khác';
         }
     }
     
-    // === ĐĂNG KÝ NẾU KHÔNG CÓ LỖI ===
     if (empty($errors)) {
         try {
             $result = $user->UserAdd(
@@ -146,12 +142,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $formData['birthdate'] ?: null,
                 $formData['address'] ?: null,
                 $formData['phone'],
-                $formData['email'] ?: null
+                $formData['email'] ?: null,
+                $formData['province'] ?: null,
+                $formData['district'] ?: null,
+                $formData['ward'] ?: null
             );
 
             if ($result) {
                 $newUserId = $db->lastInsertId();
                 $userRole->assignDefaultRole($newUserId);
+                
+                try {
+                    $emailService = new EmailService();
+                    $emailService->sendWelcomeEmail(
+                        $formData['email'],
+                        $formData['fullname'],
+                        $formData['username']
+                    );
+                } catch (Exception $e) {
+
+                    error_log("Failed to send welcome email: " . $e->getMessage());
+                }
+                
                 header("Location: userLogin.php?register=success");
                 exit();
             } else {
@@ -169,6 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Đăng ký tài khoản - LQA Shop</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?= csrf_meta() ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -326,6 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <?php endif; ?>
 
     <form id="signupForm" method="POST" novalidate>
+        <?= csrf_field() ?>
         <!-- Username -->
         <div class="form-group">
             <label class="form-label">Tên đăng nhập <span class="required">*</span></label>
@@ -383,13 +397,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- Email -->
         <div class="form-group">
-            <label class="form-label">Email <span class="optional">(không bắt buộc)</span></label>
+            <label class="form-label">Email <span class="required">*</span></label>
             <input type="email" class="form-control <?php echo isset($errors['email']) ? 'is-invalid' : ''; ?>" 
                    id="email" name="email" value="<?php echo htmlspecialchars($formData['email']); ?>"
-                   placeholder="VD: example@gmail.com" maxlength="100">
-            <div class="invalid-feedback"><?php echo $errors['email'] ?? 'Email không hợp lệ'; ?></div>
+                   placeholder="VD: example@gmail.com" maxlength="100" required>
+            <div class="invalid-feedback"><?php echo $errors['email'] ?? 'Vui lòng nhập email hợp lệ'; ?></div>
             <div class="valid-feedback"><i class="fas fa-check"></i> Email hợp lệ</div>
-            <div class="form-hint"><i class="fas fa-info-circle"></i> Dùng để khôi phục mật khẩu và nhận thông báo đơn hàng</div>
+            <div class="form-hint"><i class="fas fa-info-circle"></i> Dùng để nhận email xác nhận đăng ký, khôi phục mật khẩu và thông báo đơn hàng</div>
             <span class="checking-indicator" id="email-checking"><i class="fas fa-spinner fa-spin"></i> Đang kiểm tra...</span>
         </div>
 
@@ -413,13 +427,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="invalid-feedback"><?php echo $errors['birthdate'] ?? 'Ngày sinh không hợp lệ'; ?></div>
         </div>
 
-        <!-- Address -->
+        <!-- Address - Cascade Dropdowns -->
         <div class="form-group">
-            <label class="form-label">Địa chỉ <span class="optional">(không bắt buộc)</span></label>
+            <label class="form-label">Tỉnh/Thành phố <span class="optional">(không bắt buộc)</span></label>
+            <select class="form-select" id="province" name="province">
+                <option value="">-- Chọn Tỉnh/Thành phố --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Quận/Huyện <span class="optional">(không bắt buộc)</span></label>
+            <select class="form-select" id="district" name="district" disabled>
+                <option value="">-- Chọn Quận/Huyện --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Phường/Xã <span class="optional">(không bắt buộc)</span></label>
+            <select class="form-select" id="ward" name="ward" disabled>
+                <option value="">-- Chọn Phường/Xã --</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Địa chỉ chi tiết <span class="optional">(không bắt buộc)</span></label>
             <input type="text" class="form-control <?php echo isset($errors['address']) ? 'is-invalid' : ''; ?>" 
                    id="address" name="address" value="<?php echo htmlspecialchars($formData['address']); ?>"
-                   placeholder="Nhập địa chỉ" maxlength="255">
+                   placeholder="Số nhà, tên đường..." maxlength="255">
             <div class="invalid-feedback"><?php echo $errors['address'] ?? ''; ?></div>
+            <div class="form-hint"><i class="fas fa-info-circle"></i> VD: Số 123, Đường Nguyễn Văn A</div>
         </div>
 
         <button type="submit" class="btn btn-signup mt-3" id="submitBtn">
@@ -437,7 +473,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $(document).ready(function() {
     let checkTimeout = {};
     
-    // Toggle password visibility
+    // Load provinces on page load
+    loadProvinces();
+    
+    // Cascade dropdown handlers
+    $('#province').on('change', function() {
+        const provinceId = $(this).val();
+        $('#district').prop('disabled', true).html('<option value="">-- Chọn Quận/Huyện --</option>');
+        $('#ward').prop('disabled', true).html('<option value="">-- Chọn Phường/Xã --</option>');
+        
+        if (provinceId) {
+            loadDistricts(provinceId);
+        }
+    });
+    
+    $('#district').on('change', function() {
+        const districtId = $(this).val();
+        $('#ward').prop('disabled', true).html('<option value="">-- Chọn Phường/Xã --</option>');
+        
+        if (districtId) {
+            loadWards(districtId);
+        }
+    });
+    
+    function loadProvinces() {
+        $.ajax({
+            url: '../api/get_address_data.php',
+            type: 'GET',
+            data: { action: 'get_all_provinces' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.provinces) {
+                    let options = '<option value="">-- Chọn Tỉnh/Thành phố --</option>';
+                    response.provinces.forEach(function(province) {
+                        options += `<option value="${province.id}">${province.name}</option>`;
+                    });
+                    $('#province').html(options);
+                }
+            },
+            error: function() {
+                console.error('Failed to load provinces');
+            }
+        });
+    }
+    
+    function loadDistricts(provinceId) {
+        $.ajax({
+            url: '../api/get_address_data.php',
+            type: 'GET',
+            data: { 
+                action: 'get_districts',
+                province_id: provinceId
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.districts) {
+                    let options = '<option value="">-- Chọn Quận/Huyện --</option>';
+                    response.districts.forEach(function(district) {
+                        options += `<option value="${district.id}">${district.name}</option>`;
+                    });
+                    $('#district').html(options).prop('disabled', false);
+                }
+            },
+            error: function() {
+                console.error('Failed to load districts');
+            }
+        });
+    }
+    
+    function loadWards(districtId) {
+        $.ajax({
+            url: '../api/get_address_data.php',
+            type: 'GET',
+            data: { 
+                action: 'get_wards',
+                district_id: districtId
+            },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.wards) {
+                    let options = '<option value="">-- Chọn Phường/Xã --</option>';
+                    response.wards.forEach(function(ward) {
+                        options += `<option value="${ward.id}">${ward.name}</option>`;
+                    });
+                    $('#ward').html(options).prop('disabled', false);
+                }
+            },
+            error: function() {
+                console.error('Failed to load wards');
+            }
+        });
+    }
+    
     $('#togglePassword, #toggleConfirm').on('click', function() {
         const input = $(this).siblings('input');
         const type = input.attr('type') === 'password' ? 'text' : 'password';
@@ -445,7 +572,6 @@ $(document).ready(function() {
         $(this).find('i').toggleClass('fa-eye fa-eye-slash');
     });
     
-    // Password strength indicator
     $('#password').on('input', function() {
         const password = $(this).val();
         const strength = checkPasswordStrength(password);
@@ -476,12 +602,10 @@ $(document).ready(function() {
         return strength;
     }
     
-    // Real-time validation
     $('#username').on('input', function() {
         const value = $(this).val().trim();
         clearTimeout(checkTimeout['username']);
         
-        // Basic validation first
         if (value.length < 4) {
             setFieldError('username', 'Tên đăng nhập phải có ít nhất 4 ký tự');
             return;
@@ -495,7 +619,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Check duplicate
         $('#username-checking').addClass('show');
         checkTimeout['username'] = setTimeout(function() {
             checkDuplicate('username', value);
@@ -503,7 +626,7 @@ $(document).ready(function() {
     });
     
     $('#phone').on('input', function() {
-        // Only allow numbers
+
         this.value = this.value.replace(/[^0-9]/g, '');
         
         const value = $(this).val();
@@ -522,7 +645,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Check duplicate
         $('#phone-checking').addClass('show');
         checkTimeout['phone'] = setTimeout(function() {
             checkDuplicate('phone', value);
@@ -534,7 +656,7 @@ $(document).ready(function() {
         clearTimeout(checkTimeout['email']);
         
         if (value === '') {
-            $(this).removeClass('is-invalid is-valid');
+            setFieldError('email', 'Vui lòng nhập địa chỉ email');
             return;
         }
         
@@ -544,14 +666,12 @@ $(document).ready(function() {
             return;
         }
         
-        // Check duplicate
         $('#email-checking').addClass('show');
         checkTimeout['email'] = setTimeout(function() {
             checkDuplicate('email', value);
         }, 500);
     });
 
-    // Check duplicate via AJAX
     function checkDuplicate(type, value) {
         $.ajax({
             url: './elements_LQA/mUser/checkDuplicateAct.php',
@@ -584,7 +704,6 @@ $(document).ready(function() {
         input.removeClass('is-invalid').addClass('is-valid');
     }
     
-    // Confirm password validation
     $('#confirm_password').on('input', function() {
         const password = $('#password').val();
         const confirm = $(this).val();
@@ -598,7 +717,6 @@ $(document).ready(function() {
         }
     });
     
-    // Fullname validation
     $('#fullname').on('input', function() {
         const value = $(this).val().trim();
         if (value.length < 2) {
@@ -619,7 +737,7 @@ $(document).ready(function() {
                 } else {
                     setFieldValid('password');
                 }
-                // Also check confirm password
+
                 if ($('#confirm_password').val() !== '') {
                     $('#confirm_password').trigger('input');
                 }
@@ -627,12 +745,10 @@ $(document).ready(function() {
         }
     }
     
-    // Form submission validation
     $('#signupForm').on('submit', function(e) {
         let isValid = true;
         const errors = [];
         
-        // Username
         const username = $('#username').val().trim();
         if (username === '' || username.length < 4 || username.includes(' ') || !/^[a-zA-Z0-9_]+$/.test(username)) {
             isValid = false;
@@ -642,28 +758,24 @@ $(document).ready(function() {
             errors.push('Tên đăng nhập');
         }
         
-        // Password
         if ($('#password').val().length < 6) {
             isValid = false;
             setFieldError('password', 'Mật khẩu phải có ít nhất 6 ký tự');
             errors.push('Mật khẩu');
         }
         
-        // Confirm password
         if ($('#password').val() !== $('#confirm_password').val()) {
             isValid = false;
             setFieldError('confirm_password', 'Mật khẩu xác nhận không khớp');
             errors.push('Xác nhận mật khẩu');
         }
         
-        // Fullname
         if ($('#fullname').val().trim().length < 2) {
             isValid = false;
             setFieldError('fullname', 'Vui lòng nhập họ tên');
             errors.push('Họ tên');
         }
         
-        // Phone
         const phone = $('#phone').val();
         if (!/^(0[3|5|7|8|9])[0-9]{8}$/.test(phone)) {
             isValid = false;
@@ -671,15 +783,17 @@ $(document).ready(function() {
             errors.push('Số điện thoại');
         }
         
-        // Email (optional but must be valid if provided)
         const email = $('#email').val().trim();
-        if (email !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        if (email === '') {
+            isValid = false;
+            setFieldError('email', 'Vui lòng nhập địa chỉ email');
+            errors.push('Email');
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             isValid = false;
             setFieldError('email', 'Email không đúng định dạng');
             errors.push('Email');
         }
         
-        // Check if any field has is-invalid class (from duplicate check)
         if ($('.form-control.is-invalid, .form-select.is-invalid').length > 0) {
             isValid = false;
         }
@@ -687,7 +801,6 @@ $(document).ready(function() {
         if (!isValid) {
             e.preventDefault();
             
-            // Scroll to first error
             const firstError = $('.is-invalid').first();
             if (firstError.length) {
                 $('html, body').animate({
@@ -703,5 +816,8 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<!-- CSRF Protection Helper -->
+<script src="../public_files/js/csrf-helper.js"></script>
 </body>
 </html>

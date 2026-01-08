@@ -3,7 +3,6 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Check access rights using PhanQuyen system
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -18,19 +17,17 @@ require_once './elements_LQA/mod/database.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Xử lý khi form được submit (di chuyển lên đầu để tránh lỗi header)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $bankName = $_POST['ten_ngan_hang'];
     $accountNumber = $_POST['so_tai_khoan'];
     $accountName = $_POST['ten_tai_khoan'];
 
-    // Kiểm tra xem bảng cau_hinh_thanh_toan đã tồn tại chưa
     $checkTableSql = "SHOW TABLES LIKE 'cau_hinh_thanh_toan'";
     $checkTableStmt = $conn->prepare($checkTableSql);
     $checkTableStmt->execute();
 
     if ($checkTableStmt->rowCount() == 0) {
-        // Bảng chưa tồn tại, tạo bảng cau_hinh_thanh_toan
+
         $createTableSql = "CREATE TABLE cau_hinh_thanh_toan (
             id INT AUTO_INCREMENT PRIMARY KEY,
             ten_ngan_hang VARCHAR(100) NOT NULL,
@@ -42,28 +39,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->exec($createTableSql);
     }
 
-    // Kiểm tra xem đã có cấu hình thanh toán chưa
     $checkConfigSql = "SELECT COUNT(*) FROM cau_hinh_thanh_toan";
     $checkConfigStmt = $conn->prepare($checkConfigSql);
     $checkConfigStmt->execute();
     $configCount = $checkConfigStmt->fetchColumn();
 
     if ($configCount > 0) {
-        // Đã có cấu hình, cập nhật
+
         $updateSql = "UPDATE cau_hinh_thanh_toan SET ten_ngan_hang = ?, so_tai_khoan = ?, ten_tai_khoan = ?";
         $updateStmt = $conn->prepare($updateSql);
         $updateStmt->execute([$bankName, $accountNumber, $accountName]);
     } else {
-        // Chưa có cấu hình, thêm mới
+
         $insertSql = "INSERT INTO cau_hinh_thanh_toan (ten_ngan_hang, so_tai_khoan, ten_tai_khoan) VALUES (?, ?, ?)";
         $insertStmt = $conn->prepare($insertSql);
         $insertStmt->execute([$bankName, $accountNumber, $accountName]);
     }
 
-    // Lưu thông báo thành công
     $_SESSION['cau_hinh_thanh_toan_success'] = true;
 
-    // Sử dụng JavaScript để hiển thị thông báo và reload trang
     echo '<script>
         alert("Cấu hình thanh toán đã được lưu thành công!");
         window.location.href = "index.php?req=cau_hinh_thanh_toan";
@@ -71,13 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit();
 }
 
-// Kiểm tra xem bảng cau_hinh_thanh_toan đã tồn tại chưa
 $checkTableSql = "SHOW TABLES LIKE 'cau_hinh_thanh_toan'";
 $checkTableStmt = $conn->prepare($checkTableSql);
 $checkTableStmt->execute();
 
 if ($checkTableStmt->rowCount() == 0) {
-    // Bảng chưa tồn tại, tạo bảng cau_hinh_thanh_toan
+
     $createTableSql = "CREATE TABLE cau_hinh_thanh_toan (
         id INT AUTO_INCREMENT PRIMARY KEY,
         ten_ngan_hang VARCHAR(100) NOT NULL,
@@ -89,7 +82,6 @@ if ($checkTableStmt->rowCount() == 0) {
     $conn->exec($createTableSql);
 }
 
-// Lấy thông tin cấu hình thanh toán hiện tại
 $configSql = "SELECT * FROM cau_hinh_thanh_toan LIMIT 1";
 $configStmt = $conn->prepare($configSql);
 $configStmt->execute();

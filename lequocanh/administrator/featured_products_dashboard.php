@@ -1,8 +1,4 @@
 <?php
-/**
- * Dashboard Sản Phẩm: Nổi Bật, Mới, Khuyến Mãi
- * Hiển thị 3 danh sách chính cho trang chủ
- */
 
 require_once __DIR__ . '/elements_LQA/mod/database.php';
 require_once __DIR__ . '/elements_LQA/mod/sessionManager.php';
@@ -16,25 +12,6 @@ if (!isset($_SESSION['USER'])) {
 
 $db = Database::getInstance()->getConnection();
 
-/**
- * LOGIC PHÂN LOẠI SẢN PHẨM:
- * 
- * 1. SẢN PHẨM NỔI BẬT (is_featured = 1):
- *    - Được đánh dấu bởi admin hoặc tự động
- *    - Dựa trên: doanh số cao + lượt xem nhiều + đánh giá tốt
- *    - Điểm tổng hợp: 40% doanh số + 30% lượt xem + 20% mới + 10% khuyến mãi
- * 
- * 2. SẢN PHẨM MỚI:
- *    - Sản phẩm được thêm trong vòng 30 ngày gần đây
- *    - Sắp xếp theo ngày tạo mới nhất
- * 
- * 3. SẢN PHẨM KHUYẾN MÃI:
- *    - is_sale = 1 (đang giảm giá)
- *    - Có giá khuyến mãi < giá gốc
- *    - Sắp xếp theo % giảm giá cao nhất
- */
-
-// 1. Lấy sản phẩm nổi bật
 $sqlFeatured = "SELECT 
                 h.*,
                 t.tenTH as ten_thuonghieu,
@@ -62,7 +39,6 @@ $sqlFeatured = "SELECT
 $stmtFeatured = $db->query($sqlFeatured);
 $featuredProducts = $stmtFeatured->fetchAll(PDO::FETCH_OBJ);
 
-// 2. Lấy sản phẩm mới (30 ngày gần đây)
 $sqlNew = "SELECT 
             h.*,
             t.tenTH as ten_thuonghieu,
@@ -79,7 +55,6 @@ $sqlNew = "SELECT
 $stmtNew = $db->query($sqlNew);
 $newProducts = $stmtNew->fetchAll(PDO::FETCH_OBJ);
 
-// 3. Lấy sản phẩm khuyến mãi
 $sqlSale = "SELECT 
             h.*,
             t.tenTH as ten_thuonghieu,
@@ -104,7 +79,6 @@ $sqlSale = "SELECT
 $stmtSale = $db->query($sqlSale);
 $saleProducts = $stmtSale->fetchAll(PDO::FETCH_OBJ);
 
-// Thống kê tổng quan
 $stats = [
     'total_featured' => count($featuredProducts),
     'total_new' => count($newProducts),

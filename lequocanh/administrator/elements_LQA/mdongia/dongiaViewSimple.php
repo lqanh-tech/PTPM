@@ -2,7 +2,6 @@
 require_once './elements_LQA/mod/dongiaCls.php';
 require_once './elements_LQA/mod/hanghoaCls.php';
 
-// Hiển thị thông báo nếu có
 if (isset($_SESSION['dongia_message'])) {
     $message = $_SESSION['dongia_message'];
     $success = isset($_SESSION['dongia_success']) ? $_SESSION['dongia_success'] : false;
@@ -173,7 +172,6 @@ function applyPrice(idDonGia, tenSanPham, giaBan) {
     
     if (confirm(`🎯 XÁC NHẬN ÁP DỤNG ĐỚN GIÁ\n\nSản phẩm: ${tenSanPham}\nGiá mới: ${giaFormatted}đ\n\n⚠️ LưU Ý: Đơn giá hiện tại sẽ bị thay thế!\n\nBạn có chắc chắn muốn áp dụng?`)) {
         
-        // Hiển thị loading
         const btn = event.target;
         const originalText = btn.innerHTML;
         btn.innerHTML = '⏳ Đang xử lý...';

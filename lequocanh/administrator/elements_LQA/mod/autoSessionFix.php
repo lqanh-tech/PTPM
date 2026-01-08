@@ -1,18 +1,7 @@
 <?php
-/**
- * Auto Session Fix - Automatically fixes session_start() calls
- * 
- * This script is meant to be included at the very beginning of PHP files
- * to automatically replace direct session_start() calls with SessionManager.
- * 
- * Usage:
- * 1. Include this file at the top of your PHP file
- * 2. It will automatically handle session management safely
- */
 
-// Check if SessionManager exists, if not include it
 if (!class_exists('SessionManager')) {
-    // Try multiple paths to find SessionManager
+
     $sessionManagerPaths = [
         __DIR__ . '/sessionManager.php',
         __DIR__ . '/../mod/sessionManager.php',
@@ -31,16 +20,15 @@ if (!class_exists('SessionManager')) {
     }
     
     if (!$foundSessionManager) {
-        // Fallback to safe session handling if SessionManager not found
+
         if (function_exists('session_status') && session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
 }
 
-// Check if Logger exists, if not include it
 if (!class_exists('Logger')) {
-    // Try multiple paths to find Logger config
+
     $loggerConfigPaths = [
         __DIR__ . '/../config/logger_config.php',
         __DIR__ . '/../../elements_LQA/config/logger_config.php',
@@ -58,17 +46,13 @@ if (!class_exists('Logger')) {
     }
 }
 
-// Start session safely using SessionManager if available
 if (class_exists('SessionManager')) {
     SessionManager::start();
 } else if (function_exists('session_status') && session_status() === PHP_SESSION_NONE) {
-    // Fallback to direct session_start if SessionManager not available
+
     session_start();
 }
 
-/**
- * Safe redirect function to prevent "headers already sent" errors
- */
 function safeRedirect($url, $statusCode = 302) {
     if (class_exists('ResponseManager')) {
         ResponseManager::redirect($url, $statusCode);
@@ -85,9 +69,6 @@ function safeRedirect($url, $statusCode = 302) {
     exit;
 }
 
-/**
- * Safe logging function that uses Logger if available, otherwise error_log
- */
 function safeLog($message, $level = 'info', $context = []) {
     if (class_exists('Logger')) {
         switch ($level) {

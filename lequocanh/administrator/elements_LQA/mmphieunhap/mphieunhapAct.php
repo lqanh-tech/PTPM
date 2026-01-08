@@ -1,9 +1,8 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 require_once '../mod/mphieunhapCls.php';
 require_once '../mod/mchitietphieunhapCls.php';
@@ -16,7 +15,7 @@ if (isset($_GET['reqact'])) {
     
     switch ($reqact) {
         case 'addnew':
-            // Thêm mới phiếu nhập
+
             if (isset($_POST['maPhieuNhap']) && isset($_POST['idNCC']) && isset($_POST['idNhanVien'])) {
                 $maPhieuNhap = $_POST['maPhieuNhap'];
                 $idNCC = $_POST['idNCC'];
@@ -26,7 +25,7 @@ if (isset($_GET['reqact'])) {
                 $result = $phieunhap->addPhieuNhap($maPhieuNhap, $idNhanVien, $idNCC, $ghiChu);
                 
                 if ($result) {
-                    // Chuyển đến trang chi tiết phiếu nhập để thêm sản phẩm
+
                     header("Location: ../../index.php?req=mchitietphieunhap&idpn=" . $result);
                 } else {
                     header("Location: ../../index.php?req=mphieunhap&result=fail");
@@ -37,7 +36,7 @@ if (isset($_GET['reqact'])) {
             break;
             
         case 'update':
-            // Cập nhật phiếu nhập
+
             if (isset($_POST['idPhieuNhap']) && isset($_POST['maPhieuNhap']) && isset($_POST['idNCC']) && isset($_POST['idNhanVien'])) {
                 $idPhieuNhap = $_POST['idPhieuNhap'];
                 $maPhieuNhap = $_POST['maPhieuNhap'];
@@ -58,7 +57,7 @@ if (isset($_GET['reqact'])) {
             break;
             
         case 'delete':
-            // Xóa phiếu nhập
+
             if (isset($_GET['idpn'])) {
                 $idPhieuNhap = $_GET['idpn'];
                 $result = $phieunhap->deletePhieuNhap($idPhieuNhap);
@@ -74,7 +73,7 @@ if (isset($_GET['reqact'])) {
             break;
             
         case 'approve':
-            // Duyệt phiếu nhập
+
             if (isset($_GET['idpn'])) {
                 $idPhieuNhap = $_GET['idpn'];
                 $result = $phieunhap->approvePhieuNhap($idPhieuNhap);
@@ -90,7 +89,7 @@ if (isset($_GET['reqact'])) {
             break;
             
         case 'cancel':
-            // Hủy phiếu nhập
+
             if (isset($_GET['idpn'])) {
                 $idPhieuNhap = $_GET['idpn'];
                 $result = $phieunhap->cancelPhieuNhap($idPhieuNhap);

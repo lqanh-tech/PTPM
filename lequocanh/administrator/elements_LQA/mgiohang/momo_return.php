@@ -1,18 +1,12 @@
 <?php
-/**
- * MoMo Return Handler - Xử lý khi user quay lại từ MoMo
- */
 
 session_start();
 
-// Include required files
 require_once __DIR__ . '/../../../payment/MoMoPayment.php';
 require_once __DIR__ . '/../mod/database.php';
 
-// Log callback data
 error_log('MoMo Return Callback: ' . json_encode($_GET));
 
-// Lấy dữ liệu từ callback
 $partnerCode = $_GET['partnerCode'] ?? '';
 $orderId = $_GET['orderId'] ?? '';
 $requestId = $_GET['requestId'] ?? '';
@@ -27,7 +21,6 @@ $responseTime = $_GET['responseTime'] ?? '';
 $extraData = $_GET['extraData'] ?? '';
 $signature = $_GET['signature'] ?? '';
 
-// Decode extraData
 $extraDataDecoded = json_decode(urldecode($extraData), true);
 $orderCode = $extraDataDecoded['order_code'] ?? '';
 $userId = $extraDataDecoded['user_id'] ?? '';
@@ -145,7 +138,7 @@ $shippingAddress = $extraDataDecoded['shipping_address'] ?? '';
     
     <?php if ($resultCode == '0'): ?>
     <script>
-        // Redirect ngay lập tức nếu thanh toán thành công
+
         let redirectUrl = null;
         let redirectTimer = null;
         let manualBtnTimer = null;
@@ -156,13 +149,12 @@ $shippingAddress = $extraDataDecoded['shipping_address'] ?? '';
                 window.location.href = redirectUrl;
             } else {
                 console.log('Waiting for redirect URL...');
-                // Nếu sau 5 giây vẫn không có URL, hiển thị nút thủ công
+
                 if (!redirectTimer) {
                     redirectTimer = setTimeout(function() {
                         console.log('Timeout - showing manual redirect button');
                         document.getElementById('manualRedirectBtn').style.display = 'block';
                         
-                        // Set href cho nút
                         if (redirectUrl) {
                             document.getElementById('viewInvoiceBtn').href = redirectUrl;
                         } else {
@@ -173,7 +165,6 @@ $shippingAddress = $extraDataDecoded['shipping_address'] ?? '';
             }
         }
         
-        // Hiển thị nút thủ công sau 3 giây (backup)
         manualBtnTimer = setTimeout(function() {
             if (redirectUrl) {
                 document.getElementById('manualRedirectBtn').style.display = 'block';
@@ -181,7 +172,6 @@ $shippingAddress = $extraDataDecoded['shipping_address'] ?? '';
             }
         }, 3000);
         
-        // Thử redirect sau 1 giây
         setTimeout(performRedirect, 1000);
     </script>
     <?php endif; ?>
@@ -189,13 +179,12 @@ $shippingAddress = $extraDataDecoded['shipping_address'] ?? '';
 </html>
 
 <?php
-// Cập nhật trạng thái đơn hàng trong database nếu thanh toán thành công
+
 if ($resultCode == '0') {
     try {
         $db = Database::getInstance();
         $conn = $db->getConnection();
         
-        // Tìm đơn hàng theo orderId từ MoMo
         $findOrderSql = "SELECT id, ma_nguoi_dung, tong_tien, ma_don_hang_text FROM don_hang WHERE ma_don_hang_text = ? LIMIT 1";
         $findStmt = $conn->prepare($findOrderSql);
         $findStmt->execute([$orderId]);
@@ -207,7 +196,6 @@ if ($resultCode == '0') {
             $orderTotal = $order['tong_tien'];
             $orderCode = $order['ma_don_hang_text'];
             
-            // Cập nhật trạng thái đơn hàng
             $updateSql = "UPDATE don_hang SET 
                           trang_thai_thanh_toan = 'paid',
                           trang_thai = 'approved',
@@ -217,7 +205,6 @@ if ($resultCode == '0') {
             $stmt = $conn->prepare($updateSql);
             $stmt->execute([$dbOrderId]);
             
-            // GHI NHẬN SỬ DỤNG COUPON (nếu có)
             if (isset($_SESSION['pending_coupon']) && !empty($_SESSION['pending_coupon'])) {
                 try {
                     require_once __DIR__ . '/../mod/CouponCls.php';
@@ -237,7 +224,6 @@ if ($resultCode == '0') {
                         error_log("MoMo Return - Failed to apply coupon: {$pendingCoupon['code']}");
                     }
                     
-                    // Xóa coupon khỏi session sau khi đã sử dụng
                     unset($_SESSION['pending_coupon']);
                     unset($_SESSION['applied_coupon']);
                     unset($_SESSION['coupon_discount']);
@@ -248,12 +234,10 @@ if ($resultCode == '0') {
                 }
             }
             
-            // GỬI THÔNG BÁO ĐẾN KHÁCH HÀNG
             try {
                 require_once __DIR__ . '/../mod/CustomerNotificationManager.php';
                 $notificationManager = new CustomerNotificationManager();
                 
-                // Gửi thông báo xác nhận thanh toán
                 $notificationManager->notifyPaymentConfirmed($dbOrderId, $orderUserId);
                 
                 error_log("MoMo Return - Notification sent for order $dbOrderId to user $orderUserId");
@@ -263,16 +247,12 @@ if ($resultCode == '0') {
             
             error_log("MoMo Return - Order updated successfully: $orderId (DB ID: $dbOrderId)");
             
-            // LƯU Ý: Tồn kho đã được trừ khi tạo đơn hàng trong momo_payment.php
-            // Ở đây chỉ cần xóa giỏ hàng và cập nhật trạng thái
             error_log("MoMo Return - Inventory was already deducted when order was created");
             
-            // Xóa các sản phẩm đã thanh toán khỏi giỏ hàng
             if (!empty($userId)) {
                 require_once __DIR__ . '/../mod/giohangCls.php';
                 $giohang = new GioHang();
                 
-                // Lấy tổng số sản phẩm trong giỏ TRƯỚC KHI xóa
                 $cartBeforeSql = "SELECT COUNT(*) as total FROM tbl_giohang WHERE user_id = ?";
                 $cartBeforeStmt = $conn->prepare($cartBeforeSql);
                 $cartBeforeStmt->execute([$userId]);
@@ -281,8 +261,6 @@ if ($resultCode == '0') {
                 
                 error_log("MoMo Return - Cart items BEFORE removal: $totalBeforeRemoval for user: $userId");
                 
-                // QUAN TRỌNG: Ưu tiên lấy danh sách sản phẩm từ session (đã được lưu khi tạo đơn hàng)
-                // Điều này đảm bảo chỉ xóa đúng các sản phẩm đã thanh toán
                 $orderItems = [];
                 
                 if (isset($_SESSION['pending_order']['purchased_product_ids']) && 
@@ -290,7 +268,7 @@ if ($resultCode == '0') {
                     $orderItems = $_SESSION['pending_order']['purchased_product_ids'];
                     error_log("MoMo Return - Using purchased_product_ids from session: " . implode(', ', $orderItems));
                 } else {
-                    // Fallback: Lấy từ chi_tiet_don_hang (chỉ khi session không có)
+
                     error_log("MoMo Return - Session purchased_product_ids not found, falling back to database");
                     $orderItemsSql = "SELECT ma_san_pham FROM chi_tiet_don_hang WHERE ma_don_hang = ?";
                     $orderItemsStmt = $conn->prepare($orderItemsSql);
@@ -300,7 +278,6 @@ if ($resultCode == '0') {
                 
                 error_log("MoMo Return - Products to remove from cart: " . implode(', ', $orderItems));
                 
-                // Chỉ xóa các sản phẩm đã thanh toán
                 $removedCount = 0;
                 foreach ($orderItems as $productId) {
                     if ($giohang->removeFromCart($productId)) {
@@ -311,7 +288,6 @@ if ($resultCode == '0') {
                     }
                 }
                 
-                // Kiểm tra số sản phẩm còn lại trong giỏ SAU KHI xóa
                 $cartAfterSql = "SELECT COUNT(*) as total FROM tbl_giohang WHERE user_id = ?";
                 $cartAfterStmt = $conn->prepare($cartAfterSql);
                 $cartAfterStmt->execute([$userId]);
@@ -321,25 +297,21 @@ if ($resultCode == '0') {
                 error_log("MoMo Return - Cart items AFTER removal: $totalAfterRemoval for user: $userId");
                 error_log("MoMo Return - Removed $removedCount purchased items from cart (Expected: " . count($orderItems) . ")");
                 
-                // Xóa thông tin pending_order khỏi session sau khi xử lý xong
                 unset($_SESSION['pending_order']);
             }
             
-            // Set session để order_success.php không redirect về giỏ hàng
             $_SESSION['payment_success'] = true;
             $_SESSION['order_id'] = $dbOrderId;
             
-            // Redirect đến trang hóa đơn - Sử dụng JavaScript để set URL
             echo "<script>
                 redirectUrl = 'order_success.php?order_id={$dbOrderId}';
                 console.log('Order processed successfully. Redirect URL set:', redirectUrl);
-                // Redirect ngay lập tức
+
                 setTimeout(function() {
                     window.location.href = redirectUrl;
                 }, 1500);
             </script>";
             
-            // Flush output để đảm bảo JavaScript được gửi
             if (ob_get_level() > 0) {
                 ob_flush();
             }
@@ -377,7 +349,7 @@ if ($resultCode == '0') {
         flush();
     }
 } else {
-    // Nếu thanh toán thất bại, không cần redirect
+
     echo "<script>
         console.log('Payment failed. Result code:', '<?php echo $resultCode; ?>');
     </script>";

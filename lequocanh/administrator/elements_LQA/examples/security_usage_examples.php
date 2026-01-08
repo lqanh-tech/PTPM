@@ -1,18 +1,9 @@
 <?php
-/**
- * Security Usage Examples - How to use the new security features
- * This file demonstrates how to implement CSRF protection and input validation
- */
 
-// Include security middleware
 require_once __DIR__ . '/../mod/securityMiddleware.php';
 
-// Initialize security
 SecurityMiddleware::init();
 
-/**
- * Example 1: Form with CSRF Protection
- */
 function exampleFormWithCSRF() {
     ?>
     <form method="POST" action="process_form.php">
@@ -29,12 +20,9 @@ function exampleFormWithCSRF() {
     <?php
 }
 
-/**
- * Example 2: Processing Form with Validation
- */
 function exampleProcessForm() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Define validation rules
+
         $rules = [
             'username' => 'required|min_length:3|max_length:50|alpha_numeric',
             'email' => 'required|email',
@@ -43,21 +31,19 @@ function exampleProcessForm() {
             'age' => 'integer|min_value:18|max_value:120'
         ];
         
-        // Validate request with CSRF protection
         $validation = SecurityMiddleware::validatePostRequest($_POST, $rules, true);
         
         if ($validation['valid']) {
-            // Process valid data
+
             $sanitizedData = $validation['sanitized_data'];
             
-            // Your business logic here
             echo "Form processed successfully!";
             
             if (class_exists('Logger')) {
                 Logger::info("Form processed", ['user' => $sanitizedData['username']]);
             }
         } else {
-            // Handle validation errors
+
             foreach ($validation['errors'] as $field => $errors) {
                 foreach ($errors as $error) {
                     echo "<div class='error'>$error</div>";
@@ -67,26 +53,21 @@ function exampleProcessForm() {
     }
 }
 
-/**
- * Example 3: File Upload with Security
- */
 function exampleFileUpload() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['upload'])) {
-        // Validate CSRF first
+
         if (!CSRFProtection::validateRequest($_POST)) {
             die("CSRF validation failed");
         }
         
-        // Validate file upload
         $fileValidation = SecurityMiddleware::validateFileUpload($_FILES['upload'], [
-            'max_size' => 2 * 1024 * 1024, // 2MB
+            'max_size' => 2 * 1024 * 1024,
             'allowed_types' => ['jpg', 'jpeg', 'png', 'gif']
         ]);
         
         if ($fileValidation['valid']) {
             $fileInfo = $fileValidation['file_info'];
             
-            // Generate safe filename
             $safeFilename = uniqid() . '.' . $fileInfo['extension'];
             $uploadPath = '/uploads/' . $safeFilename;
             
@@ -113,22 +94,13 @@ function exampleFileUpload() {
     ?>
     <form method="POST" enctype="multipart/form-data">
         <?php echo SecurityMiddleware::getCsrfField(); ?>
-        <input type="file" name="upload" accept="image/*" required>
-        <button type="submit">Upload</button>
-    </form>
-    <?php
-}
 
-/**
- * Example 4: AJAX Request with CSRF
- */
 function exampleAjaxWithCSRF() {
     ?>
     <script>
-    // Get CSRF token
+
     var csrfToken = '<?php echo SecurityMiddleware::getCsrfToken(); ?>';
     
-    // AJAX request with CSRF protection
     function makeSecureAjaxRequest() {
         $.ajax({
             url: 'ajax_endpoint.php',
@@ -152,20 +124,16 @@ function exampleAjaxWithCSRF() {
     <?php
 }
 
-/**
- * Example 5: Authentication Check
- */
 function exampleAuthCheck() {
-    // Check if user is authenticated
+
     if (!SecurityMiddleware::checkAuth()) {
-        // Redirect to login
+
         header('Location: /login.php');
         exit();
     }
     
-    // Check if user has admin role
     if (!SecurityMiddleware::checkAuth(['admin', 'manager'])) {
-        // Access denied
+
         http_response_code(403);
         echo "Access denied";
         exit();
@@ -174,26 +142,18 @@ function exampleAuthCheck() {
     echo "Welcome, admin!";
 }
 
-/**
- * Example 6: Rate Limiting
- */
 function exampleRateLimit() {
     $userIP = $_SERVER['REMOTE_ADDR'];
     
-    // Check rate limit for login attempts
     if (!SecurityMiddleware::checkRateLimit("login_$userIP", 5, 300)) {
         http_response_code(429);
         echo "Too many login attempts. Please try again later.";
         exit();
     }
     
-    // Process login
     echo "Login form";
 }
 
-/**
- * Example 7: Input Sanitization
- */
 function exampleInputSanitization() {
     $rawData = [
         'name' => '<script>alert("xss")</script>John Doe',
@@ -212,18 +172,9 @@ function exampleInputSanitization() {
     $sanitizedData = InputValidator::sanitize($rawData, $sanitizationRules);
     
     print_r($sanitizedData);
-    // Output:
-    // [
-    //     'name' => '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;John Doe',
-    //     'email' => 'john@example.com',
-    //     'age' => '25',
-    //     'website' => 'http://example.com'
-    // ]
+
 }
 
-/**
- * Example 8: Custom Validation Rules
- */
 function exampleCustomValidation() {
     $data = [
         'username' => 'john_doe',
@@ -246,26 +197,3 @@ function exampleCustomValidation() {
         echo "Validation failed: " . $validation['first_error'];
     }
 }
-
-// Usage in your actual files:
-/*
-// At the top of your PHP files:
-require_once __DIR__ . '/../mod/securityMiddleware.php';
-SecurityMiddleware::init();
-
-// In your forms:
-echo SecurityMiddleware::getCsrfField();
-
-// When processing forms:
-$validation = SecurityMiddleware::validatePostRequest($_POST, $rules);
-if ($validation['valid']) {
-    // Process data
-} else {
-    // Handle errors
-}
-
-// For authentication:
-if (!SecurityMiddleware::checkAuth(['admin'])) {
-    // Redirect or show error
-}
-*/

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Promotion Manager
- * Quản lý chương trình ưu đãi
- */
-
 require_once 'database.php';
 
 class PromotionManager
@@ -16,9 +11,6 @@ class PromotionManager
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Lấy tất cả chương trình ưu đãi đang hoạt động
-     */
     public function getActivePromotions()
     {
         try {
@@ -36,9 +28,6 @@ class PromotionManager
         }
     }
 
-    /**
-     * Lấy tất cả chương trình ưu đãi (cho admin)
-     */
     public function getAllPromotions()
     {
         try {
@@ -52,9 +41,6 @@ class PromotionManager
         }
     }
 
-    /**
-     * Lấy chương trình ưu đãi theo ID
-     */
     public function getPromotionById($id)
     {
         try {
@@ -68,9 +54,6 @@ class PromotionManager
         }
     }
 
-    /**
-     * Thêm chương trình ưu đãi mới
-     */
     public function addPromotion($title, $description, $discount_percent, $start_date, $end_date, $is_active)
     {
         try {
@@ -84,9 +67,6 @@ class PromotionManager
         }
     }
 
-    /**
-     * Cập nhật chương trình ưu đãi
-     */
     public function updatePromotion($id, $title, $description, $discount_percent, $start_date, $end_date, $is_active)
     {
         try {
@@ -101,9 +81,6 @@ class PromotionManager
         }
     }
 
-    /**
-     * Xóa chương trình ưu đãi
-     */
     public function deletePromotion($id)
     {
         try {
@@ -116,9 +93,6 @@ class PromotionManager
         }
     }
 
-    /**
-     * Lấy sản phẩm được giảm giá (sản phẩm có giá khuyến mãi nhỏ hơn giá tham khảo)
-     */
     public function getDiscountedProducts()
     {
         try {

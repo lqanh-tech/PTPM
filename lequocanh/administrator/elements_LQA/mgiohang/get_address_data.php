@@ -1,14 +1,4 @@
 <?php
-/**
- * Get Vietnam Address Data API
- * 
- * Provides Province/District/Ward data for address selection
- * Data is fetched from local database (provinces, districts, wards tables)
- * 
- * @method GET
- * @params type=provinces|districts|wards, province_id, district_id
- * @return JSON
- */
 
 header('Content-Type: application/json');
 
@@ -17,7 +7,6 @@ require_once __DIR__ . '/../mod/database.php';
 
 SessionManager::start();
 
-// Only allow GET requests
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     echo json_encode([
@@ -55,7 +44,7 @@ try {
             if (!$districtId) {
                 throw new Exception('district_id is required for getting wards');
             }
-            // Note: Frontend expects WardCode, which corresponds to our 'code' column
+
             $stmt = $db->prepare("SELECT code as WardCode, name as WardName FROM wards WHERE district_id = ? AND is_active = 1 ORDER BY name ASC");
             $stmt->execute([$districtId]);
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -1,11 +1,9 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 
-// Start session safely
 SessionManager::start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     header('Location: ../../userLogin.php');
@@ -26,7 +24,6 @@ if ($orderId <= 0) {
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Lấy thông tin đơn hàng
 if (isset($_SESSION['ADMIN'])) {
     $sql = "SELECT * FROM don_hang WHERE id = ?";
     $stmt = $conn->prepare($sql);
@@ -45,20 +42,17 @@ if (!$order) {
     exit();
 }
 
-// Tính thời gian từ khi đặt hàng
 $orderTime = strtotime($order['ngay_tao']);
 $currentTime = time();
 $hoursPassed = ($currentTime - $orderTime) / 3600;
 $minutesPassed = ($currentTime - $orderTime) / 60;
 
-// Logic kiểm tra quyền thao tác
 $canCancel = ($hoursPassed <= 1 && $order['trang_thai'] == 'pending');
-$timeLeftToCancel = max(0, 60 - $minutesPassed); // Phút còn lại
+$timeLeftToCancel = max(0, 60 - $minutesPassed);
 
 $returnStatus = isset($order['trang_thai_doi_tra']) ? $order['trang_thai_doi_tra'] : 'none';
 $canRequestReturn = ($order['trang_thai'] == 'approved' && $returnStatus == 'none');
 
-// Lấy chi tiết sản phẩm
 $itemsSql = "SELECT oi.*, h.tenhanghoa 
              FROM chi_tiet_don_hang oi
              JOIN hanghoa h ON oi.ma_san_pham = h.idhanghoa
@@ -453,7 +447,7 @@ $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Đếm ký tự và validate
+
         function updateCharCount() {
             const textarea = document.getElementById('returnReason');
             const charCount = document.getElementById('charCount');
@@ -474,14 +468,12 @@ $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
             }
         }
         
-        // Enable submit button khi check agree
         document.getElementById('agreeTerms')?.addEventListener('change', function() {
             const textarea = document.getElementById('returnReason');
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = !(this.checked && textarea.value.length >= 20);
         });
         
-        // Validate form trước khi submit
         function validateReturnForm() {
             const reason = document.getElementById('returnReason').value.trim();
             const agreeTerms = document.getElementById('agreeTerms').checked;
@@ -499,16 +491,14 @@ $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
             return confirm('Bạn có chắc chắn muốn gửi yêu cầu đổi/trả hàng này?');
         }
         
-        // Xác nhận hủy đơn
         function confirmCancel() {
             if (confirm('Bạn có chắc chắn muốn HỦY đơn hàng này?\n\nLưu ý: Hành động này không thể hoàn tác!')) {
                 window.location.href = 'orderCancelAct.php?id=<?php echo $order['id']; ?>';
             }
         }
         
-        // Countdown thời gian còn lại để hủy đơn
         <?php if ($canCancel && !isset($_SESSION['ADMIN'])): ?>
-        let timeLeft = <?php echo round($timeLeftToCancel * 60); ?>; // Giây
+        let timeLeft = <?php echo round($timeLeftToCancel * 60); ?>;
         
         function updateCountdown() {
             if (timeLeft <= 0) {

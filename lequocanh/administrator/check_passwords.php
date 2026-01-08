@@ -1,14 +1,8 @@
 <?php
 
-/**
- * Check Password Status Script
- * This script checks the current status of passwords in the database
- */
-
 require_once './lequocanh/administrator/elements_LQA/mod/database.php';
 require_once './lequocanh/administrator/elements_LQA/mod/PasswordHelper.php';
 
-// Enable error reporting
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
@@ -19,7 +13,6 @@ echo "<hr>";
 try {
     $db = Database::getInstance()->getConnection();
 
-    // Get all users
     $sql = "SELECT iduser, username, password FROM user";
     $stmt = $db->prepare($sql);
     $stmt->execute();
@@ -40,7 +33,6 @@ try {
         $username = $user['username'];
         $password = $user['password'];
 
-        // Check if password is plaintext or hashed
         $isPlainText = PasswordHelper::isPlainText($password);
 
         if ($isPlainText) {
@@ -51,7 +43,6 @@ try {
             $hashedCount++;
         }
 
-        // Show preview of password (first 10 chars for plaintext, first 10 chars for hash)
         $preview = substr($password, 0, 20) . (strlen($password) > 20 ? '...' : '');
 
         echo "<tr>";

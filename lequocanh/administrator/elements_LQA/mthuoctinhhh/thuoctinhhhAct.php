@@ -1,13 +1,11 @@
 <?php
-// Use SessionManager and Security Enhancement
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 require_once __DIR__ . '/../mod/securityEnhancement.php';
 
-// Initialize security
 SecurityEnhancement::initializePage(true);
 
-// Start session safely
 SessionManager::start();
 require '../../elements_LQA/mod/thuoctinhhhCls.php';
 
@@ -17,44 +15,41 @@ if (isset($_GET['reqact'])) {
 
     switch ($requestAction) {
         case 'addnew':
-            // Validate CSRF token (already done by SecurityEnhancement::initializePage)
-            // Lấy dữ liệu từ form
+
             $idhanghoa = $_POST['idhanghoa'] ?? null;
             $idThuocTinh = $_POST['idThuocTinh'] ?? null;
             $tenThuocTinhHH = $_POST['tenThuocTinhHH'] ?? null;
             $ghiChu = $_POST['ghiChu'] ?? null;
 
-            // Kiểm tra dữ liệu đầu vào
             if ($idhanghoa && $idThuocTinh && $tenThuocTinhHH) {
                 $result = $thuocTinhHHObj->thuoctinhhhAdd($idhanghoa, $idThuocTinh, $tenThuocTinhHH,  $ghiChu);
                 header("Location: ../../index.php?req=thuoctinhhhview&result=" . ($result ? 'ok' : 'notok'));
             } else {
-                // Nếu thiếu dữ liệu
+
                 header("Location: ../../index.php?req=thuoctinhhhview&result=notok&error=missing_data");
             }
             break;
 
         case 'deletethuoctinhhh':
-            // Lấy ID thuộc tính hàng hóa cần xóa
+
             $idThuocTinhHH = $_GET['idThuocTinhHH'] ?? null;
             if ($idThuocTinhHH) {
                 $result = $thuocTinhHHObj->thuoctinhhhDelete($idThuocTinhHH);
                 header("Location: ../../index.php?req=thuoctinhhhview&result=" . ($result ? 'ok' : 'notok'));
             } else {
-                // Nếu thiếu ID
+
                 header("Location: ../../index.php?req=thuoctinhhhview&result=notok&error=missing_id");
             }
             break;
 
         case 'updatethuoctinhhh':
-            // Lấy dữ liệu từ form
+
             $idThuocTinhHH = $_POST['idThuocTinhHH'] ?? null;
             $idhanghoa = $_POST['idhanghoa'] ?? null;
             $idThuocTinh = $_POST['idThuocTinh'] ?? null;
             $tenThuocTinhHH = $_POST['tenThuocTinhHH'] ?? null;
             $debug_log = $_POST['debug_log'] ?? false;
 
-            // Debug input data - ghi log chi tiết
             if ($debug_log) {
                 $log_file = __DIR__ . '/debug_log.txt';
                 $log_data = date('Y-m-d H:i:s') . " - Update request:\n";
@@ -79,10 +74,9 @@ if (isset($_GET['reqact'])) {
             );
             error_log("DEBUG thuoctinhhhUpdate: " . print_r($debug_data, true));
 
-            // Kiểm tra dữ liệu đầu vào
             if ($idThuocTinhHH && $idhanghoa && $idThuocTinh && $tenThuocTinhHH) {
                 try {
-                    // Chuyển đổi dữ liệu sang kiểu số nếu cần
+
                     $idThuocTinhHH = (int)$idThuocTinhHH;
                     $idhanghoa = (int)$idhanghoa;
                     $idThuocTinh = (int)$idThuocTinh;
@@ -95,10 +89,9 @@ if (isset($_GET['reqact'])) {
                     }
 
                     if ($result !== false) {
-                        // Ghi log
+
                         error_log(date('Y-m-d H:i:s') . " - INFO thuoctinhhhUpdate: Updated property ID: $idThuocTinhHH, Name: $tenThuocTinhHH");
 
-                        // Kiểm tra xem yêu cầu có phải từ AJAX không
                         if (
                             isset($_POST['ajax']) || isset($_GET['ajax']) ||
                             (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest')
@@ -110,7 +103,7 @@ if (isset($_GET['reqact'])) {
                             ]);
                             exit;
                         } else {
-                            // Hiển thị thông báo thành công và chuyển hướng sau 2 giây
+
                             echo '<!DOCTYPE html>
                             <html>
                             <head>
@@ -154,7 +147,7 @@ if (isset($_GET['reqact'])) {
                             exit;
                         }
                     } else {
-                        // Lỗi khi cập nhật
+
                         error_log(date('Y-m-d H:i:s') . " - ERROR thuoctinhhhUpdate: Update failed for ID: $idThuocTinhHH");
 
                         if (
@@ -168,7 +161,7 @@ if (isset($_GET['reqact'])) {
                             ]);
                             exit;
                         } else {
-                            // Hiển thị thông báo lỗi và chuyển hướng sau 3 giây
+
                             echo '<!DOCTYPE html>
                             <html>
                             <head>
@@ -213,7 +206,7 @@ if (isset($_GET['reqact'])) {
                         }
                     }
                 } catch (Exception $e) {
-                    // Bắt lỗi ngoại lệ
+
                     $error_message = $e->getMessage();
                     error_log("EXCEPTION thuoctinhhhUpdate: " . $error_message);
 
@@ -238,7 +231,7 @@ if (isset($_GET['reqact'])) {
                     }
                 }
             } else {
-                // Thiếu dữ liệu
+
                 $missing = array();
                 if (!$idThuocTinhHH) $missing[] = 'idThuocTinhHH';
                 if (!$idhanghoa) $missing[] = 'idhanghoa';
@@ -268,7 +261,7 @@ if (isset($_GET['reqact'])) {
                     exit;
                 }
             }
-            exit; // Đảm bảo dừng thực thi sau khi redirect
+            exit;
             break;
         default:
             header('Location: ../../index.php?req=thuoctinhhhview');

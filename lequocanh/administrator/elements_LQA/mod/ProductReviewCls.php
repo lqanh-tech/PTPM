@@ -1,8 +1,4 @@
 <?php
-/**
- * Product Review Class
- * Handles all product review operations
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -15,23 +11,18 @@ class ProductReview
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Add a new review
-     */
     public function addReview($idhanghoa, $iduser, $idhoadon, $rating, $title, $text)
     {
         try {
-            // Validate rating
+
             if ($rating < 1 || $rating > 5) {
                 return ['success' => false, 'message' => 'Rating phải từ 1 đến 5 sao'];
             }
 
-            // Check if user already reviewed this product
             if ($this->hasUserReviewed($iduser, $idhanghoa)) {
                 return ['success' => false, 'message' => 'Bạn đã đánh giá sản phẩm này rồi'];
             }
 
-            // Check if this is a verified purchase
             $isVerified = $idhoadon ? $this->verifyPurchase($iduser, $idhanghoa, $idhoadon) : false;
 
             $sql = "INSERT INTO product_reviews 
@@ -65,13 +56,10 @@ class ProductReview
         }
     }
 
-    /**
-     * Get reviews for a product
-     */
     public function getProductReviews($idhanghoa, $limit = 10, $offset = 0, $rating_filter = null)
     {
         try {
-            // Chỉ lấy bình luận visible (không bị ẩn/xóa)
+
             $sql = "SELECT r.*, u.hoten, u.username 
                     FROM product_reviews r
                     INNER JOIN user u ON r.iduser = u.iduser
@@ -100,13 +88,10 @@ class ProductReview
         }
     }
 
-    /**
-     * Get rating statistics for a product
-     */
     public function getProductRatingStats($idhanghoa)
     {
         try {
-            // Chỉ tính thống kê từ bình luận visible (không bị ẩn/xóa)
+
             $sql = "SELECT 
                     COUNT(*) as total_reviews,
                     AVG(rating) as avg_rating,
@@ -124,7 +109,6 @@ class ProductReview
             
             $stats = $stmt->fetch(PDO::FETCH_OBJ);
             
-            // Calculate percentages
             if ($stats && $stats->total_reviews > 0) {
                 $stats->five_star_percent = round(($stats->five_star / $stats->total_reviews) * 100);
                 $stats->four_star_percent = round(($stats->four_star / $stats->total_reviews) * 100);
@@ -142,22 +126,17 @@ class ProductReview
         }
     }
 
-    /**
-     * Check if user can review a product
-     */
     public function canUserReview($iduser, $idhanghoa)
     {
-        // User must be logged in
+
         if (!$iduser) {
             return ['can_review' => false, 'reason' => 'Bạn cần đăng nhập để đánh giá'];
         }
 
-        // Check if user already reviewed
         if ($this->hasUserReviewed($iduser, $idhanghoa)) {
             return ['can_review' => false, 'reason' => 'Bạn đã đánh giá sản phẩm này'];
         }
 
-        // Check if user purchased this product and order is delivered
         $purchase = $this->getUserPurchase($iduser, $idhanghoa);
         
         if (!$purchase) {
@@ -174,9 +153,6 @@ class ProductReview
         ];
     }
 
-    /**
-     * Check if user has already reviewed a product
-     */
     public function hasUserReviewed($iduser, $idhanghoa)
     {
         try {
@@ -194,9 +170,6 @@ class ProductReview
         }
     }
 
-    /**
-     * Get user's purchase of a product
-     */
     private function getUserPurchase($iduser, $idhanghoa)
     {
         try {
@@ -218,9 +191,6 @@ class ProductReview
         }
     }
 
-    /**
-     * Verify if purchase is valid
-     */
     private function verifyPurchase($iduser, $idhanghoa, $idhoadon)
     {
         try {
@@ -239,13 +209,10 @@ class ProductReview
         }
     }
 
-    /**
-     * Mark review as helpful
-     */
     public function markHelpful($review_id, $iduser)
     {
         try {
-            // Check if user already marked this review
+
             $check = "SELECT COUNT(*) FROM review_helpful 
                      WHERE review_id = ? AND iduser = ?";
             $stmt = $this->db->prepare($check);
@@ -255,12 +222,10 @@ class ProductReview
                 return ['success' => false, 'message' => 'Bạn đã đánh dấu review này rồi'];
             }
 
-            // Add helpful mark
             $sql = "INSERT INTO review_helpful (review_id, iduser) VALUES (?, ?)";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$review_id, $iduser]);
 
-            // Update helpful count
             $update = "UPDATE product_reviews 
                       SET helpful_count = helpful_count + 1 
                       WHERE id = ?";
@@ -275,9 +240,6 @@ class ProductReview
         }
     }
 
-    /**
-     * Get user's reviews
-     */
     public function getUserReviews($iduser)
     {
         try {
@@ -298,13 +260,10 @@ class ProductReview
         }
     }
 
-    /**
-     * Delete review (user can delete their own review)
-     */
     public function deleteReview($review_id, $iduser)
     {
         try {
-            // Verify ownership
+
             $sql = "DELETE FROM product_reviews 
                     WHERE id = ? AND iduser = ?";
             
@@ -323,13 +282,10 @@ class ProductReview
         }
     }
 
-    /**
-     * Get total review count for product
-     */
     public function getReviewCount($idhanghoa)
     {
         try {
-            // Chỉ đếm bình luận visible (không bị ẩn/xóa)
+
             $sql = "SELECT COUNT(*) FROM product_reviews 
                     WHERE idhanghoa = ? AND is_approved = 1
                     AND (status = 'visible' OR status IS NULL)";

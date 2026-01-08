@@ -1,12 +1,10 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Xác định đường dẫn đến file database.php
 $paths = [
     '../mod/database.php',
     './elements_LQA/mod/database.php',
@@ -28,14 +26,12 @@ if (!$loaded) {
     exit();
 }
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER'])) {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Chưa đăng nhập']);
     exit();
 }
 
-// Kiểm tra tham số đầu vào
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'ID đơn hàng không hợp lệ']);
@@ -45,12 +41,11 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $orderId = intval($_GET['id']);
 $userId = $_SESSION['USER'];
 
-// Kết nối database
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
 try {
-    // Lấy thông tin đơn hàng - sử dụng bảng don_hang
+
     $orderSql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
     $orderStmt = $conn->prepare($orderSql);
     $orderStmt->execute([$orderId, $userId]);
@@ -62,8 +57,7 @@ try {
         exit();
     }
     
-    // Đánh dấu đơn hàng đã đọc - sử dụng bảng don_hang
-    $status = $order['trang_thai']; // Đổi tên field
+    $status = $order['trang_thai'];
     $field = '';
     
     switch ($status) {
@@ -79,7 +73,7 @@ try {
     }
     
     if (!empty($field)) {
-        // Kiểm tra xem cột có tồn tại không
+
         $checkColumnSql = "SHOW COLUMNS FROM don_hang LIKE '$field'";
         $checkColumnStmt = $conn->prepare($checkColumnSql);
         $checkColumnStmt->execute();
@@ -91,7 +85,6 @@ try {
         }
     }
     
-    // Lấy danh sách sản phẩm trong đơn hàng - sử dụng bảng chi_tiet_don_hang
     $orderItemsSql = "SELECT oi.*, h.tenhanghoa, h.hinhanh 
                      FROM chi_tiet_don_hang oi
                      JOIN hanghoa h ON oi.ma_san_pham = h.idhanghoa
@@ -100,7 +93,6 @@ try {
     $orderItemsStmt->execute([$orderId]);
     $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Lấy thông tin thuế và phí vận chuyển
     $taxAmount = isset($order['thue']) ? floatval($order['thue']) : 0;
     $shippingFee = isset($order['phi_van_chuyen']) ? floatval($order['phi_van_chuyen']) : 0;
     $paymentStatus = isset($order['trang_thai_thanh_toan']) ? $order['trang_thai_thanh_toan'] : 'pending';
@@ -108,11 +100,9 @@ try {
     $shippingMethodName = isset($order['shipping_method_name']) ? $order['shipping_method_name'] : '';
     $estimatedDelivery = isset($order['estimated_delivery']) ? $order['estimated_delivery'] : '';
     
-    // Tính tổng tiền hàng (subtotal) = tổng tiền - thuế - phí vận chuyển
     $subtotal = floatval($order['tong_tien']) - $taxAmount - $shippingFee;
-    if ($subtotal < 0) $subtotal = floatval($order['tong_tien']); // Fallback nếu dữ liệu cũ
+    if ($subtotal < 0) $subtotal = floatval($order['tong_tien']);
     
-    // Format phương thức thanh toán
     $paymentMethodText = '';
     switch ($order['phuong_thuc_thanh_toan']) {
         case 'bank_transfer':
@@ -128,7 +118,6 @@ try {
             $paymentMethodText = $order['phuong_thuc_thanh_toan'];
     }
     
-    // Format trạng thái thanh toán
     $paymentStatusText = '';
     switch ($paymentStatus) {
         case 'paid':
@@ -144,7 +133,6 @@ try {
             $paymentStatusText = $paymentStatus;
     }
     
-    // Format phương thức vận chuyển
     $shippingMethodText = '';
     if (!empty($shippingMethodName)) {
         $shippingMethodText = $shippingMethodName;
@@ -169,7 +157,6 @@ try {
         $shippingMethodText = 'Không xác định';
     }
     
-    // Định dạng lại thông tin đơn hàng - sử dụng field tiếng Việt
     $formattedOrder = [
         'id' => $order['id'],
         'order_code' => $order['ma_don_hang_text'],
@@ -192,9 +179,8 @@ try {
         'items' => []
     ];
     
-    // Định dạng lại thông tin sản phẩm - sử dụng field tiếng Việt
     foreach ($orderItems as $item) {
-        // Xử lý đường dẫn hình ảnh - sử dụng displayImage.php
+
         $imageId = $item['hinhanh'];
         $imagePath = '';
         if (!empty($imageId) && $imageId > 0) {
@@ -215,7 +201,6 @@ try {
         ];
     }
     
-    // Trả về kết quả
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true,
@@ -227,7 +212,6 @@ try {
     echo json_encode(['success' => false, 'message' => 'Lỗi khi lấy thông tin đơn hàng: ' . $e->getMessage()]);
 }
 
-// Hàm lấy text trạng thái
 function getStatusText($status) {
     switch ($status) {
         case 'pending':
@@ -241,7 +225,6 @@ function getStatusText($status) {
     }
 }
 
-// Hàm lấy class CSS cho trạng thái
 function getStatusClass($status) {
     switch ($status) {
         case 'pending':

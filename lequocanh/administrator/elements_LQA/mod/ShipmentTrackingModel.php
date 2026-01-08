@@ -1,8 +1,4 @@
 <?php
-/**
- * Shipment Tracking Model - Theo dõi vận chuyển
- * MVC Pattern - Model Layer
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -11,16 +7,15 @@ class ShipmentTrackingModel
     private $db;
     private $conn;
 
-    // Các trạng thái vận chuyển
-    const STATUS_PENDING = 'pending';           // Chờ lấy hàng
-    const STATUS_PICKING = 'picking';           // Đang lấy hàng
-    const STATUS_PICKED = 'picked';             // Đã lấy hàng
-    const STATUS_SHIPPING = 'shipping';         // Đang vận chuyển
-    const STATUS_DELIVERING = 'delivering';     // Đang giao hàng
-    const STATUS_DELIVERED = 'delivered';       // Giao thành công
-    const STATUS_FAILED = 'failed';             // Giao thất bại
-    const STATUS_RETURNED = 'returned';         // Hoàn trả
-    const STATUS_CANCELLED = 'cancelled';       // Đã hủy
+    const STATUS_PENDING = 'pending';
+    const STATUS_PICKING = 'picking';
+    const STATUS_PICKED = 'picked';
+    const STATUS_SHIPPING = 'shipping';
+    const STATUS_DELIVERING = 'delivering';
+    const STATUS_DELIVERED = 'delivered';
+    const STATUS_FAILED = 'failed';
+    const STATUS_RETURNED = 'returned';
+    const STATUS_CANCELLED = 'cancelled';
 
     public function __construct()
     {
@@ -28,9 +23,6 @@ class ShipmentTrackingModel
         $this->conn = $this->db->getConnection();
     }
 
-    /**
-     * Thêm lịch sử tracking
-     */
     public function addTracking($orderId, $status, $description = null, $location = null, $trackingCode = null, $carrier = null)
     {
         $sql = "INSERT INTO shipment_tracking (order_id, tracking_code, carrier, status, status_description, location) 
@@ -46,9 +38,6 @@ class ShipmentTrackingModel
         ]);
     }
 
-    /**
-     * Lấy lịch sử tracking theo đơn hàng
-     */
     public function getByOrderId($orderId)
     {
         $sql = "SELECT * FROM shipment_tracking 
@@ -59,9 +48,6 @@ class ShipmentTrackingModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy tracking mới nhất của đơn hàng
-     */
     public function getLatestByOrderId($orderId)
     {
         $sql = "SELECT * FROM shipment_tracking 
@@ -73,9 +59,6 @@ class ShipmentTrackingModel
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Lấy tracking theo mã vận đơn
-     */
     public function getByTrackingCode($trackingCode)
     {
         $sql = "SELECT st.*, dh.ma_don_hang_text, dh.ma_nguoi_dung 
@@ -88,23 +71,16 @@ class ShipmentTrackingModel
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Cập nhật trạng thái vận chuyển cho đơn hàng
-     */
     public function updateOrderShippingStatus($orderId, $status, $description = null)
     {
-        // Thêm vào lịch sử tracking
+
         $this->addTracking($orderId, $status, $description);
 
-        // Cập nhật trạng thái trong bảng don_hang
         $sql = "UPDATE don_hang SET shipping_status = ? WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
         return $stmt->execute([$status, $orderId]);
     }
 
-    /**
-     * Lấy tên trạng thái tiếng Việt
-     */
     public static function getStatusName($status)
     {
         $statusNames = [
@@ -122,9 +98,6 @@ class ShipmentTrackingModel
         return $statusNames[$status] ?? $status;
     }
 
-    /**
-     * Lấy màu badge cho trạng thái
-     */
     public static function getStatusBadgeClass($status)
     {
         $badgeClasses = [
@@ -142,9 +115,6 @@ class ShipmentTrackingModel
         return $badgeClasses[$status] ?? 'badge-secondary';
     }
 
-    /**
-     * Lấy tất cả trạng thái
-     */
     public static function getAllStatuses()
     {
         return [

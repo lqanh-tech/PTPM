@@ -1,18 +1,15 @@
 <?php
 require_once __DIR__ . '/../mod/nhacungcapCls.php';
 
-// Debugging - show all input
 $debug = [];
 $debug['POST'] = $_POST;
 $debug['GET'] = $_GET;
 $debug['REQUEST'] = $_REQUEST;
 
-// Try to get ID from various sources
 $idNCC = isset($_POST['idNCC']) ? $_POST['idNCC'] : (isset($_GET['idNCC']) ? $_GET['idNCC'] : (isset($_REQUEST['idNCC']) ? $_REQUEST['idNCC'] : null));
 
 $debug['ID detected'] = $idNCC;
 
-// Output debug if requested
 if (isset($_GET['debug']) || isset($_POST['debug'])) {
     echo "<pre>";
     print_r($debug);

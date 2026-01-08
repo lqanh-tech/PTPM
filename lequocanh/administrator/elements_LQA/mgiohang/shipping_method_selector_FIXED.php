@@ -1,20 +1,14 @@
 <?php
-/**
- * Shipping Method Selector - FIXED VERSION
- * Đã fix triệt để vấn đề duplicate
- */
 
 require_once __DIR__ . '/../mod/database.php';
 
 $db = Database::getInstance()->getConnection();
 
-// Lấy thông tin đơn hàng từ session
 $cartWeight = $_SESSION['cart_weight'] ?? 1.0;
 $cartValue = $_SESSION['cart_total'] ?? 0;
 $provinceId = $_SESSION['province_id'] ?? 1;
 $districtId = $_SESSION['district_id'] ?? 1;
 
-// Sử dụng VIEW giống như admin để đảm bảo đồng bộ
 $stmt = $db->query("
     SELECT * FROM v_shipping_methods_with_fees 
     WHERE is_active = 1 
@@ -23,18 +17,14 @@ $stmt = $db->query("
 
 $shippingMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// VIEW đã đảm bảo unique, không cần filter thêm
-
-// Tính phí cho từng phương thức
 $processedMethods = [];
 foreach ($shippingMethods as $method) {
-    // Tính phí
+
     $stmt = $db->prepare("SELECT calculate_shipping_fee(?, ?, ?, ?, ?) as fee");
     $stmt->execute([$method['id'], $provinceId, $districtId, $cartWeight, $cartValue]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $method['calculated_fee'] = $result['fee'] ?? 0;
     
-    // Lấy chi tiết phí
     $stmt = $db->prepare("
         SELECT base_fee, fee_per_kg, min_order_free_ship
         FROM shipping_fees
@@ -219,7 +209,6 @@ function selectShippingMethod(row) {
     document.getElementById('selected_shipping_method').value = methodCode;
     document.getElementById('selected_shipping_fee').value = methodFee;
     
-    // Cập nhật tổng tiền thanh toán
     updateTotalWithShipping(methodFee);
     
     document.dispatchEvent(new CustomEvent('shippingMethodChanged', {
@@ -228,7 +217,7 @@ function selectShippingMethod(row) {
 }
 
 function updateTotalWithShipping(shippingFee) {
-    // Cập nhật phí vận chuyển hiển thị
+
     const shippingFeeElement = document.getElementById('shipping-fee-value');
     if (shippingFeeElement) {
         if (shippingFee === 0) {
@@ -238,16 +227,14 @@ function updateTotalWithShipping(shippingFee) {
         }
     }
     
-    // Cập nhật global variable nếu có
     if (typeof window.currentShippingFee !== 'undefined') {
         window.currentShippingFee = shippingFee;
     }
     
-    // Gọi hàm update tổng tiền nếu có
     if (typeof window.updateFinalTotal === 'function') {
         window.updateFinalTotal();
     } else {
-        // Fallback: tự tính và cập nhật
+
         const subtotalElement = document.getElementById('subtotal-display');
         const vatElement = document.getElementById('vat-display');
         const totalElement = document.getElementById('final-total-display');

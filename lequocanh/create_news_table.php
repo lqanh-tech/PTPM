@@ -4,7 +4,6 @@ require_once 'administrator/elements_LQA/mod/database.php';
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Create news table
     $sql = "
     CREATE TABLE IF NOT EXISTS news (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -24,7 +23,6 @@ try {
     $db->exec($sql);
     echo "Table 'news' created successfully in database.\n";
     
-    // Also create banners and promotions tables if they don't exist
     $bannersSql = "
     CREATE TABLE IF NOT EXISTS banners (
         id INT AUTO_INCREMENT PRIMARY KEY,

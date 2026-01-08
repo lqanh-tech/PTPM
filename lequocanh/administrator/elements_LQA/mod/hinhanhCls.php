@@ -19,7 +19,6 @@ class HinhAnh
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Thêm hình ảnh mới
     public function ThemHinhAnh($ten_file, $duong_dan, $loai_file, $kich_thuoc, $id_tham_chieu, $loai_tham_chieu, $thu_tu)
     {
         $sql = "INSERT INTO hinhanh (ten_file, duong_dan, loai_file, kich_thuoc, id_tham_chieu, loai_tham_chieu, thu_tu, trang_thai) 
@@ -28,7 +27,6 @@ class HinhAnh
         return $stmt->execute([$ten_file, $duong_dan, $loai_file, $kich_thuoc, $id_tham_chieu, $loai_tham_chieu, $thu_tu]);
     }
 
-    // Lấy tất cả hình ảnh
     public function LayTatCaHinhAnh()
     {
         $sql = "SELECT * FROM hinhanh WHERE trang_thai = 1 ORDER BY ngay_tao DESC";
@@ -37,7 +35,6 @@ class HinhAnh
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    // Xóa hình ảnh
     public function XoaHinhAnh($id)
     {
         $sql = "SELECT duong_dan FROM hinhanh WHERE id = ?";
@@ -57,7 +54,6 @@ class HinhAnh
         return false;
     }
 
-    // Xóa nhiều hình ảnh
     public function XoaNhieuHinhAnh($ids)
     {
         if (empty($ids)) return false;

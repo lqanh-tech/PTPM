@@ -1,5 +1,5 @@
 <?php
-// Debug script to check database data
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -19,14 +19,12 @@ try {
 
     echo "Connected to database.\n";
 
-    // Check Provinces
     $stmt = $pdo->query("SELECT * FROM provinces ORDER BY id ASC LIMIT 1");
     $province = $stmt->fetch();
     
     if ($province) {
         echo "Found Province: " . json_encode($province, JSON_UNESCAPED_UNICODE) . "\n";
         
-        // Check Districts for this province
         $stmt = $pdo->prepare("SELECT * FROM districts WHERE province_id = ? LIMIT 5");
         $stmt->execute([$province['id']]);
         $districts = $stmt->fetchAll();
@@ -38,7 +36,7 @@ try {
         
         if (count($districts) == 0) {
             echo "WARNING: No districts found for province {$province['id']}!\n";
-            // Check if any districts exist at all
+
             $count = $pdo->query("SELECT COUNT(*) FROM districts")->fetchColumn();
             echo "Total districts in table: $count\n";
         }

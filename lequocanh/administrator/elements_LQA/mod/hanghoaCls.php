@@ -93,11 +93,11 @@ class hanghoa
 
     public function HanghoaAdd($tenhanghoa, $mota, $giathamkhao, $id_hinhanh, $idloaihang, $idThuongHieu, $idDonViTinh, $idNhanVien, $ghichu = '')
     {
-        // Tạo file log
+
         $log_file = dirname(__FILE__) . '/hanghoa_class_debug.log';
 
         try {
-            // Ghi log chi tiết
+
             $log_data = date('Y-m-d H:i:s') . " - HanghoaAdd() được gọi với các tham số:\n";
             $log_data .= "tenhanghoa: $tenhanghoa\n";
             $log_data .= "mota: $mota\n";
@@ -110,27 +110,23 @@ class hanghoa
             $log_data .= "ghichu: " . ($ghichu ?: "") . "\n";
             file_put_contents($log_file, $log_data, FILE_APPEND);
 
-            // Convert empty strings to NULL for integer fields, but use 0 for id_hinhanh
-            $id_hinhanh = ($id_hinhanh === '') ? 0 : $id_hinhanh; // Use 0 instead of NULL for id_hinhanh
+            $id_hinhanh = ($id_hinhanh === '') ? 0 : $id_hinhanh;
             $idThuongHieu = ($idThuongHieu === '' || $idThuongHieu === 0 || $idThuongHieu === '0') ? null : $idThuongHieu;
             $idDonViTinh = ($idDonViTinh === '' || $idDonViTinh === 0 || $idDonViTinh === '0') ? null : $idDonViTinh;
             $idNhanVien = ($idNhanVien === '' || $idNhanVien === 0 || $idNhanVien === '0') ? null : $idNhanVien;
 
-            // Kiểm tra kết nối database
             if (!$this->db || !($this->db instanceof PDO)) {
                 $error_msg = "Lỗi: Không có kết nối database hợp lệ";
                 file_put_contents($log_file, date('Y-m-d H:i:s') . " - $error_msg\n", FILE_APPEND);
                 return false;
             }
 
-            // Kiểm tra các tham số bắt buộc
             if (empty($tenhanghoa) || empty($giathamkhao) || empty($idloaihang)) {
                 $error_msg = "Lỗi: Thiếu thông tin bắt buộc (tên hàng hóa, giá tham khảo hoặc loại hàng)";
                 file_put_contents($log_file, date('Y-m-d H:i:s') . " - $error_msg\n", FILE_APPEND);
                 return false;
             }
 
-            // Kiểm tra cấu trúc bảng hanghoa
             try {
                 $checkColumns = $this->db->query("SHOW COLUMNS FROM hanghoa");
                 $columns = $checkColumns->fetchAll(PDO::FETCH_COLUMN);
@@ -141,36 +137,30 @@ class hanghoa
                 file_put_contents($log_file, $log_column_error, FILE_APPEND);
             }
 
-            // Chuẩn bị câu lệnh SQL với tên cột chính xác
-            // Thêm trường ghichu vào câu lệnh SQL
-            $ghichu = ""; // Giá trị mặc định cho ghichu
+            $ghichu = "";
 
             if (in_array('hinhanh', $columns)) {
                 $sql = "INSERT INTO hanghoa (tenhanghoa, mota, giathamkhao, hinhanh, idloaihang, idThuongHieu, idDonViTinh, idNhanVien, ghichu) VALUES (?,?,?,?,?,?,?,?,?)";
                 $data = array($tenhanghoa, $mota, $giathamkhao, $id_hinhanh, $idloaihang, $idThuongHieu, $idDonViTinh, $idNhanVien, $ghichu);
             } else {
-                // Nếu tên cột là id_hinhanh thay vì hinhanh
+
                 $sql = "INSERT INTO hanghoa (tenhanghoa, mota, giathamkhao, id_hinhanh, idloaihang, idThuongHieu, idDonViTinh, idNhanVien, ghichu) VALUES (?,?,?,?,?,?,?,?,?)";
                 $data = array($tenhanghoa, $mota, $giathamkhao, $id_hinhanh, $idloaihang, $idThuongHieu, $idDonViTinh, $idNhanVien, $ghichu);
             }
 
-            // Ghi log SQL và dữ liệu
             $log_sql = date('Y-m-d H:i:s') . " - SQL: $sql\n";
             $log_sql .= "Data: " . print_r($data, true) . "\n";
             file_put_contents($log_file, $log_sql, FILE_APPEND);
 
-            // Thực thi câu lệnh SQL
             $add = $this->db->prepare($sql);
             $result = $add->execute($data);
 
-            // Kiểm tra kết quả
             if ($result) {
                 $rowCount = $add->rowCount();
                 $lastId = $this->db->lastInsertId();
                 $log_success = date('Y-m-d H:i:s') . " - Thêm hàng hóa thành công. Rows affected: $rowCount, Last Insert ID: $lastId\n";
                 file_put_contents($log_file, $log_success, FILE_APPEND);
 
-                // Thêm vào bảng tonkho nếu có
                 try {
                     $checkTonkhoTable = $this->db->query("SHOW TABLES LIKE 'tonkho'");
                     if ($checkTonkhoTable->rowCount() > 0) {
@@ -185,22 +175,19 @@ class hanghoa
                     file_put_contents($log_file, $log_tonkho_error, FILE_APPEND);
                 }
 
-                return $lastId; // Trả về ID của hàng hóa mới thêm
+                return $lastId;
             } else {
                 $error_info = print_r($add->errorInfo(), true);
                 $log_error = date('Y-m-d H:i:s') . " - Thêm hàng hóa thất bại. Error info: $error_info\n";
                 file_put_contents($log_file, $log_error, FILE_APPEND);
 
-                // Thử phương án thay thế nếu có lỗi với tên cột
                 if (strpos($error_info, "Unknown column") !== false) {
-                    // Kiểm tra cấu trúc bảng một lần nữa
+
                     $describeStmt = $this->db->query("DESCRIBE hanghoa");
                     $columns = $describeStmt->fetchAll(PDO::FETCH_COLUMN);
 
-                    // Xác định tên cột hình ảnh chính xác
                     $imageColumn = in_array('hinhanh', $columns) ? 'hinhanh' : 'id_hinhanh';
 
-                    // Thử lại với tên cột chính xác
                     $sql = "INSERT INTO hanghoa (tenhanghoa, mota, giathamkhao, $imageColumn, idloaihang, idThuongHieu, idDonViTinh, idNhanVien) VALUES (?,?,?,?,?,?,?,?)";
                     $add = $this->db->prepare($sql);
                     $result = $add->execute($data);
@@ -230,11 +217,11 @@ class hanghoa
     public function HanghoaDelete($idhanghoa)
     {
         try {
-            // Kiểm tra các ràng buộc trước khi xóa
+
             $relatedData = $this->checkRelatedData($idhanghoa);
 
             if (!empty($relatedData)) {
-                // Trả về thông tin về các bảng có liên quan
+
                 return [
                     'success' => false,
                     'error_type' => 'foreign_key_constraint',
@@ -243,7 +230,6 @@ class hanghoa
                 ];
             }
 
-            // Nếu không có ràng buộc, thực hiện xóa
             $sql = "DELETE from hanghoa where idhanghoa = ?";
             $data = array($idhanghoa);
 
@@ -258,14 +244,14 @@ class hanghoa
                 'message' => $rowCount > 0 ? 'Xóa hàng hóa thành công' : 'Không tìm thấy hàng hóa để xóa'
             ];
         } catch (PDOException $e) {
-            // Xử lý lỗi foreign key constraint
+
             if ($e->getCode() == '23000' && strpos($e->getMessage(), 'foreign key constraint') !== false) {
-                // Phân tích thông báo lỗi để lấy tên bảng
+
                 $errorMessage = $e->getMessage();
                 $tableName = 'không xác định';
 
                 if (preg_match('/`([^`]+)`\.`([^`]+)`/', $errorMessage, $matches)) {
-                    $tableName = $matches[2]; // Tên bảng
+                    $tableName = $matches[2];
                 }
 
                 return [
@@ -277,7 +263,6 @@ class hanghoa
                 ];
             }
 
-            // Lỗi khác
             return [
                 'success' => false,
                 'error_type' => 'database_error',
@@ -288,8 +273,8 @@ class hanghoa
 
     public function HanghoaUpdate($tenhanghoa, $id_hinhanh, $mota, $giathamkhao, $idloaihang, $idThuongHieu, $idDonViTinh, $idNhanVien, $idhanghoa, $ghichu = '')
     {
-        // Convert empty strings to NULL for integer fields, but use 0 for id_hinhanh
-        $id_hinhanh = ($id_hinhanh === '') ? 0 : $id_hinhanh; // Use 0 instead of NULL for id_hinhanh
+
+        $id_hinhanh = ($id_hinhanh === '') ? 0 : $id_hinhanh;
         $idThuongHieu = $idThuongHieu === '' ? null : $idThuongHieu;
         $idDonViTinh = $idDonViTinh === '' ? null : $idDonViTinh;
         $idNhanVien = $idNhanVien === '' ? null : $idNhanVien;
@@ -316,7 +301,7 @@ class hanghoa
 
     public function HanghoaGetbyIdloaihang($idloaihang)
     {
-        // Lọc sản phẩm: chỉ lấy những sản phẩm không bị ngừng bán
+
         $statusInfo = $this->getStatusColumnInfo();
         $statusCondition = '';
         if ($statusInfo['column']) {
@@ -367,26 +352,17 @@ class hanghoa
         return $update->rowCount();
     }
 
-    /**
-     * Enhanced search: name, description, AND attributes
-     * Single query with LEFT JOIN for performance
-     * 
-     * @param string $keyword Search keyword
-     * @return array Array of product objects
-     */
     public function searchHanghoa($keyword)
     {
         try {
-            // Log for debugging
+
             error_log("searchHanghoa - Starting search with keyword: " . $keyword);
 
-            // Check database connection
             if (!$this->db || !($this->db instanceof PDO)) {
                 error_log("searchHanghoa - Error: No valid database connection");
                 return [];
             }
 
-            // Check if hanghoa table exists
             try {
                 $checkTable = $this->db->query("SHOW TABLES LIKE 'hanghoa'");
                 if ($checkTable->rowCount() == 0) {
@@ -400,7 +376,6 @@ class hanghoa
 
             $searchTerm = '%' . $keyword . '%';
 
-            // OPTIMIZED: Single query with LEFT JOIN to search in attributes
             $sql = "SELECT DISTINCT h.*,
                     CASE 
                         -- Priority 1: Exact match in product name
@@ -453,18 +428,10 @@ class hanghoa
         }
     }
 
-    /**
-     * Calculate average rating for a product
-     * Uses indexed query for performance
-     * Returns 0 if no reviews
-     * 
-     * @param int $idhanghoa Product ID
-     * @return array ['average' => float, 'count' => int]
-     */
     public function getAverageRating($idhanghoa)
     {
         try {
-            // Chỉ tính rating từ các bình luận visible (không bị ẩn/xóa)
+
             $sql = "SELECT COALESCE(AVG(rating), 0) as avg_rating,
                            COUNT(*) as review_count
                     FROM product_reviews 
@@ -486,17 +453,10 @@ class hanghoa
         }
     }
 
-    /**
-     * Get review count for a product
-     * Helper method for quick count retrieval
-     * 
-     * @param int $idhanghoa Product ID
-     * @return int Number of approved reviews
-     */
     public function getReviewCount($idhanghoa)
     {
         try {
-            // Chỉ đếm bình luận visible (không bị ẩn/xóa)
+
             $sql = "SELECT COUNT(*) FROM product_reviews 
                     WHERE ma_san_pham = ? AND is_approved = 1
                     AND (status = 'visible' OR status IS NULL)";
@@ -509,15 +469,12 @@ class hanghoa
         }
     }
 
-    /**
-     * Kiểm tra dữ liệu liên quan trước khi xóa hàng hóa
-     */
     public function checkRelatedData($idhanghoa)
     {
         $relatedData = [];
 
         try {
-            // Kiểm tra bảng tồn kho
+
             $sql = "SELECT COUNT(*) as count FROM tonkho WHERE idhanghoa = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idhanghoa]);
@@ -531,7 +488,6 @@ class hanghoa
                 ];
             }
 
-            // Kiểm tra bảng chi tiết hóa đơn
             $sql = "SELECT COUNT(*) as count FROM chitiethoadon WHERE idhanghoa = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idhanghoa]);
@@ -545,7 +501,6 @@ class hanghoa
                 ];
             }
 
-            // Kiểm tra bảng chi tiết phiếu nhập
             $sql = "SELECT COUNT(*) as count FROM chitietphieunhap WHERE idhanghoa = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idhanghoa]);
@@ -559,7 +514,6 @@ class hanghoa
                 ];
             }
 
-            // Kiểm tra bảng thuộc tính hàng hóa
             $sql = "SELECT COUNT(*) as count FROM thuoctinhhh WHERE idhanghoa = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idhanghoa]);
@@ -573,7 +527,6 @@ class hanghoa
                 ];
             }
 
-            // Kiểm tra bảng đơn giá
             $sql = "SELECT COUNT(*) as count FROM dongia WHERE idhanghoa = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idhanghoa]);
@@ -593,9 +546,6 @@ class hanghoa
         return $relatedData;
     }
 
-    /**
-     * Đưa ra gợi ý hành động dựa trên bảng có liên quan
-     */
     private function getSuggestedAction($tableName)
     {
         $suggestions = [
@@ -611,7 +561,7 @@ class hanghoa
 
     public function CheckRelations($idhanghoa)
     {
-        // Giữ lại method cũ để tương thích
+
         $relatedData = $this->checkRelatedData($idhanghoa);
         return array_keys($relatedData);
     }
@@ -643,7 +593,6 @@ class hanghoa
         return $getAll->fetchAll();
     }
 
-    // Lấy thông tin thương hiệu theo ID
     public function GetThuongHieuById($idThuongHieu)
     {
         $sql = 'SELECT * FROM thuonghieu WHERE idThuongHieu = ?';
@@ -676,7 +625,6 @@ class hanghoa
         try {
             error_log("GetHinhAnhById - Bắt đầu tìm hình ảnh với ID: " . $id);
 
-            // Kiểm tra xem bảng hinhanh có tồn tại không
             try {
                 $checkTable = $this->db->query("SHOW TABLES LIKE 'hinhanh'");
                 if ($checkTable->rowCount() == 0) {
@@ -687,7 +635,6 @@ class hanghoa
                 error_log("GetHinhAnhById - Lỗi khi kiểm tra bảng hinhanh: " . $e->getMessage());
             }
 
-            // Kiểm tra cấu trúc bảng hinhanh
             try {
                 $columns = $this->db->query("SHOW COLUMNS FROM hinhanh");
                 $columnNames = [];
@@ -705,22 +652,20 @@ class hanghoa
             $hinhanh = $stmt->fetch(PDO::FETCH_OBJ);
 
             if ($hinhanh) {
-                // Log đường dẫn để debug
+
                 error_log("GetHinhAnhById - ID: " . $id . ", đường dẫn gốc: " . $hinhanh->duong_dan);
                 error_log("GetHinhAnhById - Thông tin đầy đủ: " . print_r($hinhanh, true));
 
-                // Xử lý đường dẫn hình ảnh
                 if (strpos($hinhanh->duong_dan, 'data:image') === 0) {
-                    // Nếu là base64, giữ nguyên
+
                     error_log("GetHinhAnhById - Đường dẫn là base64");
                     return $hinhanh;
                 } else {
-                    // Đường dẫn chính xác từ gốc web app
+
                     if (!empty($hinhanh->duong_dan)) {
-                        // Chuẩn hóa đường dẫn
+
                         $hinhanh->duong_dan = str_replace('\\', '/', $hinhanh->duong_dan);
 
-                        // Nếu đường dẫn chưa có "administrator/" ở đầu và bắt đầu bằng "uploads/"
                         if (
                             strpos($hinhanh->duong_dan, 'administrator/') !== 0 &&
                             strpos($hinhanh->duong_dan, 'uploads/') === 0
@@ -741,7 +686,6 @@ class hanghoa
         }
     }
 
-    // Phương thức tạo bảng hanghoa_hinhanh nếu chưa tồn tại
     public function CreateHanghoaHinhanhTable()
     {
         try {
@@ -759,14 +703,13 @@ class hanghoa
         }
     }
 
-    // Biến static để lưu trữ trạng thái kiểm tra cột file_hash
     private static $hasCheckedFileHashColumn = false;
     private static $fileHashColumnExists = false;
 
     public function ThemHinhAnh($ten_file, $loai_file, $duong_dan, $file_hash = null)
     {
         try {
-            // Chỉ kiểm tra cột file_hash một lần trong suốt thời gian chạy ứng dụng
+
             if (!self::$hasCheckedFileHashColumn) {
                 $checkColumnSql = "SHOW COLUMNS FROM hinhanh LIKE 'file_hash'";
                 $checkColumnStmt = $this->db->prepare($checkColumnSql);
@@ -775,7 +718,6 @@ class hanghoa
                 self::$fileHashColumnExists = ($checkColumnStmt->rowCount() > 0);
                 self::$hasCheckedFileHashColumn = true;
 
-                // Nếu chưa có cột file_hash, thêm cột này vào bảng
                 if (!self::$fileHashColumnExists) {
                     $addColumnSql = "ALTER TABLE hinhanh ADD COLUMN file_hash VARCHAR(32) NULL";
                     $this->db->exec($addColumnSql);
@@ -783,7 +725,6 @@ class hanghoa
                 }
             }
 
-            // Sử dụng prepared statement được tối ưu hóa
             if ($file_hash) {
                 $sql = "INSERT INTO hinhanh (ten_file, loai_file, duong_dan, trang_thai, ngay_tao, file_hash)
                         VALUES (?, ?, ?, 0, CURRENT_TIMESTAMP, ?)";
@@ -804,7 +745,7 @@ class hanghoa
     public function XoaHinhAnh($id)
     {
         try {
-            // Xóa record trong database
+
             $sql = "DELETE FROM hinhanh WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([$id]);
@@ -814,32 +755,28 @@ class hanghoa
         }
     }
 
-    // Áp dụng hình ảnh cho sản phẩm
     public function ApplyImageToProduct($idhanghoa, $id_hinhanh)
     {
         try {
-            // Đảm bảo kết nối đang hoạt động
+
             if (!$this->db || !($this->db instanceof PDO)) {
                 error_log("Không có kết nối database hợp lệ");
                 return false;
             }
 
-            // Kiểm tra trạng thái transaction hiện tại và bắt đầu nếu chưa có
             try {
-                // Chỉ bắt đầu transaction nếu chưa có transaction nào đang active
+
                 if (!$this->db->inTransaction()) {
                     $this->db->beginTransaction();
                 }
             } catch (PDOException $e) {
-                // Ghi log lỗi và trả về false
+
                 error_log("Lỗi transaction: " . $e->getMessage());
                 return false;
             }
 
-            // Đảm bảo bảng hanghoa_hinhanh đã được tạo
             $this->CreateHanghoaHinhanhTable();
 
-            // Cập nhật hình ảnh chính cho sản phẩm
             $sql = 'UPDATE hanghoa SET hinhanh = ? WHERE idhanghoa = ?';
             $stmt = $this->db->prepare($sql);
             $result = $stmt->execute([$id_hinhanh, $idhanghoa]);
@@ -848,7 +785,6 @@ class hanghoa
                 throw new Exception("Không thể cập nhật hình ảnh chính");
             }
 
-            // Thêm quan hệ vào bảng hanghoa_hinhanh nếu chưa tồn tại
             $checkSql = 'SELECT COUNT(*) FROM hanghoa_hinhanh WHERE idhanghoa = ? AND idhinhanh = ?';
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute([$idhanghoa, $id_hinhanh]);
@@ -864,15 +800,13 @@ class hanghoa
                 }
             }
 
-            // Cập nhật trạng thái hình ảnh thành đang sử dụng
             $this->UpdateImageStatus($id_hinhanh);
 
-            // Hoàn tất giao dịch
             $this->db->commit();
 
             return true;
         } catch (Exception $e) {
-            // Rollback nếu có lỗi
+
             try {
                 $this->db->rollBack();
             } catch (PDOException $rollbackException) {
@@ -918,7 +852,6 @@ class hanghoa
         return $stmt->execute([$id]);
     }
 
-    // Tìm sản phẩm theo tên
     public function FindProductsByName($name)
     {
         $sql = 'SELECT * FROM hanghoa WHERE tenhanghoa LIKE ?';
@@ -927,7 +860,6 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    // Lấy ID được insert cuối cùng
     public function GetLastInsertId()
     {
         return $this->db->lastInsertId();
@@ -948,7 +880,6 @@ class hanghoa
         }
     }
 
-    // Kiểm tra xem hình ảnh đã tồn tại chưa
     public function CheckImageExists($fileName)
     {
         try {
@@ -963,11 +894,10 @@ class hanghoa
         }
     }
 
-    // Thêm phương thức kiểm tra trùng lặp ảnh bằng hash MD5
     public function CheckImageExistsByHash($fileHash)
     {
         try {
-            // Sử dụng biến static đã kiểm tra từ hàm ThemHinhAnh
+
             if (!self::$hasCheckedFileHashColumn) {
                 $checkColumnSql = "SHOW COLUMNS FROM hinhanh LIKE 'file_hash'";
                 $checkColumnStmt = $this->db->prepare($checkColumnSql);
@@ -976,18 +906,16 @@ class hanghoa
                 self::$fileHashColumnExists = ($checkColumnStmt->rowCount() > 0);
                 self::$hasCheckedFileHashColumn = true;
 
-                // Nếu chưa có cột file_hash, thêm cột này vào bảng
                 if (!self::$fileHashColumnExists) {
                     $addColumnSql = "ALTER TABLE hinhanh ADD COLUMN file_hash VARCHAR(32) NULL";
                     $this->db->exec($addColumnSql);
                     self::$fileHashColumnExists = true;
-                    return false; // Vì vừa thêm cột, chắc chắn chưa có dữ liệu
+                    return false;
                 }
             } else if (!self::$fileHashColumnExists) {
-                return false; // Nếu đã kiểm tra trước đó và biết rằng cột không tồn tại
+                return false;
             }
 
-            // Sử dụng prepared statement với tham số được bind trực tiếp
             $sql = "SELECT id FROM hinhanh WHERE file_hash = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$fileHash]);
@@ -1000,7 +928,6 @@ class hanghoa
         }
     }
 
-    // Đếm số lượng hình ảnh đã áp dụng cho từng sản phẩm
     public function CountImagesForProduct($idhanghoa)
     {
         try {
@@ -1015,7 +942,6 @@ class hanghoa
         }
     }
 
-    // Lấy tất cả thông tin về hình ảnh đã áp dụng cho một sản phẩm
     public function GetAllImagesForProduct($idhanghoa)
     {
         try {
@@ -1032,7 +958,6 @@ class hanghoa
         }
     }
 
-    // Thêm phương thức để cập nhật hình ảnh của sản phẩm
     public function CapNhatHinhAnhSanPham($idhanghoa, $id_hinhanh_moi)
     {
         try {
@@ -1044,7 +969,6 @@ class hanghoa
         }
     }
 
-    // Kiểm tra hình ảnh không khớp tên với sản phẩm
     public function GetMismatchedProductImages()
     {
         try {
@@ -1062,11 +986,10 @@ class hanghoa
         }
     }
 
-    // Kiểm tra và tìm hình ảnh bị thiếu
     public function FindMissingImages()
     {
         try {
-            // Tìm các hình ảnh được tham chiếu trong bảng hanghoa nhưng không tồn tại trong bảng hinhanh
+
             $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.hinhanh
                    FROM hanghoa h
                    LEFT JOIN hinhanh ha ON h.hinhanh = ha.id
@@ -1080,11 +1003,10 @@ class hanghoa
         }
     }
 
-    // Tìm hình ảnh có tên khớp chính xác với tên sản phẩm
     public function FindExactMatchImage($idhanghoa)
     {
         try {
-            // Lấy thông tin sản phẩm
+
             $sql = "SELECT tenhanghoa FROM hanghoa WHERE idhanghoa = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idhanghoa]);
@@ -1094,13 +1016,11 @@ class hanghoa
                 return null;
             }
 
-            // Lấy tất cả hình ảnh
             $sql = "SELECT * FROM hinhanh";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             $images = $stmt->fetchAll(PDO::FETCH_OBJ);
 
-            // Tìm hình ảnh khớp chính xác
             foreach ($images as $image) {
                 if ($this->IsExactImageNameMatch($product->tenhanghoa, $image->ten_file)) {
                     return $image;
@@ -1114,7 +1034,6 @@ class hanghoa
         }
     }
 
-    // Áp dụng tất cả hình ảnh khớp chính xác cho sản phẩm
     public function ApplyAllExactMatchImages()
     {
         try {
@@ -1122,13 +1041,11 @@ class hanghoa
                 $this->db->beginTransaction();
             }
 
-            // Lấy tất cả sản phẩm
             $sqlProducts = "SELECT idhanghoa, tenhanghoa FROM hanghoa";
             $stmtProducts = $this->db->prepare($sqlProducts);
             $stmtProducts->execute();
             $products = $stmtProducts->fetchAll(PDO::FETCH_OBJ);
 
-            // Lấy tất cả hình ảnh
             $sqlImages = "SELECT id, ten_file FROM hinhanh";
             $stmtImages = $this->db->prepare($sqlImages);
             $stmtImages->execute();
@@ -1139,12 +1056,11 @@ class hanghoa
             foreach ($products as $product) {
                 foreach ($images as $image) {
                     if ($this->IsExactImageNameMatch($product->tenhanghoa, $image->ten_file)) {
-                        // Cập nhật hình ảnh chính cho sản phẩm
+
                         $sqlUpdate = "UPDATE hanghoa SET hinhanh = ? WHERE idhanghoa = ?";
                         $stmtUpdate = $this->db->prepare($sqlUpdate);
                         $stmtUpdate->execute([$image->id, $product->idhanghoa]);
 
-                        // Thêm liên kết vào bảng hanghoa_hinhanh
                         $checkSql = "SELECT COUNT(*) FROM hanghoa_hinhanh WHERE idhanghoa = ? AND idhinhanh =?";
                         $checkStmt = $this->db->prepare($checkSql);
                         $checkStmt->execute([$product->idhanghoa, $image->id]);
@@ -1157,7 +1073,7 @@ class hanghoa
                         }
 
                         $matchesCount++;
-                        break; // Chỉ áp dụng hình ảnh đầu tiên khớp
+                        break;
                     }
                 }
             }
@@ -1171,14 +1087,12 @@ class hanghoa
         }
     }
 
-    // Gỡ bỏ hình ảnh khỏi sản phẩm
     public function RemoveImageFromProduct($idhanghoa)
     {
         try {
-            // Log cho việc debug
+
             error_log("RemoveImageFromProduct - Bắt đầu gỡ bỏ hình ảnh cho sản phẩm ID: " . $idhanghoa);
 
-            // Kiểm tra xem sản phẩm có tồn tại không
             $checkProduct = "SELECT hinhanh FROM hanghoa WHERE idhanghoa = ?";
             $stmtCheckProduct = $this->db->prepare($checkProduct);
             $stmtCheckProduct->execute([$idhanghoa]);
@@ -1191,12 +1105,10 @@ class hanghoa
 
             error_log("RemoveImageFromProduct - Hình ảnh hiện tại của sản phẩm: " . ($currentImageId ?: 'NULL'));
 
-            // Bắt đầu giao dịch nếu chưa có
             if (!$this->db->inTransaction()) {
                 $this->db->beginTransaction();
             }
 
-            // Đặt hình ảnh về NULL cho sản phẩm
             $sqlUpdate = "UPDATE hanghoa SET hinhanh = NULL WHERE idhanghoa = ?";
             $stmtUpdate = $this->db->prepare($sqlUpdate);
             $result = $stmtUpdate->execute([$idhanghoa]);
@@ -1209,10 +1121,9 @@ class hanghoa
 
             error_log("RemoveImageFromProduct - Đã cập nhật sản phẩm thành NULL");
 
-            // Xóa quan hệ trong bảng hanghoa_hinhanh nếu có hình ảnh cũ
             if ($currentImageId) {
                 try {
-                    // Kiểm tra xem bảng hanghoa_hinhanh có tồn tại không
+
                     $checkTableSql = "SHOW TABLES LIKE 'hanghoa_hinhanh'";
                     $checkTableStmt = $this->db->prepare($checkTableSql);
                     $checkTableStmt->execute();
@@ -1234,11 +1145,10 @@ class hanghoa
                     }
                 } catch (Exception $e) {
                     error_log("RemoveImageFromProduct - Lỗi khi xử lý bảng hanghoa_hinhanh: " . $e->getMessage());
-                    // Không rollback ở đây vì việc xóa quan hệ không quan trọng bằng việc cập nhật hình ảnh chính
+
                 }
             }
 
-            // Hoàn tất giao dịch
             $this->db->commit();
             error_log("RemoveImageFromProduct - Gỡ bỏ hình ảnh hoàn tất thành công");
 
@@ -1258,18 +1168,15 @@ class hanghoa
         }
     }
 
-    // Gỡ bỏ tất cả hình ảnh không khớp tên với sản phẩm
     public function RemoveAllMismatchedImages()
     {
         try {
             error_log("RemoveAllMismatchedImages - Bắt đầu gỡ bỏ tất cả hình ảnh không khớp");
 
-            // Bắt đầu giao dịch nếu chưa có
             if (!$this->db->inTransaction()) {
                 $this->db->beginTransaction();
             }
 
-            // Lấy danh sách sản phẩm có hình ảnh không khớp
             $mismatched = $this->GetMismatchedProductImages();
             $count = 0;
 
@@ -1284,7 +1191,6 @@ class hanghoa
             foreach ($mismatched as $item) {
                 error_log("RemoveAllMismatchedImages - Đang xử lý sản phẩm ID: " . $item->idhanghoa . ", Tên: " . $item->tenhanghoa . ", Hình ảnh ID: " . $item->id);
 
-                // Đặt hình ảnh về NULL cho sản phẩm
                 $sqlUpdate = "UPDATE hanghoa SET hinhanh = NULL WHERE idhanghoa = ?";
                 $stmtUpdate = $this->db->prepare($sqlUpdate);
                 $resultUpdate = $stmtUpdate->execute([$item->idhanghoa]);
@@ -1294,7 +1200,6 @@ class hanghoa
                     continue;
                 }
 
-                // Xóa quan hệ trong bảng hanghoa_hinhanh
                 $sqlDeleteRelation = "DELETE FROM hanghoa_hinhanh WHERE idhanghoa = ? AND idhinhanh = ?";
                 $stmtDeleteRelation = $this->db->prepare($sqlDeleteRelation);
                 $resultDelete = $stmtDeleteRelation->execute([$item->idhanghoa, $item->id]);
@@ -1307,20 +1212,19 @@ class hanghoa
                 error_log("RemoveAllMismatchedImages - Đã gỡ bỏ hình ảnh cho sản phẩm ID: " . $item->idhanghoa);
             }
 
-            // Hoàn tất giao dịch
             $this->db->commit();
 
             error_log("RemoveAllMismatchedImages - Hoàn tất gỡ bỏ " . $count . " hình ảnh");
             return $count;
         } catch (PDOException $e) {
-            // Rollback nếu có lỗi
+
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
             error_log("Error in RemoveAllMismatchedImages: " . $e->getMessage());
             return false;
         } catch (Exception $e) {
-            // Bắt các exception khác
+
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
@@ -1329,14 +1233,11 @@ class hanghoa
         }
     }
 
-    // Kiểm tra xem tên file hình ảnh có khớp chính xác với tên sản phẩm không (phân biệt hoa thường)
     public function IsExactImageNameMatch($tenhanghoa, $ten_file)
     {
-        // Tách tên file không có phần mở rộng
+
         $imageNameWithoutExt = pathinfo($ten_file, PATHINFO_FILENAME);
 
-        // So sánh chính xác giữa tên sản phẩm và tên file, chỉ loại bỏ khoảng trắng đầu/cuối
-        // Giữ nguyên phân biệt chữ hoa/thường để so khớp tuyệt đối
         if (trim($tenhanghoa) === trim($imageNameWithoutExt)) {
             return true;
         }
@@ -1344,12 +1245,6 @@ class hanghoa
         return false;
     }
 
-    /**
-     * Filter products by price, color, size, and rating
-     * 
-     * @param array $filters Array containing filter criteria
-     * @return array Filtered products
-     */
     public function filterProducts($filters)
     {
         try {
@@ -1359,11 +1254,24 @@ class hanghoa
             try {
                 $checkReviews = $this->db->query("SHOW TABLES LIKE 'product_reviews'");
                 if ($checkReviews && $checkReviews->rowCount() > 0) {
-                    $hasProductCol = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'ma_san_pham'");
                     $hasRatingCol = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'rating'");
-                    if ($hasProductCol && $hasProductCol->rowCount() > 0 && $hasRatingCol && $hasRatingCol->rowCount() > 0) {
-                        $ratingSelect = '(SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as average_rating';
-                        $reviewCountSelect = '(SELECT COUNT(*) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) as review_count';
+                    if ($hasRatingCol && $hasRatingCol->rowCount() > 0) {
+
+                        $hasProductId = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'product_id'");
+                        $hasMaSanPham = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'ma_san_pham'");
+                        
+                        if ($hasProductId && $hasProductId->rowCount() > 0) {
+                            $productCol = 'product_id';
+                        } elseif ($hasMaSanPham && $hasMaSanPham->rowCount() > 0) {
+                            $productCol = 'ma_san_pham';
+                        } else {
+                            $productCol = null;
+                        }
+                        
+                        if ($productCol) {
+                            $ratingSelect = "(SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.$productCol = h.idhanghoa AND (pr.status = 'approved' OR pr.is_approved = 1)) as average_rating";
+                            $reviewCountSelect = "(SELECT COUNT(*) FROM product_reviews pr WHERE pr.$productCol = h.idhanghoa AND (pr.status = 'approved' OR pr.is_approved = 1)) as review_count";
+                        }
                     }
                 }
             } catch (PDOException $e) {
@@ -1378,22 +1286,19 @@ class hanghoa
             $conditions = $statusCondition ? [$statusCondition] : [];
             $params = [];
 
-            // Color and Size filters using thuoctinhhh table
             if (!empty($filters['colors']) || !empty($filters['sizes'])) {
                 $joins[] = 'INNER JOIN thuoctinhhh tt ON h.idhanghoa = tt.idhanghoa';
 
                 $filterConditions = [];
 
-                // Color filter: Tìm ID thuộc tính màu sắc động
                 if (!empty($filters['colors'])) {
-                    // Lấy ID thuộc tính màu sắc từ database
+
                     $colorAttrStmt = $this->db->query("SELECT idThuocTinh FROM thuoctinh WHERE tenThuocTinh LIKE '%màu%' OR tenThuocTinh LIKE '%color%' LIMIT 1");
                     $colorAttr = $colorAttrStmt->fetch(PDO::FETCH_ASSOC);
                     
                     if ($colorAttr) {
                         $colorAttrId = $colorAttr['idThuocTinh'];
                         
-                        // Mapping màu từ tiếng Anh sang tiếng Việt
                         $colorMapping = [
                             'red' => 'Đỏ',
                             'blue' => 'Xanh dương',
@@ -1412,10 +1317,9 @@ class hanghoa
                         $colorOrConditions = [];
                         foreach ($filters['colors'] as $colorEn) {
                             $colorEn = trim($colorEn);
-                            // Chuyển từ tiếng Anh sang tiếng Việt
+
                             $colorVi = isset($colorMapping[$colorEn]) ? $colorMapping[$colorEn] : $colorEn;
                             
-                            // Tìm chính xác tên màu (không dùng LIKE để tránh lỗi)
                             $colorOrConditions[] = "LOWER(TRIM(tt.tenThuocTinhHH)) = LOWER(?)";
                             $params[] = $colorVi;
                         }
@@ -1425,7 +1329,6 @@ class hanghoa
                     }
                 }
 
-                // Size filter: check RAM (8) or Storage (9) or Battery (10)
                 if (!empty($filters['sizes'])) {
                     $sizeValues = array_map(function ($s) {
                         return trim($s);
@@ -1437,7 +1340,6 @@ class hanghoa
                         $params[] = '%,' . $size . ',%';
                     }
 
-                    // Check multiple size-related IDs: 8 (RAM), 9 (Storage), 10 (Battery)
                     $sizeCondition = "tt.idThuocTinh IN (8, 9, 10) AND (" . implode(' OR ', $sizeOrConditions) . ")";
                     $filterConditions[] = $sizeCondition;
                 }
@@ -1451,7 +1353,6 @@ class hanghoa
                 }
             }
 
-            // Price filter - lấy giá hiển thị (khuyến mại nếu có, nếu không thì giá tham khảo)
             if (isset($filters['min_price']) && isset($filters['max_price'])) {
                 $conditions[] = '(CASE 
                     WHEN h.giakhuyenmai > 0 THEN h.giakhuyenmai 
@@ -1461,20 +1362,25 @@ class hanghoa
                 $params[] = $filters['max_price'];
             }
 
-            // Category filter
             if (isset($filters['category']) && $filters['category'] > 0) {
                 $conditions[] = 'h.idloaihang = ?';
                 $params[] = $filters['category'];
             }
 
-            // Rating filter - lọc theo đánh giá trung bình
             if (isset($filters['min_rating']) && $filters['min_rating'] > 0) {
-                // Subquery để tính rating trung bình
-                $conditions[] = '(SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.ma_san_pham = h.idhanghoa AND pr.is_approved = 1 AND (pr.status = "visible" OR pr.status IS NULL)) >= ?';
-                $params[] = $filters['min_rating'];
+
+                $ratingThreshold = $filters['min_rating'] - 0.5;
+                if ($ratingThreshold < 0.5) $ratingThreshold = 0.5;
+                
+                $hasProductId = $this->db->query("SHOW COLUMNS FROM product_reviews LIKE 'product_id'");
+                $filterProductCol = ($hasProductId && $hasProductId->rowCount() > 0) ? 'product_id' : 'ma_san_pham';
+                
+                $conditions[] = "(SELECT COALESCE(AVG(pr.rating), 0) FROM product_reviews pr WHERE pr.$filterProductCol = h.idhanghoa AND (pr.status = 'approved' OR pr.is_approved = 1)) >= ?";
+                $params[] = $ratingThreshold;
+                
+                $conditions[] = "(SELECT COUNT(*) FROM product_reviews pr WHERE pr.$filterProductCol = h.idhanghoa AND (pr.status = 'approved' OR pr.is_approved = 1)) > 0";
             }
 
-            // Build final query
             if (!empty($joins)) {
                 $sql .= ' ' . implode(' ', $joins);
             }
@@ -1483,10 +1389,8 @@ class hanghoa
                 $sql .= ' WHERE ' . implode(' AND ', $conditions);
             }
 
-            // Order by: sản phẩm có ảnh lên trước, sau đó theo tên
             $sql .= ' ORDER BY (CASE WHEN h.hinhanh IS NOT NULL AND h.hinhanh != 0 AND h.hinhanh != "" THEN 0 ELSE 1 END) ASC, h.tenhanghoa ASC';
 
-            // Execute query
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
             $stmt->setFetchMode(PDO::FETCH_OBJ);
@@ -1506,12 +1410,6 @@ class hanghoa
         return $this->lastFilterDebug;
     }
 
-    /**
-     * Get available filter options (colors, sizes, price range)
-     * 
-     * @param int|null $idloaihang Category ID to filter options by
-     * @return array Available filter options
-     */
     public function getFilterOptions($idloaihang = null)
     {
         try {
@@ -1521,7 +1419,6 @@ class hanghoa
                 'price_range' => ['min' => 0, 'max' => 100000000]
             ];
 
-            // Build base query for attributes
             $sql = 'SELECT DISTINCT tt.tenThuocTinhHH 
                     FROM thuoctinhhh tt
                     INNER JOIN hanghoa h ON tt.idhanghoa = h.idhanghoa';
@@ -1537,17 +1434,15 @@ class hanghoa
             $stmt->execute($params);
             $attributes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
-            // Extract colors and sizes from attributes
             $colorKeywords = ['màu', 'color'];
             $sizeKeywords = ['kích', 'size', 'cỡ'];
 
             foreach ($attributes as $attr) {
                 $attrLower = mb_strtolower($attr, 'UTF-8');
 
-                // Check if it's a color attribute
                 foreach ($colorKeywords as $keyword) {
                     if (strpos($attrLower, $keyword) !== false) {
-                        // Extract color value
+
                         $color = $this->extractAttributeValue($attr, $colorKeywords);
                         if ($color && !in_array($color, $options['colors'])) {
                             $options['colors'][] = $color;
@@ -1556,10 +1451,9 @@ class hanghoa
                     }
                 }
 
-                // Check if it's a size attribute
                 foreach ($sizeKeywords as $keyword) {
                     if (strpos($attrLower, $keyword) !== false) {
-                        // Extract size value
+
                         $size = $this->extractAttributeValue($attr, $sizeKeywords);
                         if ($size && !in_array($size, $options['sizes'])) {
                             $options['sizes'][] = $size;
@@ -1569,7 +1463,6 @@ class hanghoa
                 }
             }
 
-            // Get price range
             $priceSql = 'SELECT MIN(giathamkhao) as min_price, MAX(giathamkhao) as max_price FROM hanghoa';
 
             if ($idloaihang) {
@@ -1599,18 +1492,10 @@ class hanghoa
         }
     }
 
-    /**
-     * Extract attribute value from attribute string
-     * 
-     * @param string $attribute Full attribute string
-     * @param array $keywords Keywords to remove
-     * @return string|null Extracted value
-     */
     private function extractAttributeValue($attribute, $keywords)
     {
         $value = $attribute;
 
-        // Remove common separators and keywords
         $value = preg_replace('/[:\-\|]/u', ' ', $value);
 
         foreach ($keywords as $keyword) {
@@ -1619,7 +1504,6 @@ class hanghoa
 
         $value = trim($value);
 
-        // Return null if empty or too long
         if (empty($value) || mb_strlen($value, 'UTF-8') > 50) {
             return null;
         }
@@ -1627,25 +1511,10 @@ class hanghoa
         return $value;
     }
 
-    /**
-     * Get related products with stricter relevance criteria
-     * 
-     * @param int $idhanghoa Current product ID
-     * @param int $limit Maximum number of similar products to return
-     * @return array Array of similar product objects
-     * 
-     * IMPROVED ALGORITHM (v2.0):
-     * Tier 1: Cùng thương hiệu + Cùng loại hàng (ưu tiên cao nhất)
-     * Tier 2: Cùng loại hàng + Giá tương tự (±30%)
-     * Tier 3: Cùng thương hiệu (khác loại hàng)
-     * Tier 4: Cùng loại hàng (bất kỳ giá)
-     * Tier 5: Giá tương tự (fallback)
-     * Tier 6: Bất kỳ sản phẩm nào
-     */
     public function getRelatedProducts($idhanghoa, $limit = 6)
     {
         try {
-            // Get current product info
+
             $current = $this->HanghoaGetbyId($idhanghoa);
 
             if (!$current) {
@@ -1653,9 +1522,8 @@ class hanghoa
             }
 
             $results = [];
-            $excludeIds = [$idhanghoa]; // Always exclude current product
+            $excludeIds = [$idhanghoa];
 
-            // Tier 1: Cùng thương hiệu + Cùng loại hàng (BEST MATCH)
             if (!empty($current->idThuongHieu) && !empty($current->idloaihang)) {
                 $tier1 = $this->getProductsSameBrandSameCategory($current, $limit, $excludeIds);
                 foreach ($tier1 as $p) {
@@ -1664,7 +1532,6 @@ class hanghoa
                 }
             }
 
-            // Tier 2: Cùng loại hàng + Giá tương tự (±30%)
             if (count($results) < $limit && !empty($current->idloaihang)) {
                 $remaining = $limit - count($results);
                 $tier2 = $this->getProductsSameCategorySimilarPrice($current, $remaining, $excludeIds);
@@ -1674,7 +1541,6 @@ class hanghoa
                 }
             }
 
-            // Tier 3: Cùng thương hiệu (khác loại hàng)
             if (count($results) < $limit && !empty($current->idThuongHieu)) {
                 $remaining = $limit - count($results);
                 $tier3 = $this->getProductsSameBrandOnly($current, $remaining, $excludeIds);
@@ -1684,7 +1550,6 @@ class hanghoa
                 }
             }
 
-            // Tier 4: Cùng loại hàng (bất kỳ giá)
             if (count($results) < $limit && !empty($current->idloaihang)) {
                 $remaining = $limit - count($results);
                 $tier4 = $this->getProductsSameCategoryOnly($current, $remaining, $excludeIds);
@@ -1694,7 +1559,6 @@ class hanghoa
                 }
             }
 
-            // Tier 5: Giá tương tự (±30%)
             if (count($results) < $limit) {
                 $remaining = $limit - count($results);
                 $tier5 = $this->getSimilarPriceProducts($current, $remaining, $excludeIds);
@@ -1704,7 +1568,6 @@ class hanghoa
                 }
             }
 
-            // Tier 6: Bất kỳ sản phẩm nào (fallback)
             if (count($results) < $limit) {
                 $remaining = $limit - count($results);
                 $tier6 = $this->getAnyProducts($current, $remaining, $excludeIds);
@@ -1720,9 +1583,6 @@ class hanghoa
         }
     }
 
-    /**
-     * Tier 1: Cùng thương hiệu + Cùng loại hàng
-     */
     private function getProductsSameBrandSameCategory($current, $limit, $excludeIds = [])
     {
         if (empty($current->idThuongHieu) || empty($current->idloaihang)) {
@@ -1755,9 +1615,6 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Tier 2: Cùng loại hàng + Giá tương tự (±30%)
-     */
     private function getProductsSameCategorySimilarPrice($current, $limit, $excludeIds = [])
     {
         if (empty($current->idloaihang)) {
@@ -1776,7 +1633,7 @@ class hanghoa
             $params = array_merge($params, $excludeIds);
         }
         
-        $params[] = $current->giathamkhao; // For ORDER BY
+        $params[] = $current->giathamkhao;
 
         $sql = "SELECT h.* FROM hanghoa h
                 WHERE h.idhanghoa != ? 
@@ -1795,9 +1652,6 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Tier 3: Cùng thương hiệu (khác loại hàng)
-     */
     private function getProductsSameBrandOnly($current, $limit, $excludeIds = [])
     {
         if (empty($current->idThuongHieu)) {
@@ -1829,9 +1683,6 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Tier 4: Cùng loại hàng (bất kỳ giá)
-     */
     private function getProductsSameCategoryOnly($current, $limit, $excludeIds = [])
     {
         if (empty($current->idloaihang)) {
@@ -1863,19 +1714,9 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    // Method getSameBrandProducts đã được thay thế bởi getProductsSameBrandSameCategory và getProductsSameBrandOnly
-
-    /**
-     * Get products with similar price range
-     * 
-     * @param object $current Current product
-     * @param int $limit Maximum number of products
-     * @param array $excludeIds Product IDs to exclude
-     * @return array Array of similar price products
-     */
     private function getSimilarPriceProducts($current, $limit, $excludeIds = [])
     {
-        // Price range: ±30% of current product price
+
         $priceMin = $current->giathamkhao * 0.7;
         $priceMax = $current->giathamkhao * 1.3;
         
@@ -1916,14 +1757,6 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get any products as fallback (to ensure we always have results)
-     * 
-     * @param object $current Current product
-     * @param int $limit Maximum number of products
-     * @param array $excludeIds Product IDs to exclude
-     * @return array Array of any available products
-     */
     private function getAnyProducts($current, $limit, $excludeIds = [])
     {
         if (!empty($excludeIds)) {
@@ -1955,16 +1788,6 @@ class hanghoa
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    /**
-     * Get product status for display
-     * Logic:
-     * - If trang_thai = 2 (Ngừng bán): Always show "Ngừng bán"
-     * - If trang_thai = 3 (Hết hàng): Show "Hết hàng"
-     * - If trang_thai = 1 (Đang bán): Check quantity; if 0 show "Hết hàng", else show "Đang bán"
-     * 
-     * @param int $idhanghoa Product ID
-     * @return string Display status (Đang bán, Ngừng bán, Hết hàng)
-     */
     public function getProductStatus($idhanghoa)
     {
         try {
@@ -1977,7 +1800,6 @@ class hanghoa
                 return "Không xác định";
             }
 
-            // Status values: 1=Đang bán, 2=Ngừng bán, 3=Hết hàng
             switch ((int)$product->trang_thai) {
                 case 2:
                     return "Ngừng bán";
@@ -1985,7 +1807,7 @@ class hanghoa
                     return "Hết hàng";
                 case 1:
                 default:
-                    // For active products, check if quantity is 0
+
                     $quantity = $this->getProductQuantity($idhanghoa);
                     if ($quantity == 0) {
                         return "Hết hàng";
@@ -1998,16 +1820,10 @@ class hanghoa
         }
     }
 
-    /**
-     * Get product quantity from tonkho table
-     * 
-     * @param int $idhanghoa Product ID
-     * @return int Product quantity (0 if not found)
-     */
     public function getProductQuantity($idhanghoa)
     {
         try {
-            // Check if tonkho table exists
+
             $checkTable = $this->db->query("SHOW TABLES LIKE 'tonkho'");
             if ($checkTable->rowCount() == 0) {
                 return 0;
@@ -2025,17 +1841,10 @@ class hanghoa
         }
     }
 
-    /**
-     * Update product status
-     * 
-     * @param int $idhanghoa Product ID
-     * @param int $status Status value (1=Đang bán, 2=Ngừng bán, 3=Hết hàng)
-     * @return bool True if successful, false otherwise
-     */
     public function updateProductStatus($idhanghoa, $status)
     {
         try {
-            // Validate status value
+
             if (!in_array($status, [1, 2, 3])) {
                 error_log("Invalid status value: " . $status);
                 return false;
@@ -2056,12 +1865,6 @@ class hanghoa
         }
     }
 
-    /**
-     * Get product status value (numeric)
-     * 
-     * @param int $idhanghoa Product ID
-     * @return int Status value (1, 2, or 3)
-     */
     public function getProductStatusValue($idhanghoa)
     {
         try {
@@ -2077,16 +1880,10 @@ class hanghoa
         }
     }
 
-    /**
-     * Get products by status
-     * 
-     * @param int $status Status value (1, 2, or 3)
-     * @return array Array of product objects
-     */
     public function getProductsByStatus($status)
     {
         try {
-            // Validate status value
+
             if (!in_array($status, [1, 2, 3])) {
                 return [];
             }
@@ -2103,32 +1900,16 @@ class hanghoa
         }
     }
 
-    /**
-     * Get all discontinued products (trang_thai = 2)
-     * 
-     * @return array Array of discontinued product objects
-     */
     public function getDiscontinuedProducts()
     {
         return $this->getProductsByStatus(2);
     }
 
-    /**
-     * Get all out of stock products (trang_thai = 3)
-     * 
-     * @return array Array of out of stock product objects
-     */
     public function getOutOfStockProducts()
     {
         return $this->getProductsByStatus(3);
     }
 
-    /**
-     * Get status color CSS class for display
-     * 
-     * @param string $displayStatus Display status string
-     * @return string CSS class name
-     */
     public function getStatusCssClass($displayStatus)
     {
         switch ($displayStatus) {
@@ -2143,31 +1924,20 @@ class hanghoa
         }
     }
 
-    /**
-     * Get status color for display
-     * 
-     * @param string $displayStatus Display status string
-     * @return string Color code (hex)
-     */
     public function getStatusColor($displayStatus)
     {
         switch ($displayStatus) {
             case "Đang bán":
-                return "#27ae60"; // Green
+                return "#27ae60";
             case "Ngừng bán":
-                return "#e74c3c"; // Red
+                return "#e74c3c";
             case "Hết hàng":
-                return "#95a5a6"; // Gray
+                return "#95a5a6";
             default:
-                return "#34495e"; // Dark gray
+                return "#34495e";
         }
     }
 
-    /**
-     * Lấy tồn kho của sản phẩm từ bảng tonkho
-     * @param int $idhanghoa - ID hàng hóa
-     * @return int - Số lượng tồn kho (0 nếu không tìm thấy)
-     */
     public function getTonKho($idhanghoa)
     {
         try {
@@ -2180,10 +1950,9 @@ class hanghoa
 
             $result = $stmt->fetch();
 
-            // Trả về soLuong nếu tìm thấy, nếu không trả về 0
             return $result && isset($result->soLuong) ? (int)$result->soLuong : 0;
         } catch (Exception $e) {
-            // Nếu có lỗi (bảng không tồn tại, etc), trả về 0
+
             return 0;
         }
     }

@@ -1,18 +1,7 @@
 <?php
-/**
- * Track Product View
- * Include file này vào trang chi tiết sản phẩm để track lượt xem
- * 
- * Cách dùng:
- * require_once __DIR__ . '/track_product_view.php';
- * trackProductView($idhanghoa);
- */
 
 require_once __DIR__ . '/administrator/elements_LQA/mod/ProductViewTrackerCls.php';
 
-/**
- * Track lượt xem sản phẩm
- */
 function trackProductView($idhanghoa) {
     if (empty($idhanghoa) || !is_numeric($idhanghoa)) {
         return false;
@@ -27,9 +16,6 @@ function trackProductView($idhanghoa) {
     }
 }
 
-/**
- * Lấy lượt xem sản phẩm
- */
 function getProductViewCount($idhanghoa) {
     try {
         $tracker = new ProductViewTracker();

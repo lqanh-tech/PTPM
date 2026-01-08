@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,20 +9,17 @@ if (!isset($_SESSION['ADMIN'])) {
     exit;
 }
 
-// Lấy danh sách vai trò
 require_once './elements_LQA/mod/roleCls.php';
 $roleObj = new Role();
 $list_roles = $roleObj->getAllRoles();
 
-// Lấy danh sách người dùng
 require_once './elements_LQA/mod/userCls.php';
 $userObj = new user();
 $list_users = $userObj->UserGetAll();
 
-// Lấy danh sách người dùng đã có vai trò
 $usersWithRoles = [];
 try {
-    // Truy vấn để lấy tất cả user_id từ bảng user_roles
+
     $db = Database::getInstance()->getConnection();
     $sql = "SELECT DISTINCT user_id FROM user_roles";
     $stmt = $db->prepare($sql);
@@ -36,7 +33,6 @@ try {
     error_log("Lỗi khi lấy danh sách người dùng đã có vai trò: " . $e->getMessage());
 }
 
-// Xử lý thông báo
 $result = isset($_GET['result']) ? $_GET['result'] : '';
 $message = '';
 $messageClass = '';
@@ -49,7 +45,6 @@ if ($result == 'ok') {
     $messageClass = 'danger';
 }
 
-// Lấy thông tin người dùng được chọn
 $selectedUserId = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
 $selectedUser = null;
 $userRoles = [];
@@ -90,7 +85,7 @@ if ($selectedUserId > 0) {
                         <?php
                         $hasUsers = false;
                         foreach ($list_users as $user):
-                            // Chỉ hiển thị người dùng chưa có vai trò
+
                             if (!in_array($user->iduser, $usersWithRoles)):
                                 $hasUsers = true;
                         ?>
@@ -107,7 +102,6 @@ if ($selectedUserId > 0) {
                             endif;
                         endforeach;
 
-                        // Hiển thị thông báo nếu không có người dùng nào
                         if (!$hasUsers):
                             ?>
                             <div class="text-center p-3 text-muted">
@@ -182,19 +176,17 @@ if ($selectedUserId > 0) {
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Xử lý tìm kiếm người dùng
+
         const searchInput = document.getElementById('searchUser');
         const clearButton = document.getElementById('clearSearch');
         const userItems = document.querySelectorAll('.user-list .list-group-item');
         const noResultsMessage = document.createElement('div');
 
-        // Tạo phần tử thông báo không có kết quả tìm kiếm
         noResultsMessage.className = 'text-center p-3 text-muted';
         noResultsMessage.innerHTML =
             '<i class="fas fa-search mb-2"></i><p>Không tìm thấy người dùng nào phù hợp.</p>';
         noResultsMessage.style.display = 'none';
 
-        // Thêm vào danh sách
         const userList = document.querySelector('.user-list');
         userList.appendChild(noResultsMessage);
 
@@ -216,7 +208,6 @@ if ($selectedUserId > 0) {
                 }
             });
 
-            // Hiển thị thông báo nếu không có kết quả
             if (visibleCount === 0 && searchTerm !== '') {
                 noResultsMessage.style.display = 'block';
             } else {

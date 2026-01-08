@@ -1,42 +1,35 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Kiểm tra xem có thông báo thành công không
 if (!isset($_SESSION['payment_success']) || !isset($_GET['order_id'])) {
-    // Log để debug
+
     error_log("Order Success - Missing session or order_id. Session payment_success: " . (isset($_SESSION['payment_success']) ? 'YES' : 'NO') . ", GET order_id: " . (isset($_GET['order_id']) ? $_GET['order_id'] : 'NO'));
     
-    // Nếu có order_id nhưng không có session, vẫn cho phép xem (có thể là refresh page)
     if (isset($_GET['order_id']) && is_numeric($_GET['order_id'])) {
         error_log("Order Success - Allowing access with order_id only: " . $_GET['order_id']);
-        // Tiếp tục xử lý
+
     } else {
-        // Nếu không có thông báo thành công, chuyển hướng về trang giỏ hàng
+
         header('Location: giohangView.php');
         exit();
     }
 }
 
-// Lấy ID đơn hàng
 $orderId = $_GET['order_id'];
 
-// Kết nối database để lấy thông tin đơn hàng
 require_once '../mod/database.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Lấy thông tin đơn hàng
 $orderSql = "SELECT * FROM don_hang WHERE id = ?";
 $orderStmt = $conn->prepare($orderSql);
 $orderStmt->execute([$orderId]);
 $order = $orderStmt->fetch(PDO::FETCH_ASSOC);
 
-// Kiểm tra xem đơn hàng có tồn tại không
 if (!$order) {
     error_log("Order Success - Order not found: " . $orderId);
     echo "<script>alert('Không tìm thấy đơn hàng!'); window.location.href='giohangView.php';</script>";
@@ -45,7 +38,6 @@ if (!$order) {
 
 error_log("Order Success - Order loaded successfully: " . $orderId . ", Status: " . $order['trang_thai'] . ", Payment: " . $order['trang_thai_thanh_toan']);
 
-// Xóa thông báo thành công khỏi session
 unset($_SESSION['payment_success']);
 ?>
 
@@ -96,7 +88,7 @@ unset($_SESSION['payment_success']);
         <h2 class="mb-3">Đặt hàng thành công!</h2>
 
         <?php
-        // Tạo thông báo theo phương thức thanh toán
+
         $paymentMethod = $order['phuong_thuc_thanh_toan'] ?? 'bank_transfer';
         $paymentStatus = $order['trang_thai_thanh_toan'] ?? 'pending';
 
@@ -129,7 +121,7 @@ unset($_SESSION['payment_success']);
             <p><strong>Mã đơn hàng:</strong> #<?php echo $orderId; ?></p>
             <p><strong>Mã tham chiếu:</strong> <?php echo $order['ma_don_hang_text']; ?></p>
             <?php
-            // Tính toán chi tiết
+
             $finalTotal = $order['tong_tien'];
             $vatAmount = isset($order['thue']) ? $order['thue'] : 0;
             $shippingFee = isset($order['phi_van_chuyen']) ? $order['phi_van_chuyen'] : 0;
@@ -241,7 +233,7 @@ unset($_SESSION['payment_success']);
     <?php if ($paymentStatus == 'paid'): ?>
     <div class="container mt-4">
         <?php 
-        $orderId = $orderId; // Pass order ID to widget
+        $orderId = $orderId;
         include __DIR__ . '/../../../components/product_review_widget.php'; 
         ?>
     </div>
@@ -269,11 +261,9 @@ unset($_SESSION['payment_success']);
     </div>
     
     <script>
-    // LƯU Ý: Giỏ hàng đã được xóa trong momo_return.php hoặc payment_confirm.php
-    // Không cần xóa lại ở đây để tránh xóa nhầm các sản phẩm khác trong giỏ
+
     console.log('Order success page loaded. Cart items were already removed during payment processing.');
     
-    // Check for order status updates
     let lastStatus = '<?php echo $order['trang_thai']; ?>';
     let lastPaymentStatus = '<?php echo $order['trang_thai_thanh_toan']; ?>';
     
@@ -282,9 +272,9 @@ unset($_SESSION['payment_success']);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Check if status changed
+
                     if (data.order_status !== lastStatus || data.payment_status !== lastPaymentStatus) {
-                        // Show toast notification
+
                         let message = '';
                         
                         if (data.order_status === 'approved' && lastStatus !== 'approved') {
@@ -300,7 +290,6 @@ unset($_SESSION['payment_success']);
                             const toast = new bootstrap.Toast(document.getElementById('orderStatusToast'));
                             toast.show();
                             
-                            // Reload page after 2 seconds to show updated status
                             setTimeout(() => {
                                 location.reload();
                             }, 2000);
@@ -314,7 +303,6 @@ unset($_SESSION['payment_success']);
             .catch(error => console.error('Error checking order status:', error));
     }
     
-    // Check every 5 seconds
     setInterval(checkOrderStatus, 5000);
     </script>
 </body>

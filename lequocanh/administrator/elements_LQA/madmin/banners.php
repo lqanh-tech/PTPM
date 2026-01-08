@@ -2,7 +2,6 @@
 require_once '../mod/sessionManager.php';
 SessionManager::start();
 
-// Check access rights using PhanQuyen system
 require_once '../mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -27,13 +26,11 @@ switch ($action) {
             $position = (int)($_POST['position'] ?? 0);
             $is_active = isset($_POST['is_active']) ? 1 : 0;
 
-            // Kiểm tra dữ liệu đầu vào
             if (empty($title)) {
                 $message = 'Lỗi: Tiêu đề không được để trống';
                 break;
             }
 
-            // Upload ảnh
             $image_url = '';
             if (!isset($_FILES['image']) || $_FILES['image']['error'] === UPLOAD_ERR_NO_FILE) {
                 $message = 'Lỗi: Vui lòng chọn ảnh banner';
@@ -85,12 +82,11 @@ switch ($action) {
             $position = (int)($_POST['position'] ?? 0);
             $is_active = isset($_POST['is_active']) ? 1 : 0;
 
-            // Upload ảnh mới nếu có
             $image_url = $banner['image_url'];
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $new_image_url = $bannerManager->uploadBannerImage($_FILES['image']);
                 if ($new_image_url) {
-                    // Xóa ảnh cũ nếu khác ảnh mới
+
                     if ($banner['image_url'] !== $new_image_url) {
                         $oldImagePath = __DIR__ . '/../../..' . $banner['image_url'];
                         if (file_exists($oldImagePath)) {
@@ -117,7 +113,7 @@ switch ($action) {
         $banner = $bannerManager->getBannerById($id);
         
         if ($banner && $bannerManager->deleteBanner($id)) {
-            // Xóa ảnh nếu tồn tại
+
             if ($banner['image_url']) {
                 $imagePath = __DIR__ . '/../../..' . $banner['image_url'];
                 if (file_exists($imagePath)) {
@@ -218,28 +214,3 @@ if ($msg === 'notfound') $message = 'Banner không tồn tại';
                                     <img src="<?php echo htmlspecialchars($banner['image_url']); ?>" alt="Current Banner" width="200">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                            <div class="form-text">Chấp nhận định dạng: JPG, PNG, GIF</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="position" class="form-label">Vị trí (số thứ tự)</label>
-                            <input type="number" class="form-control" id="position" name="position" value="<?php echo $action === 'edit' ? $banner['position'] : ($_POST['position'] ?? '0'); ?>" min="0">
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" <?php echo ($action === 'edit' && $banner['is_active']) || (isset($_POST['is_active']) && $_POST['is_active']) ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="is_active">Hiển thị</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn btn-primary"><?php echo $action === 'edit' ? 'Cập nhật' : 'Thêm'; ?> Banner</button>
-                <a href="?" class="btn btn-secondary">Hủy</a>
-            </form>
-        <?php endif; ?>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>

@@ -1,12 +1,7 @@
 <?php
-/**
- * Print Invoice Template
- * Template HTML để in hóa đơn
- */
 
 require_once __DIR__ . '/OrderExporter.php';
 
-// Kiểm tra quyền admin
 session_start();
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     http_response_code(403);
@@ -185,8 +180,7 @@ if (!$order) {
     </div>
     
     <script>
-        // Auto print khi load (tùy chọn)
-        // window.onload = function() { window.print(); }
+
     </script>
 </body>
 </html>

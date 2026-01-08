@@ -1,25 +1,21 @@
 <?php
-/**
- * Get Available Filter Options API
- * Returns available colors and sizes for filtering
- */
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
 
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('get_filter_options');
 
 try {
     $hanghoa = new hanghoa();
     
-    // Get category if specified
     $reqView = isset($_GET['reqView']) ? (int)$_GET['reqView'] : null;
     
-    // Get available filter options
     $options = $hanghoa->getFilterOptions($reqView);
     
-    // Return success response
     echo json_encode([
         'success' => true,
         'colors' => $options['colors'],
@@ -28,7 +24,7 @@ try {
     ], JSON_UNESCAPED_UNICODE);
     
 } catch (Exception $e) {
-    // Return error response
+
     http_response_code(500);
     echo json_encode([
         'success' => false,

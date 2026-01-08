@@ -1,24 +1,17 @@
 <?php
-/**
- * Input Validation Example - Demonstrates how to use InputValidator
- * Priority: HIGH - Security demonstration
- */
 
-// Include required files
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/inputValidator.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
 $errors = [];
 $success = false;
 $formData = [];
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get form data
+
     $formData = [
         'name' => $_POST['name'] ?? '',
         'email' => $_POST['email'] ?? '',
@@ -32,7 +25,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'terms' => $_POST['terms'] ?? ''
     ];
     
-    // Define validation rules
     $rules = [
         'name' => 'required|min_length:2|max_length:50|alpha',
         'email' => 'required|email',
@@ -45,14 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'terms' => 'required'
     ];
     
-    // Validate input
     $validator = new InputValidator();
     if ($validator->validate($formData, $rules)) {
-        // Additional custom validation
+
         if ($formData['password'] !== $formData['confirm_password']) {
             $errors['confirm_password'] = ['Passwords do not match'];
         } else {
-            // Sanitize data
+
             $sanitizedData = InputValidator::sanitize($formData, [
                 'name' => 'string',
                 'email' => 'email',
@@ -236,7 +227,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h4>2. Validate Input:</h4>
         <pre><code>$validator = new InputValidator();
 if ($validator->validate($data, $rules)) {
-    // Validation passed
+
 } else {
     $errors = $validator->getErrors();
 }</code></pre>
@@ -251,7 +242,7 @@ if ($validator->validate($data, $rules)) {
         <h4>4. Quick Validation:</h4>
         <pre><code>$result = InputValidator::quickValidate($data, $rules);
 if ($result['valid']) {
-    // Process data
+
 } else {
     echo $result['first_error'];
 }</code></pre>

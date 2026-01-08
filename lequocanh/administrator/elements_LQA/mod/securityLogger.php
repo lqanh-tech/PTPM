@@ -1,31 +1,19 @@
 <?php
 
-/**
- * COMPREHENSIVE SECURITY LOGGER
- * Implements: Audit Trail, Fail Secure, Defense in Depth
- *
- * @author Security Team
- * @version 2.0
- */
-
 class SecurityLogger
 {
     private static $logFile;
     private static $alertFile;
     private static $instance = null;
 
-    // WHITELIST ĐỘNG - Lấy từ database thay vì hardcode
-    // Admin luôn có quyền tất cả, các user khác lấy từ bảng phân quyền
     private static $adminWhitelist = ['admin'];
     
-    // Các module cơ bản mà tất cả nhân viên đều có quyền truy cập
     private static $basicModules = [
         'userprofile',
         'userUpdateProfile',
         'thongbao'
     ];
 
-    // Các module nhạy cảm cần cảnh báo đặc biệt
     private static $sensitiveModules = [
         'nhanvienview',
         'roleview',
@@ -41,7 +29,6 @@ class SecurityLogger
         self::$logFile = __DIR__ . "/security_access.log";
         self::$alertFile = __DIR__ . "/security_alerts.log";
 
-        // Tạo file log nếu chưa có
         if (!file_exists(self::$logFile)) {
             file_put_contents(self::$logFile, "=== SECURITY ACCESS LOG STARTED ===" . PHP_EOL);
         }
@@ -58,9 +45,6 @@ class SecurityLogger
         return self::$instance;
     }
 
-    /**
-     * Ghi log truy cập với đầy đủ thông tin
-     */
     public static function logAccess($username, $module, $hasAccess, $reason = "", $additionalInfo = [])
     {
         $logger = self::getInstance();
@@ -71,7 +55,6 @@ class SecurityLogger
         $sessionId = session_id() ?? "no-session";
         $referer = $_SERVER["HTTP_REFERER"] ?? "direct";
 
-        // Thông tin cơ bản
         $logData = [
             'timestamp' => $timestamp,
             'username' => $username,
@@ -85,7 +68,6 @@ class SecurityLogger
             'additional' => $additionalInfo
         ];
 
-        // Format log entry
         $logEntry = sprintf(
             "[%s] USER: %s | MODULE: %s | ACCESS: %s | REASON: %s | IP: %s | SESSION: %s | REFERER: %s%s",
             $timestamp,
@@ -99,33 +81,26 @@ class SecurityLogger
             PHP_EOL
         );
 
-        // Ghi log
         file_put_contents(self::$logFile, $logEntry, FILE_APPEND | LOCK_EX);
 
-        // Kiểm tra và cảnh báo
         self::checkAndAlert($username, $module, $hasAccess, $logData);
 
         return $logData;
     }
 
-    /**
-     * Kiểm tra whitelist động - lấy từ database
-     */
     public static function checkWhitelist($username, $module)
     {
-        // Admin có quyền tất cả
+
         if (in_array($username, self::$adminWhitelist) || $username === 'admin') {
             return true;
         }
         
-        // Các module cơ bản cho tất cả nhân viên
         if (in_array($module, self::$basicModules)) {
             return true;
         }
         
-        // Kiểm tra quyền từ database
         try {
-            // Đảm bảo database.php đã được load
+
             if (!class_exists('Database')) {
                 $dbPaths = [
                     __DIR__ . '/database.php',
@@ -142,12 +117,11 @@ class SecurityLogger
             
             if (!class_exists('Database')) {
                 error_log("SecurityLogger: Database class not found");
-                return true; // Cho phép truy cập nếu không thể kiểm tra
+                return true;
             }
             
             $db = Database::getInstance()->getConnection();
             
-            // Kiểm tra trong bảng phân quyền NhanVien_PhanHeQuanLy
             $sql = "SELECT COUNT(*) FROM NhanVien_PhanHeQuanLy nvph
                     JOIN PhanHeQuanLy ph ON nvph.idPhanHe = ph.idPhanHe
                     JOIN nhanvien nv ON nvph.idNhanVien = nv.idNhanVien
@@ -160,17 +134,14 @@ class SecurityLogger
             return $stmt->fetchColumn() > 0;
         } catch (Exception $e) {
             error_log("SecurityLogger checkWhitelist error: " . $e->getMessage());
-            // Fail Secure: Nếu có lỗi, từ chối truy cập
+
             return false;
         }
     }
     
-    /**
-     * Lấy danh sách module được phép của user từ database
-     */
     public static function getUserAllowedModules($username)
     {
-        // Admin có quyền tất cả
+
         if (in_array($username, self::$adminWhitelist) || $username === 'admin') {
             return ['*'];
         }
@@ -178,7 +149,7 @@ class SecurityLogger
         $allowedModules = self::$basicModules;
         
         try {
-            // Đảm bảo database.php đã được load
+
             if (!class_exists('Database')) {
                 $dbPaths = [
                     __DIR__ . '/database.php',
@@ -218,30 +189,20 @@ class SecurityLogger
         return array_unique($allowedModules);
     }
 
-    /**
-     * Kiểm tra và cảnh báo bất thường
-     */
     private static function checkAndAlert($username, $module, $hasAccess, $logData)
     {
         $alerts = [];
 
-        // 1. Truy cập không được phép theo whitelist
         if ($hasAccess && !self::checkWhitelist($username, $module)) {
             $alerts[] = "UNAUTHORIZED_ACCESS: User $username accessed $module without whitelist permission";
         }
 
-        // 2. Truy cập module nhạy cảm
         if ($hasAccess && in_array($module, self::$sensitiveModules)) {
             $alerts[] = "SENSITIVE_MODULE_ACCESS: User $username accessed sensitive module $module";
         }
 
-        // 3. Truy cập từ IP lạ (có thể mở rộng với database IP whitelist)
-        $suspiciousIPs = ['127.0.0.1']; // Tạm thời để trống, có thể config sau
-        // if (in_array($logData['ip'], $suspiciousIPs)) {
-        //     $alerts[] = "SUSPICIOUS_IP: Access from suspicious IP " . $logData['ip'];
-        // }
+        $suspiciousIPs = ['127.0.0.1'];
 
-        // 4. Nhiều lần truy cập thất bại liên tiếp
         if (!$hasAccess) {
             $failedAttempts = self::countRecentFailedAttempts($username, $module);
             if ($failedAttempts >= 3) {
@@ -249,21 +210,16 @@ class SecurityLogger
             }
         }
 
-        // 5. Truy cập ngoài giờ làm việc (8h-18h)
         $currentHour = (int)date('H');
         if ($hasAccess && ($currentHour < 8 || $currentHour > 18)) {
             $alerts[] = "OFF_HOURS_ACCESS: User $username accessed $module at $currentHour:00";
         }
 
-        // Ghi cảnh báo
         foreach ($alerts as $alert) {
             self::writeAlert($alert, $logData);
         }
     }
 
-    /**
-     * Ghi cảnh báo bảo mật
-     */
     private static function writeAlert($alertMessage, $logData)
     {
         $timestamp = $logData['timestamp'];
@@ -279,13 +235,8 @@ class SecurityLogger
 
         file_put_contents(self::$alertFile, $alertEntry, FILE_APPEND | LOCK_EX);
 
-        // Có thể thêm email alert hoặc notification khác ở đây
-        // self::sendEmailAlert($alertMessage, $logData);
     }
 
-    /**
-     * Đếm số lần truy cập thất bại gần đây
-     */
     private static function countRecentFailedAttempts($username, $module)
     {
         if (!file_exists(self::$logFile)) {
@@ -296,7 +247,7 @@ class SecurityLogger
         $lines = explode(PHP_EOL, $logContent);
 
         $failedCount = 0;
-        $timeLimit = time() - 300; // 5 phút gần đây
+        $timeLimit = time() - 300;
 
         foreach (array_reverse($lines) as $line) {
             if (empty($line)) continue;
@@ -307,13 +258,12 @@ class SecurityLogger
                 strpos($line, "ACCESS: DENIED") !== false
             ) {
 
-                // Extract timestamp và kiểm tra thời gian
                 if (preg_match('/\[([\d\-\s:]+)\]/', $line, $matches)) {
                     $logTime = strtotime($matches[1]);
                     if ($logTime >= $timeLimit) {
                         $failedCount++;
                     } else {
-                        break; // Đã quá thời gian limit
+                        break;
                     }
                 }
             }
@@ -322,9 +272,6 @@ class SecurityLogger
         return $failedCount;
     }
 
-    /**
-     * Lấy IP thực của client
-     */
     private static function getClientIP()
     {
         $ipKeys = [
@@ -351,9 +298,6 @@ class SecurityLogger
         return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
 
-    /**
-     * Lấy thống kê bảo mật
-     */
     public static function getSecurityStats($days = 7)
     {
         if (!file_exists(self::$logFile)) {
@@ -377,7 +321,6 @@ class SecurityLogger
         foreach ($lines as $line) {
             if (empty($line) || strpos($line, 'USER:') === false) continue;
 
-            // Extract timestamp
             if (preg_match('/\[([\d\-\s:]+)\]/', $line, $matches)) {
                 $logTime = strtotime($matches[1]);
                 if ($logTime < $timeLimit) continue;
@@ -391,7 +334,6 @@ class SecurityLogger
                 $stats['denied']++;
             }
 
-            // Extract user và module
             if (preg_match('/USER: (\w+)/', $line, $matches)) {
                 $user = $matches[1];
                 $stats['users'][$user] = ($stats['users'][$user] ?? 0) + 1;
@@ -403,7 +345,6 @@ class SecurityLogger
             }
         }
 
-        // Đếm alerts
         if (file_exists(self::$alertFile)) {
             $alertContent = file_get_contents(self::$alertFile);
             $alertLines = explode(PHP_EOL, $alertContent);
@@ -418,7 +359,6 @@ class SecurityLogger
     }
 }
 
-// Backward compatibility function
 function logSecurityAccess($username, $module, $hasAccess, $reason = "")
 {
     return SecurityLogger::logAccess($username, $module, $hasAccess, $reason);

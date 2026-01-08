@@ -1,29 +1,18 @@
 <?php
-/**
- * Shipping Dashboard
- * 
- * Dashboard tổng quan về vận chuyển
- * - Thống kê đơn hàng theo trạng thái vận chuyển
- * - Biểu đồ vận chuyển
- * - Đơn hàng cần xử lý
- */
 
 require_once __DIR__ . '/../mod/database.php';
 
-// Check permission - must be called from index.php with proper session
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     die('Access denied. Please login.');
 }
 
 $db = Database::getInstance()->getConnection();
 
-// Get statistics
 try {
-    // Tổng số đơn hàng
+
     $stmt = $db->query("SELECT COUNT(*) as total FROM don_hang");
     $totalOrders = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Đơn hàng theo trạng thái vận chuyển
     $stmt = $db->query("
         SELECT 
             shipping_status,
@@ -35,7 +24,6 @@ try {
     ");
     $shippingStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Đơn hàng cần xử lý (pending)
     $stmt = $db->query("
         SELECT 
             id,
@@ -53,7 +41,6 @@ try {
     ");
     $pendingOrders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Thống kê theo phương thức vận chuyển
     $stmt = $db->query("
         SELECT 
             shipping_method_name,
@@ -65,7 +52,6 @@ try {
     ");
     $methodStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Doanh thu vận chuyển theo tháng
     $stmt = $db->query("
         SELECT 
             DATE_FORMAT(ngay_dat_hang, '%Y-%m') as month,
@@ -86,7 +72,6 @@ try {
     $monthlyStats = [];
 }
 
-// Status labels
 $statusLabels = [
     'pending' => 'Chờ xử lý',
     'picking' => 'Đang lấy hàng',
@@ -338,7 +323,7 @@ $statusColors = [
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Status Chart
+
         const statusData = <?= json_encode($shippingStats) ?>;
         const statusLabels = <?= json_encode($statusLabels) ?>;
         const statusColors = <?= json_encode(array_values($statusColors)) ?>;
@@ -362,7 +347,6 @@ $statusColors = [
             }
         });
 
-        // Method Chart
         const methodData = <?= json_encode($methodStats) ?>;
         
         new Chart(document.getElementById('methodChart'), {
@@ -390,7 +374,6 @@ $statusColors = [
             }
         });
 
-        // Revenue Chart
         const monthlyData = <?= json_encode($monthlyStats) ?>;
         
         new Chart(document.getElementById('revenueChart'), {
@@ -426,10 +409,9 @@ $statusColors = [
             }
         });
 
-        // Create shipment function
         function createShipment(orderId) {
             if (confirm('Tạo vận đơn GHN cho đơn hàng này?')) {
-                // TODO: Implement create shipment
+
                 alert('Chức năng đang được phát triển');
             }
         }

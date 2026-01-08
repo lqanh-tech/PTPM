@@ -1,13 +1,11 @@
 <?php
-// Comprehensive notification diagnostic script
+
 require_once './administrator/elements_LQA/mod/sessionManager.php';
 require_once './administrator/elements_LQA/mod/database.php';
 require_once './administrator/elements_LQA/mod/CustomerNotificationManager.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check if user is logged in
 if (!isset($_SESSION['USER'])) {
     die("Please login first to diagnose notifications.");
 }
@@ -16,11 +14,10 @@ $username = $_SESSION['USER'];
 $db = Database::getInstance()->getConnection();
 $notificationManager = new CustomerNotificationManager();
 
-// Handle test actions
 if (isset($_GET['action'])) {
     switch ($_GET['action']) {
         case 'create_cod_notification':
-            // Create a test COD order notification
+
             $title = "📦 Test COD Order Created";
             $message = "This is a test COD order notification created at " . date('Y-m-d H:i:s');
             $result = $notificationManager->createNotification($username, $title, $message, 'order_created');
@@ -28,7 +25,7 @@ if (isset($_GET['action'])) {
             exit;
             
         case 'create_payment_notification':
-            // Create a test payment notification
+
             $title = "💰 Test Payment Confirmed";
             $message = "This is a test payment confirmation notification created at " . date('Y-m-d H:i:s');
             $result = $notificationManager->createNotification($username, $title, $message, 'payment_confirmed');
@@ -36,7 +33,7 @@ if (isset($_GET['action'])) {
             exit;
             
         case 'create_approved_notification':
-            // Create a test order approved notification
+
             $title = "✅ Test Order Approved";
             $message = "This is a test order approved notification created at " . date('Y-m-d H:i:s');
             $result = $notificationManager->createNotification($username, $title, $message, 'order_approved');
@@ -44,7 +41,7 @@ if (isset($_GET['action'])) {
             exit;
             
         case 'clear_all':
-            // Clear all notifications for the user
+
             $sql = "DELETE FROM customer_notifications WHERE user_id = ?";
             $stmt = $db->prepare($sql);
             $stmt->execute([$username]);
@@ -81,7 +78,7 @@ if (isset($_GET['action'])) {
     <!-- System Status -->
     <h3>1. System Status</h3>
     <?php
-    // Check if table exists
+
     $tableExists = $db->query("SHOW TABLES LIKE 'customer_notifications'")->rowCount() > 0;
     ?>
     <div class="mb-3">
@@ -102,17 +99,15 @@ if (isset($_GET['action'])) {
     ];
     
     if ($tableExists) {
-        // Total notifications
+
         $sql = "SELECT COUNT(*) as count FROM customer_notifications WHERE user_id = ?";
         $stmt = $db->prepare($sql);
         $stmt->execute([$username]);
         $stats['total'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
         
-        // Unread notifications
         $stats['unread'] = $notificationManager->getUnreadCount($username);
         $stats['read'] = $stats['total'] - $stats['unread'];
         
-        // By type
         $sql = "SELECT type, COUNT(*) as count FROM customer_notifications WHERE user_id = ? GROUP BY type";
         $stmt = $db->prepare($sql);
         $stmt->execute([$username]);

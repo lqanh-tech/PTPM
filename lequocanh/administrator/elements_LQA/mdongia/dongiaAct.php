@@ -1,11 +1,10 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
-// Tìm đường dẫn đúng đến dongiaCls.php
+
 $dongiaPaths = [
     '../../elements_LQA/mod/dongiaCls.php',
     '../mod/dongiaCls.php',
@@ -46,26 +45,17 @@ function redirectWithMessage($success, $message = '')
     exit;
 }
 
-// Kiểm tra xem yêu cầu là AJAX hay form thông thường
 $isAjax = !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest';
 
 if (isset($_GET['reqact'])) {
     $requestAction = $_GET['reqact'];
     switch ($requestAction) {
         case 'addnew':
-            // Ghi log để debug
+
             error_log("DongiaAct addnew: Starting process");
             error_log("DongiaAct addnew: POST data: " . print_r($_POST, true));
             error_log("DongiaAct addnew: GET data: " . print_r($_GET, true));
             
-            // Debug: Chỉ log vào error_log, không echo để tránh headers already sent
-            // if (!$isAjax) {
-            //     echo "<h2>🔍 Debug Thêm Đơn Giá</h2>";
-            //     echo "<h3>POST Data:</h3><pre>" . print_r($_POST, true) . "</pre>";
-            //     echo "<h3>REQUEST Data:</h3><pre>" . print_r($_REQUEST, true) . "</pre>";
-            // }
-
-            // Lấy dữ liệu từ form
             $idHangHoa = isset($_REQUEST['idhanghoa']) ? trim($_REQUEST['idhanghoa']) : '';
             $giaBan = isset($_REQUEST['giaban']) ? trim($_REQUEST['giaban']) : '';
             $ngayApDung = isset($_REQUEST['ngayapdung']) ? trim($_REQUEST['ngayapdung']) : '';
@@ -75,7 +65,6 @@ if (isset($_GET['reqact'])) {
 
             error_log("DongiaAct addnew: Parsed data - idHangHoa: '$idHangHoa', giaBan: '$giaBan', ngayApDung: '$ngayApDung', ngayKetThuc: '$ngayKetThuc'");
 
-            // Kiểm tra dữ liệu đầu vào
             if (empty($idHangHoa) || empty($giaBan) || empty($ngayApDung) || empty($ngayKetThuc)) {
                 error_log("DongiaAct addnew: Validation failed - missing required fields");
                 if ($isAjax) {
@@ -83,10 +72,9 @@ if (isset($_GET['reqact'])) {
                 } else {
                     redirectWithMessage(false, 'Vui lòng điền đầy đủ thông tin bắt buộc');
                 }
-                return; // Thêm return để dừng xử lý
+                return;
             }
 
-            // Kiểm tra giá bán phải là số dương
             if (!is_numeric($giaBan) || floatval($giaBan) <= 0) {
                 error_log("DongiaAct addnew: Validation failed - invalid price: '$giaBan'");
                 if ($isAjax) {
@@ -97,7 +85,6 @@ if (isset($_GET['reqact'])) {
                 return;
             }
 
-            // Kiểm tra định dạng ngày
             if (!DateTime::createFromFormat('Y-m-d', $ngayApDung) || !DateTime::createFromFormat('Y-m-d', $ngayKetThuc)) {
                 error_log("DongiaAct addnew: Validation failed - invalid date format");
                 if ($isAjax) {
@@ -108,7 +95,6 @@ if (isset($_GET['reqact'])) {
                 return;
             }
 
-            // Kiểm tra ngày áp dụng phải trước ngày kết thúc
             if (strtotime($ngayApDung) >= strtotime($ngayKetThuc)) {
                 error_log("DongiaAct addnew: Validation failed - invalid date range");
                 if ($isAjax) {
@@ -119,7 +105,6 @@ if (isset($_GET['reqact'])) {
                 return;
             }
 
-            // Thêm đơn giá mới
             error_log("DongiaAct addnew: Creating Dongia instance");
             try {
                 $dg = new Dongia();

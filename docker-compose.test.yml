@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # MySQL Database for testing
+  mysql-test:
+    image: mysql:8.0
+    container_name: lequocanh-mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sales_management
+      MYSQL_USER: testuser
+      MYSQL_PASSWORD: testpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./lequocanh/database/trainingdb_backup.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-test-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+
+  # PHP Test Runner
+  php-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: lequocanh-php-test
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+    volumes:
+      - .:/var/www/html
+      - ./test-results:/var/www/html/test-results
+    environment:
+      DB_HOST: mysql-test
+      DB_PORT: 3306
+      DB_NAME: sales_management
+      DB_USER: testuser
+      DB_PASS: testpass
+      APP_DEBUG: "true"
+    command: php /var/www/html/automated_test_runner.php
+    networks:
+      - test-network
+
+  # Auto-Fix Service
+  auto-fix:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: lequocanh-auto-fix
+    depends_on:
+      - php-test
+    volumes:
+      - .:/var/www/html
+      - ./test-results:/var/www/html/test-results
+    environment:
+      DB_HOST: mysql-test
+      DB_PORT: 3306
+      DB_NAME: sales_management
+      DB_USER: testuser
+      DB_PASS: testpass
+      APP_DEBUG: "true"
+    command: php /var/www/html/auto_fix_runner.php
+    networks:
+      - test-network
+
+  # Health Check Monitor
+  health-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: lequocanh-health-monitor
+    depends_on:
+      - mysql-test
+    volumes:
+      - .:/var/www/html
+      - ./monitoring:/var/www/html/monitoring
+    environment:
+      DB_HOST: mysql-test
+      DB_PORT: 3306
+      DB_NAME: sales_management
+      DB_USER: testuser
+      DB_PASS: testpass
+    command: php /var/www/html/health_monitor.php
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
+
+volumes:
+  mysql-test-data:

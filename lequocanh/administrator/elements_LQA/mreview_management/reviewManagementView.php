@@ -1,8 +1,5 @@
 <?php
-/**
- * Trang Quản Lý Bình Luận
- * Admin có thể xem, ẩn/hiện, xóa bình luận
- */
+
 ?>
 
 <style>
@@ -520,9 +517,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Load on page load
 loadReviews(1);
 
-// Auto refresh every 30 seconds
 setInterval(() => loadReviews(currentPage), 30000);
 </script>

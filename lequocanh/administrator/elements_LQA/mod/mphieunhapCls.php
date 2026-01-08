@@ -20,7 +20,6 @@ class MPhieuNhap
         $this->createTableIfNotExists();
     }
 
-    // Tạo bảng mphieunhap nếu chưa tồn tại
     private function createTableIfNotExists()
     {
         try {
@@ -43,7 +42,6 @@ class MPhieuNhap
         }
     }
 
-    // Lấy tất cả phiếu nhập
     public function getAllPhieuNhap()
     {
         $sql = "SELECT pn.*, nv.tenNV, ncc.tenNCC
@@ -57,7 +55,6 @@ class MPhieuNhap
         return $stmt->fetchAll();
     }
 
-    // Lấy phiếu nhập theo ID
     public function getPhieuNhapById($idPhieuNhap)
     {
         $sql = "SELECT pn.*, nv.tenNV, ncc.tenNCC
@@ -71,7 +68,6 @@ class MPhieuNhap
         return $stmt->fetch();
     }
 
-    // Thêm phiếu nhập mới
     public function addPhieuNhap($maPhieuNhap, $idNhanVien, $idNCC, $ghiChu)
     {
         try {
@@ -86,7 +82,6 @@ class MPhieuNhap
         }
     }
 
-    // Cập nhật phiếu nhập
     public function updatePhieuNhap($idPhieuNhap, $maPhieuNhap, $idNhanVien, $idNCC, $ghiChu)
     {
         try {
@@ -102,11 +97,10 @@ class MPhieuNhap
         }
     }
 
-    // Xóa phiếu nhập
     public function deletePhieuNhap($idPhieuNhap)
     {
         try {
-            // Chỉ cho phép xóa phiếu nhập chưa được duyệt
+
             $sql = "DELETE FROM mphieunhap WHERE idPhieuNhap = ? AND trangThai = 0";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idPhieuNhap]);
@@ -117,14 +111,12 @@ class MPhieuNhap
         }
     }
 
-    // Duyệt phiếu nhập
     public function approvePhieuNhap($idPhieuNhap)
     {
         try {
-            // Ghi log để debug
+
             error_log("Starting approval process for phieu nhap ID: " . $idPhieuNhap);
 
-            // Kiểm tra xem lớp MTonKho đã được include chưa
             if (!class_exists('MTonKho')) {
                 require_once 'mtonkhoCls.php';
                 error_log("MTonKho class loaded");
@@ -133,7 +125,6 @@ class MPhieuNhap
             $this->db->beginTransaction();
             error_log("Transaction started");
 
-            // Cập nhật trạng thái phiếu nhập
             $sql = "UPDATE mphieunhap SET trangThai = 1 WHERE idPhieuNhap = ? AND trangThai = 0";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idPhieuNhap]);
@@ -142,7 +133,7 @@ class MPhieuNhap
             error_log("Update phieu nhap status: rows affected = " . $rowsAffected);
 
             if ($rowsAffected > 0) {
-                // Lấy danh sách chi tiết phiếu nhập
+
                 $sql = "SELECT * FROM mchitietphieunhap WHERE idPhieuNhap = ?";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$idPhieuNhap]);
@@ -150,10 +141,8 @@ class MPhieuNhap
 
                 error_log("Found " . count($chiTietList) . " detail items for phieu nhap ID: " . $idPhieuNhap);
 
-                // Cập nhật số lượng trong bảng tồn kho và cập nhật giá tham khảo
                 $tonkhoObj = new MTonKho();
 
-                // Kiểm tra xem lớp hanghoa đã được include chưa
                 if (!class_exists('hanghoa')) {
                     require_once 'hanghoaCls.php';
                     error_log("hanghoa class loaded");
@@ -161,17 +150,15 @@ class MPhieuNhap
                 $hanghoaObj = new hanghoa();
 
                 foreach ($chiTietList as $chiTiet) {
-                    // Ghi log thông tin chi tiết
+
                     error_log("Processing detail item: idCTPN = " . $chiTiet->idCTPN .
                         ", idhanghoa = " . $chiTiet->idhanghoa .
                         ", soLuong = " . $chiTiet->soLuong .
                         ", giaNhap = " . $chiTiet->giaNhap);
 
-                    // Cập nhật số lượng tồn kho (sử dụng transaction bên ngoài)
                     $updateResult = $tonkhoObj->updateSoLuong($chiTiet->idhanghoa, $chiTiet->soLuong, true, true);
                     error_log("Update tonkho result: " . ($updateResult ? "success" : "failed"));
 
-                    // LOGIC MỚI: Quản lý giá thông minh dựa trên cấu hình
                     if (!class_exists('PriceLogicConfig')) {
                         require_once dirname(__FILE__) . '/../config/price_logic_config.php';
                     }
@@ -183,11 +170,9 @@ class MPhieuNhap
                     $currentActivePrice = $dongiaObj->DongiaGetActiveByProduct($chiTiet->idhanghoa);
                     $hasActivePrice = ($currentActivePrice !== false);
 
-                    // Kiểm tra có nên cập nhật giá tham khảo không
                     if (PriceLogicConfig::shouldUpdateReferencePrice($hasActivePrice)) {
                         $priceToUpdate = $chiTiet->giaNhap;
 
-                        // Nếu cấu hình tự động áp dụng lợi nhuận
                         if (PriceLogicConfig::AUTO_APPLY_PROFIT_MARGIN) {
                             $priceToUpdate = PriceLogicConfig::calculateSellingPrice($chiTiet->giaNhap);
                         }
@@ -199,11 +184,10 @@ class MPhieuNhap
                             ", selling price = " . $priceToUpdate);
                     }
 
-                    // Tạo đơn giá mới từ giá nhập nếu được cấu hình
                     if (PriceLogicConfig::shouldCreatePriceFromImport() && !$hasActivePrice) {
                         $sellingPrice = PriceLogicConfig::calculateSellingPrice($chiTiet->giaNhap);
                         $ngayApDung = date('Y-m-d');
-                        $ngayKetThuc = date('Y-m-d', strtotime('+1 year')); // Có hiệu lực 1 năm
+                        $ngayKetThuc = date('Y-m-d', strtotime('+1 year'));
                         $ghiChu = "Tự động tạo từ phiếu nhập - Giá nhập: " . number_format($chiTiet->giaNhap) . " VNĐ";
 
                         $addPriceResult = $dongiaObj->DongiaAdd(
@@ -237,7 +221,7 @@ class MPhieuNhap
                 return false;
             }
         } catch (PDOException $e) {
-            // Chỉ rollback nếu có transaction đang hoạt động
+
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
                 error_log("Transaction rolled back due to PDO error");
@@ -246,7 +230,7 @@ class MPhieuNhap
             error_log("Stack trace: " . $e->getTraceAsString());
             return false;
         } catch (Exception $e) {
-            // Chỉ rollback nếu có transaction đang hoạt động
+
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
                 error_log("Transaction rolled back due to general error");
@@ -257,11 +241,10 @@ class MPhieuNhap
         }
     }
 
-    // Hủy phiếu nhập
     public function cancelPhieuNhap($idPhieuNhap)
     {
         try {
-            // Chỉ cho phép hủy phiếu nhập chưa được duyệt
+
             $sql = "UPDATE mphieunhap SET trangThai = 2 WHERE idPhieuNhap = ? AND trangThai = 0";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idPhieuNhap]);
@@ -272,7 +255,6 @@ class MPhieuNhap
         }
     }
 
-    // Cập nhật tổng tiền phiếu nhập
     public function updateTongTien($idPhieuNhap)
     {
         try {
@@ -292,19 +274,16 @@ class MPhieuNhap
         }
     }
 
-    // Cập nhật tồn kho cho phiếu nhập đã duyệt
     public function forceUpdateTonKho($idPhieuNhap)
     {
         try {
             error_log("Force updating tonkho for approved phieu nhap ID: " . $idPhieuNhap);
 
-            // Kiểm tra xem lớp MTonKho đã được include chưa
             if (!class_exists('MTonKho')) {
                 require_once 'mtonkhoCls.php';
                 error_log("MTonKho class loaded");
             }
 
-            // Kiểm tra trạng thái phiếu nhập
             $sql = "SELECT trangThai FROM mphieunhap WHERE idPhieuNhap = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idPhieuNhap]);
@@ -312,10 +291,9 @@ class MPhieuNhap
 
             error_log("Phieu nhap status: " . $trangThai);
 
-            if ($trangThai == 1) { // Đã duyệt
+            if ($trangThai == 1) {
                 $this->db->beginTransaction();
 
-                // Lấy danh sách chi tiết phiếu nhập
                 $sql = "SELECT * FROM mchitietphieunhap WHERE idPhieuNhap = ?";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$idPhieuNhap]);
@@ -323,10 +301,8 @@ class MPhieuNhap
 
                 error_log("Found " . count($chiTietList) . " detail items for phieu nhap ID: " . $idPhieuNhap);
 
-                // Cập nhật số lượng trong bảng tồn kho và cập nhật giá tham khảo
                 $tonkhoObj = new MTonKho();
 
-                // Kiểm tra xem lớp hanghoa đã được include chưa
                 if (!class_exists('hanghoa')) {
                     require_once 'hanghoaCls.php';
                     error_log("hanghoa class loaded");
@@ -334,17 +310,15 @@ class MPhieuNhap
                 $hanghoaObj = new hanghoa();
 
                 foreach ($chiTietList as $chiTiet) {
-                    // Ghi log thông tin chi tiết
+
                     error_log("Processing detail item: idCTPN = " . $chiTiet->idCTPN .
                         ", idhanghoa = " . $chiTiet->idhanghoa .
                         ", soLuong = " . $chiTiet->soLuong .
                         ", giaNhap = " . $chiTiet->giaNhap);
 
-                    // Cập nhật số lượng tồn kho (sử dụng transaction bên ngoài)
                     $updateResult = $tonkhoObj->updateSoLuong($chiTiet->idhanghoa, $chiTiet->soLuong, true, true);
                     error_log("Update tonkho result: " . ($updateResult ? "success" : "failed"));
 
-                    // LOGIC MỚI: Quản lý giá thông minh dựa trên cấu hình (tương tự approvePhieuNhap)
                     if (!class_exists('PriceLogicConfig')) {
                         require_once dirname(__FILE__) . '/../config/price_logic_config.php';
                     }
@@ -356,11 +330,9 @@ class MPhieuNhap
                     $currentActivePrice = $dongiaObj->DongiaGetActiveByProduct($chiTiet->idhanghoa);
                     $hasActivePrice = ($currentActivePrice !== false);
 
-                    // Kiểm tra có nên cập nhật giá tham khảo không
                     if (PriceLogicConfig::shouldUpdateReferencePrice($hasActivePrice)) {
                         $priceToUpdate = $chiTiet->giaNhap;
 
-                        // Nếu cấu hình tự động áp dụng lợi nhuận
                         if (PriceLogicConfig::AUTO_APPLY_PROFIT_MARGIN) {
                             $priceToUpdate = PriceLogicConfig::calculateSellingPrice($chiTiet->giaNhap);
                         }
@@ -372,11 +344,10 @@ class MPhieuNhap
                             ", selling price = " . $priceToUpdate);
                     }
 
-                    // Tạo đơn giá mới từ giá nhập nếu được cấu hình
                     if (PriceLogicConfig::shouldCreatePriceFromImport() && !$hasActivePrice) {
                         $sellingPrice = PriceLogicConfig::calculateSellingPrice($chiTiet->giaNhap);
                         $ngayApDung = date('Y-m-d');
-                        $ngayKetThuc = date('Y-m-d', strtotime('+1 year')); // Có hiệu lực 1 năm
+                        $ngayKetThuc = date('Y-m-d', strtotime('+1 year'));
                         $ghiChu = "Tự động tạo từ phiếu nhập (force update) - Giá nhập: " . number_format($chiTiet->giaNhap) . " VNĐ";
 
                         $addPriceResult = $dongiaObj->DongiaAdd(

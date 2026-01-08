@@ -1,12 +1,8 @@
 <?php
-/**
- * Trang Hỗ Trợ Khách Hàng - Simple Version (No Login Required for Testing)
- */
 
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
 SessionManager::start();
 
-// For testing, allow access without login
 $isLoggedIn = isset($_SESSION['USER']);
 $userId = $_SESSION['USER'] ?? 'guest';
 ?>
@@ -86,11 +82,10 @@ $userId = $_SESSION['USER'] ?? 'guest';
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Inject BASE_URL from PHP to JavaScript
-        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http://localhost:20080', '/'); ?>';
+
+        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http:
         console.log('BASE_URL injected:', window.BASE_URL);
         
-        // Check JavaScript BASE_URL
         const jsBaseUrlEl = document.getElementById('jsBaseUrl');
         if (window.BASE_URL) {
             jsBaseUrlEl.innerHTML = `<span class="success">✓ window.BASE_URL = <code>${window.BASE_URL}</code></span>`;
@@ -98,7 +93,6 @@ $userId = $_SESSION['USER'] ?? 'guest';
             jsBaseUrlEl.innerHTML = '<span class="error">✗ window.BASE_URL is undefined</span>';
         }
         
-        // Get API URL
         const getApiUrl = (path) => {
             const url = window.BASE_URL 
                 ? `${window.BASE_URL}/lequocanh/api/${path}`
@@ -107,7 +101,6 @@ $userId = $_SESSION['USER'] ?? 'guest';
             return url;
         };
         
-        // Test API
         async function testAPI() {
             const resultEl = document.getElementById('apiResult');
             resultEl.textContent = 'Testing...';
@@ -137,7 +130,6 @@ $userId = $_SESSION['USER'] ?? 'guest';
             }
         }
         
-        // Load tickets
         async function loadTickets() {
             const resultEl = document.getElementById('ticketsResult');
             resultEl.textContent = 'Loading...';
@@ -162,7 +154,6 @@ $userId = $_SESSION['USER'] ?? 'guest';
             }
         }
         
-        // Auto test on load
         console.log('=== AUTO TEST ===');
         console.log('window.BASE_URL:', window.BASE_URL);
         console.log('Test API URL:', getApiUrl('support_tickets.php?action=user_list'));

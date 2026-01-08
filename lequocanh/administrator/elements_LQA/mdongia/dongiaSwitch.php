@@ -1,16 +1,10 @@
 <?php
-/**
- * Xử lý chuyển đổi đơn giá áp dụng
- * Giải pháp cho việc chọn lại giữa các giá cũ
- */
 
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/dongiaCls.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check admin access
 if (!isset($_SESSION['ADMIN'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -42,16 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 sendJsonResponse(false, 'ID đơn giá không hợp lệ');
             }
             
-            // Lấy thông tin đơn giá trước khi chuyển đổi
             $dongiaInfo = $dg->DongiaGetbyId($idDonGia);
             if (!$dongiaInfo) {
                 sendJsonResponse(false, 'Không tìm thấy đơn giá');
             }
             
-            // Kiểm tra tác động của việc thay đổi giá
             $impact = $dg->checkPriceImpact($dongiaInfo->idHangHoa, $dongiaInfo->giaBan);
             
-            // Thực hiện chuyển đổi
             $result = $dg->DongiaSwitchActive($idDonGia);
             
             if ($result) {

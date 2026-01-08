@@ -1,8 +1,4 @@
 <?php
-/**
- * Component hiển thị đánh giá sản phẩm
- * Sử dụng trong trang chi tiết sản phẩm
- */
 
 $productId = $productId ?? $_GET['id'] ?? null;
 
@@ -422,12 +418,10 @@ if (!$productId) {
         
         let html = '';
         
-        // Previous button
         html += `<button ${pagination.page === 1 ? 'disabled' : ''} onclick="loadReviews(${pagination.page - 1})">
             <i class="fas fa-chevron-left"></i>
         </button>`;
         
-        // Page numbers
         for (let i = 1; i <= pagination.total_pages; i++) {
             if (i === 1 || i === pagination.total_pages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
                 html += `<button class="${i === pagination.page ? 'active' : ''}" onclick="loadReviews(${i})">${i}</button>`;
@@ -436,7 +430,6 @@ if (!$productId) {
             }
         }
         
-        // Next button
         html += `<button ${pagination.page === pagination.total_pages ? 'disabled' : ''} onclick="loadReviews(${pagination.page + 1})">
             <i class="fas fa-chevron-right"></i>
         </button>`;
@@ -551,7 +544,6 @@ if (!$productId) {
         }
     };
     
-    // Load reviews on page load
     loadReviews(1);
 })();
 </script>

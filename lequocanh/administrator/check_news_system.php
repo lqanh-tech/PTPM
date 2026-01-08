@@ -1,14 +1,10 @@
 <?php
 
-/**
- * Kiểm tra toàn bộ hệ thống thêm tin tức
- */
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 echo "<h1>Kiểm tra Hệ Thống Thêm Tin Tức</h1>";
 
-// 1. Kiểm tra database
 echo "<h2>1. Kiểm tra Database Connection</h2>";
 try {
     require_once __DIR__ . '/elements_LQA/mod/database.php';
@@ -19,7 +15,6 @@ try {
     exit;
 }
 
-// 2. Kiểm tra bảng news
 echo "<h2>2. Kiểm tra Bảng News</h2>";
 try {
     $result = $db->query("SHOW TABLES LIKE 'news'");
@@ -45,7 +40,6 @@ CREATE TABLE IF NOT EXISTS news (
         </pre>";
     }
 
-    // Hiển thị cấu trúc
     $columns = $db->query("DESCRIBE news")->fetchAll(PDO::FETCH_ASSOC);
     echo "<p>Các cột:</p>";
     echo "<ul>";
@@ -57,7 +51,6 @@ CREATE TABLE IF NOT EXISTS news (
     echo "<p style='color: red;'>✗ Error: " . $e->getMessage() . "</p>";
 }
 
-// 3. Kiểm tra NewsManager
 echo "<h2>3. Kiểm tra NewsManager Class</h2>";
 try {
     require_once __DIR__ . '/elements_LQA/mod/NewsManager.php';
@@ -68,7 +61,6 @@ try {
     exit;
 }
 
-// 4. Test thêm tin tức
 echo "<h2>4. Test Thêm Tin Tức</h2>";
 
 $testTitle = "Test News " . date('Y-m-d H:i:s');
@@ -87,7 +79,6 @@ $result = $newsManager->addNews($testTitle, $testContent, '', 'Admin', 0);
 if ($result) {
     echo "<p style='color: green;'><strong>✓ Thêm tin tức thành công!</strong></p>";
 
-    // Kiểm tra dữ liệu vừa thêm
     $stmt = $db->prepare("SELECT * FROM news WHERE title = ? ORDER BY id DESC LIMIT 1");
     $stmt->execute([$testTitle]);
     $news = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -104,7 +95,6 @@ if ($result) {
     echo "<p style='color: red;'><strong>✗ Thêm tin tức thất bại!</strong></p>";
 }
 
-// 5. Hiển thị tất cả tin tức
 echo "<h2>5. Danh Sách Tin Tức Trong Database</h2>";
 try {
     $stmt = $db->query("SELECT * FROM news ORDER BY id DESC LIMIT 10");
@@ -131,7 +121,6 @@ try {
     echo "<p style='color: red;'>Error: " . $e->getMessage() . "</p>";
 }
 
-// 6. Hiển thị log lỗi
 echo "<h2>6. Log Lỗi PHP (Error Log)</h2>";
 $logFile = __DIR__ . '/../../../../logs/error.log';
 if (file_exists($logFile)) {

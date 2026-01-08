@@ -5,7 +5,6 @@ require_once __DIR__ . '/../mod/thuonghieuCls.php';
 require_once __DIR__ . '/../mod/donvitinhCls.php';
 require_once __DIR__ . '/../mod/nhanvienCls.php';
 
-// Función para escribir registros de depuración
 function write_debug_log($message, $data = null)
 {
     $log_file = __DIR__ . '/debug_log.txt';
@@ -23,16 +22,13 @@ function write_debug_log($message, $data = null)
     file_put_contents($log_file, $log_data, FILE_APPEND);
 }
 
-// Debugging - show all input
 $debug = [];
 $debug['POST'] = $_POST;
 $debug['GET'] = $_GET;
 $debug['REQUEST'] = $_REQUEST;
 
-// Try to get ID from various sources
 $idhanghoa = isset($_POST['idhanghoa']) ? $_POST['idhanghoa'] : (isset($_GET['idhanghoa']) ? $_GET['idhanghoa'] : (isset($_REQUEST['idhanghoa']) ? $_REQUEST['idhanghoa'] : null));
 
-// If still no ID, try alternative forms
 if (!$idhanghoa) {
     if (isset($_POST['data-id'])) {
         $idhanghoa = $_POST['data-id'];
@@ -43,7 +39,6 @@ if (!$idhanghoa) {
 
 $debug['ID detected'] = $idhanghoa;
 
-// Output debug ONLY if explicitly requested with debug_output=true parameter
 if (isset($_GET['debug_output']) || isset($_POST['debug_output'])) {
     echo "<div style='background-color: #f8f9fa; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px;'>";
     echo "<h4>Debug Information</h4>";
@@ -53,7 +48,6 @@ if (isset($_GET['debug_output']) || isset($_POST['debug_output'])) {
     echo "</div>";
 }
 
-// Registrar información de depuración si debug_log está habilitado
 if (isset($_POST['debug_log']) || isset($_GET['debug_log'])) {
     write_debug_log("Carga de formulario de actualización", [
         'idhanghoa' => $idhanghoa,
@@ -82,7 +76,6 @@ if (!$getHangHoaUpdate) {
     exit;
 }
 
-// Registrar información sobre si se encontraron datos válidos
 if (isset($_POST['debug_log']) || isset($_GET['debug_log'])) {
     write_debug_log("Datos recuperados para el formulario", [
         'getHangHoaUpdate' => $getHangHoaUpdate,
@@ -92,7 +85,6 @@ if (isset($_POST['debug_log']) || isset($_GET['debug_log'])) {
     ]);
 }
 
-// Lấy danh sách loại hàng, thương hiệu, đơn vị tính
 $loaiHangObj = new LoaiHang();
 $loaiHangList = $loaiHangObj->loaihangGetAll();
 
@@ -102,7 +94,6 @@ $thuongHieuList = $thuongHieuObj->thuonghieuGetAll();
 $donViTinhObj = new DonViTinh();
 $donViTinhList = $donViTinhObj->donvitinhGetAll();
 
-// Lấy danh sách nhân viên
 $nhanVienObj = new NhanVien();
 $nhanVienList = $nhanVienObj->nhanvienGetAll();
 ?>
@@ -231,7 +222,7 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
         </div>
 
         <?php
-        // Hiển thị thông tin tồn kho nếu có
+
         if (isset($getHangHoaUpdate->idhanghoa)) {
             $tonKho = $hangHoaObj->getTonKho($getHangHoaUpdate->idhanghoa);
         ?>
@@ -253,7 +244,7 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
 </div>
 
 <style>
-    /* Đảm bảo tất cả các phần tử có thể tương tác */
+
     * {
         pointer-events: auto;
     }
@@ -353,9 +344,9 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
 </style>
 
 <script>
-    // Đảm bảo các phần tử input có thể tương tác
+
     window.onload = function() {
-        // Focus vào ô input đầu tiên sau khi form đã load
+
         setTimeout(function() {
             var inputs = document.querySelectorAll('input.form-control');
             if (inputs.length > 0) {
@@ -364,7 +355,6 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
         }, 500);
     }
 
-    // Thêm sự kiện tập trung cho các phần tử input
     document.querySelectorAll('input.form-control, textarea.form-control, select.form-control').forEach(function(input) {
         input.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -374,47 +364,42 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
 
     document.getElementById('close-btn').addEventListener('click', function(e) {
         e.stopPropagation();
-        // Emit custom event for parent window to handle closing
+
         if (window.parent) {
             window.parent.postMessage('closeUpdateForm', '*');
         }
-        // Also handle close if this is used in a native popup
+
         var parentElement = window.frameElement && window.frameElement.parentElement;
         if (parentElement) {
             parentElement.style.display = 'none';
         }
     });
 
-    // Xử lý nút xóa hình ảnh
     const removeImageBtn = document.getElementById('remove-image-btn');
     if (removeImageBtn) {
         removeImageBtn.addEventListener('click', function(e) {
             e.preventDefault();
 
-            // Hiển thị hộp thoại xác nhận
             if (confirm('Bạn có chắc chắn muốn xóa hình ảnh này khỏi sản phẩm không?')) {
-                // Lấy ID sản phẩm
+
                 const idhanghoa = this.getAttribute('data-id');
 
-                // Hiển thị trạng thái đang xử lý
                 this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang xóa...';
                 this.disabled = true;
 
-                // Gửi yêu cầu xóa hình ảnh
                 fetch('./elements_LQA/mhanghoa/hanghoaAct.php?reqact=remove_image&idhanghoa=' + idhanghoa, {
                         method: 'GET'
                     })
                     .then(response => {
-                        // Xử lý kết quả
+
                         if (response.ok) {
-                            // Cập nhật giao diện
+
                             const imageContainer = this.closest('.mt-2');
                             imageContainer.innerHTML = '<p class="text-success">Đã xóa hình ảnh thành công!</p>';
 
-                            // Cập nhật giá trị input
                             document.querySelector('input[name="id_hinhanh"]').value = '0';
                         } else {
-                            // Hiển thị lỗi
+
                             alert('Có lỗi xảy ra khi xóa hình ảnh. Vui lòng thử lại.');
                             this.innerHTML = '<i class="fas fa-trash"></i> Xóa hình ảnh';
                             this.disabled = false;
@@ -430,20 +415,17 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
         });
     }
 
-    // Xử lý form submission
     document.getElementById('updatehanghoa').addEventListener('submit', function(e) {
-        // Validate the image ID field
+
         const idHinhanhField = document.querySelector('input[name="id_hinhanh"]');
         if (idHinhanhField.value === '' || isNaN(parseInt(idHinhanhField.value))) {
-            idHinhanhField.value = '0'; // Set to 0 if empty or not a number
+            idHinhanhField.value = '0';
         }
 
-        // Show submitting state
         const submitBtn = document.querySelector('.btn-primary');
         submitBtn.textContent = "Đang gửi...";
         submitBtn.disabled = true;
 
-        // Submit form through JavaScript and handle redirect
         e.preventDefault();
 
         var formData = new FormData(this);
@@ -456,10 +438,10 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
             .then(data => {
                 console.log("Response:", data);
                 if (data.success) {
-                    // Redirect to the list page - sử dụng URL tương đối
+
                     window.location.href = "../../index.php?req=hanghoaview";
                 } else {
-                    // Show error
+
                     alert("Lỗi: " + data.message);
                     submitBtn.textContent = "Cập nhật";
                     submitBtn.disabled = false;
@@ -467,7 +449,7 @@ $nhanVienList = $nhanVienObj->nhanvienGetAll();
             })
             .catch(error => {
                 console.error("Error:", error);
-                // Redirect anyway in case of error parsing JSON
+
                 window.top.location.href = "/administrator/index.php?req=hanghoaview";
             });
 

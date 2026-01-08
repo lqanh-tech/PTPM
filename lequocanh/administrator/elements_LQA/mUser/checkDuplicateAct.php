@@ -1,8 +1,4 @@
 <?php
-/**
- * API kiểm tra trùng lặp username, email, phone
- * Dùng cho validation real-time khi đăng ký
- */
 
 header('Content-Type: application/json; charset=utf-8');
 

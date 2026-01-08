@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Rate Limiting Middleware
- * Phase 4 - Advanced rate limiting with Redis support
- */
-
 class RateLimitMiddleware
 {
     private $limit;
@@ -32,7 +27,7 @@ class RateLimitMiddleware
 
     private function getIdentifier()
     {
-        // Use user ID if authenticated, otherwise IP
+
         if (isset($_REQUEST['user']['id'])) {
             return 'user:' . $_REQUEST['user']['id'];
         }
@@ -63,7 +58,7 @@ class RateLimitMiddleware
 
             $this->addRateLimitHeaders($current, $this->limit);
         } catch (Exception $e) {
-            // Fallback to file-based rate limiting
+
             $this->handleFileRateLimit($key);
         }
     }
@@ -84,20 +79,16 @@ class RateLimitMiddleware
             $data = json_decode($content, true) ?: [];
         }
 
-        // Clean old entries
         $data = array_filter($data, function ($timestamp) use ($now) {
             return ($now - $timestamp) < $this->window;
         });
 
-        // Add current request
         $data[] = $now;
 
-        // Check limit
         if (count($data) > $this->limit) {
             $this->rateLimitExceeded(count($data), $this->limit);
         }
 
-        // Save data
         file_put_contents($file, json_encode($data));
 
         $this->addRateLimitHeaders(count($data), $this->limit);

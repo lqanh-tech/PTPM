@@ -1,8 +1,4 @@
 <?php
-/**
- * View - Quản lý sản phẩm nổi bật (Thủ công)
- * Tích hợp vào admin panel
- */
 
 require_once __DIR__ . '/../mod/database.php';
 require_once __DIR__ . '/../mod/FeaturedProductsCls.php';
@@ -13,7 +9,6 @@ $db = Database::getInstance()->getConnection();
 $message = '';
 $messageType = 'success';
 
-// Xử lý actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $idhanghoa = $_POST['idhanghoa'] ?? 0;
@@ -58,7 +53,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy danh sách sản phẩm
 $sql = "SELECT h.*, 
         t.tenTH AS ten_thuonghieu,
         CASE 
@@ -467,7 +461,6 @@ function closeSaleModal() {
     document.getElementById('saleModal').style.display = 'none';
 }
 
-// Close modal when clicking outside
 window.onclick = function(event) {
     const modal = document.getElementById('saleModal');
     if (event.target === modal) {

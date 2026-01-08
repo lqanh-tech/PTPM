@@ -1,10 +1,4 @@
 <?php
-/**
- * Order Tracking Page
- * 
- * Trang tra cứu đơn hàng công khai cho khách hàng
- * Không cần đăng nhập
- */
 
 require_once 'administrator/elements_LQA/mod/database.php';
 
@@ -17,7 +11,6 @@ if ($orderCode) {
     try {
         $db = Database::getInstance()->getConnection();
         
-        // Get order info - tìm theo ma_don_hang_text hoặc id
         $stmt = $db->prepare("
             SELECT 
                 dh.*,
@@ -31,7 +24,7 @@ if ($orderCode) {
         $orderInfo = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($orderInfo) {
-            // Get order items
+
             $itemsStmt = $db->prepare("
                 SELECT ctdh.*, h.tenhanghoa 
                 FROM chi_tiet_don_hang ctdh
@@ -41,7 +34,6 @@ if ($orderCode) {
             $itemsStmt->execute([$orderInfo['id']]);
             $orderItems = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Get tracking history if exists
             try {
                 $stmt = $db->prepare("
                     SELECT * FROM shipment_tracking 

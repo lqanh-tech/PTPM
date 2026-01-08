@@ -1,29 +1,22 @@
 <?php
-// Load local development configuration for faster loading
+
 require_once __DIR__ . '/config/local_config.php';
 
-// Bootstrap is already loaded by the parent index.php - skip loading it again
-// require_once __DIR__ . '/../bootstrap.php'; // REMOVED - prevents double loading
-
-// Load essential classes that were provided by bootstrap
 require_once __DIR__ . '/administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/administrator/elements_LQA/config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
 require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/hanghoaCls.php';
 
-// Get product IDs from URL parameter
 $productIds = [];
 if (isset($_GET['products'])) {
     $productIds = explode(',', $_GET['products']);
-    // Sanitize the product IDs
+
     $productIds = array_map('intval', $productIds);
 }
 
-// Get product information
 $products = [];
 if (!empty($productIds)) {
     $hanghoa = new hanghoa();
@@ -71,7 +64,7 @@ if (!empty($productIds)) {
 
     <!-- Minimal inline critical CSS -->
     <style>
-        /* Critical above-the-fold styles */
+
         .navbar {
             z-index: 1030 !important;
         }
@@ -103,7 +96,6 @@ if (!empty($productIds)) {
             z-index: 1090 !important;
         }
 
-        /* Product comparison table */
         .comparison-table th {
             background-color: #f8f9fa;
             font-weight: bold;
@@ -169,7 +161,7 @@ if (!empty($productIds)) {
                                 data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user me-2"></i>
                                 <?php
-                                // Lấy tên người dùng từ database
+
                                 $username = $_SESSION['USER'];
                                 $db = Database::getInstance()->getConnection();
                                 $stmt = $db->prepare("SELECT hoten FROM user WHERE username = ?");

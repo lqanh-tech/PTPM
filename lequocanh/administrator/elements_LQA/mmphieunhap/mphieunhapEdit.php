@@ -5,12 +5,10 @@ require_once './elements_LQA/mod/mphieunhapCls.php';
 require_once './elements_LQA/mod/nhacungcapCls.php';
 require_once './elements_LQA/mod/nhanvienCls.php';
 
-// Khởi tạo các đối tượng
 $phieuNhapObj = new MPhieuNhap();
 $nccObj = new nhacungcap();
 $nvObj = new NhanVien();
 
-// Lấy thông tin phiếu nhập cần sửa
 if (isset($_GET['idpn'])) {
     $idPhieuNhap = $_GET['idpn'];
     $phieuNhap = $phieuNhapObj->getPhieuNhapById($idPhieuNhap);
@@ -21,14 +19,12 @@ if (isset($_GET['idpn'])) {
         exit;
     }
     
-    // Kiểm tra trạng thái phiếu nhập
     if ($phieuNhap->trangThai != 0) {
         echo "<div class='alert alert-warning'>Không thể sửa phiếu nhập đã được duyệt hoặc đã hủy!</div>";
         echo "<a href='index.php?req=mphieunhap' class='btn btn-primary'>Quay lại</a>";
         exit;
     }
     
-    // Lấy danh sách nhà cung cấp và nhân viên
     $list_ncc = $nccObj->NhacungcapGetAll();
     $list_nv = $nvObj->nhanvienGetAll();
 } else {

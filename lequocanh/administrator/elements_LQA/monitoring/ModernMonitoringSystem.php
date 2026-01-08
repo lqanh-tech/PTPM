@@ -1,8 +1,4 @@
 <?php
-/**
- * Modern Monitoring System
- * Phase 4 - Integrated monitoring with metrics export
- */
 
 class ModernMonitoringSystem {
     private static $instance = null;
@@ -46,7 +42,6 @@ class ModernMonitoringSystem {
             'timestamp' => microtime(true)
         ];
         
-        // Store in database for persistence
         $sql = "INSERT INTO system_metrics (metric_name, metric_value, metric_type, labels) 
                 VALUES (?, ?, ?, ?)";
         $stmt = $this->db->prepare($sql);
@@ -105,7 +100,7 @@ class ModernMonitoringSystem {
     }
     
     private function normalizePath($path) {
-        // Replace IDs with placeholders for better grouping
+
         return preg_replace('/\/\d+/', '/{id}', $path);
     }
     
@@ -148,7 +143,6 @@ class ModernMonitoringSystem {
             'disk' => $this->checkDiskHealth()
         ];
         
-        // Determine overall health status
         if (!$health['database']['healthy'] || !$health['disk']['healthy']) {
             $health['status'] = 'unhealthy';
         } elseif ($health['memory']['usage'] > $health['memory']['peak'] * 0.9) {
@@ -163,7 +157,7 @@ class ModernMonitoringSystem {
             $stmt = $this->db->query("SELECT 1");
             return [
                 'healthy' => true,
-                'response_time' => 0.001 // Would measure actual response time
+                'response_time' => 0.001
             ];
         } catch (Exception $e) {
             return [
@@ -174,7 +168,7 @@ class ModernMonitoringSystem {
     }
     
     private function checkCacheHealth() {
-        // Check if cache directory is writable
+
         $cacheDir = __DIR__ . '/../../../cache';
         return [
             'healthy' => is_dir($cacheDir) && is_writable($cacheDir),
@@ -188,7 +182,7 @@ class ModernMonitoringSystem {
         $usage = ($total - $free) / $total;
         
         return [
-            'healthy' => $usage < 0.9, // Alert if disk usage > 90%
+            'healthy' => $usage < 0.9,
             'usage_percent' => round($usage * 100, 2),
             'free_bytes' => $free,
             'total_bytes' => $total

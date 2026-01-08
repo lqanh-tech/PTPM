@@ -1,17 +1,14 @@
 <?php
-// Đảm bảo session đã được khởi tạo
+
 if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// Thiết lập múi giờ Việt Nam
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
-// Hiển thị thông tin hệ thống với thiết kế Professional
 echo '<div class="admin-header">';
 echo '<div class="header-content">';
 
-// Logo và tiêu đề hệ thống
 echo '<div class="system-info">';
 echo '<div class="system-logo">';
 echo '<i class="fas fa-cogs"></i>';
@@ -22,7 +19,6 @@ echo '<p class="system-subtitle">Bảng điều khiển quản trị</p>';
 echo '</div>';
 echo '</div>';
 
-// Thông tin thời gian và trạng thái
 echo '<div class="header-info">';
 echo '<div class="datetime-display">';
 $current_time = date('H:i:s - d/m/Y');
@@ -37,11 +33,10 @@ echo '</div>';
 echo '</div>';
 echo '</div>';
 
-// Hiển thị thông tin người dùng với thiết kế Professional
 echo '<div class="user-info-section">';
 
 if (isset($_SESSION['ADMIN']) || isset($_SESSION['USER'])) {
-    // Lấy tên người dùng từ session
+
     $namelogin = isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : $_SESSION['USER'];
     $userRole = isset($_SESSION['ADMIN']) ? 'Quản trị viên' : 'Người dùng';
     $roleIcon = isset($_SESSION['ADMIN']) ? 'fas fa-user-shield' : 'fas fa-user';
@@ -61,7 +56,6 @@ if (isset($_SESSION['ADMIN']) || isset($_SESSION['USER'])) {
     echo '<span>' . $userRole . '</span>';
     echo '</div>';
 
-    // Hiển thị thông tin thời gian đăng nhập gần nhất
     if (isset($_COOKIE[$namelogin])) {
         echo '<div class="last-login">';
         echo '<i class="fas fa-history"></i>';
@@ -93,7 +87,6 @@ echo '</div>';
 
 echo '</div>';
 
-// Hiển thị thông báo trạng thái với thiết kế Professional
 echo '<div class="status-section">';
 
 if (isset($_GET['result'])) {
@@ -134,7 +127,6 @@ echo '</div>';
 ?>
 
 <style>
-    /* ===== PROFESSIONAL ADMIN HEADER DESIGN ===== */
 
     .admin-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -164,7 +156,6 @@ echo '</div>';
         gap: 20px;
     }
 
-    /* System Info Section */
     .system-info {
         display: flex;
         align-items: center;
@@ -203,7 +194,6 @@ echo '</div>';
         font-weight: 400;
     }
 
-    /* Header Info Section */
     .header-info {
         display: flex;
         align-items: center;
@@ -245,7 +235,6 @@ echo '</div>';
         border-radius: 6px;
     }
 
-    /* User Info Section */
     .user-info-section {
         margin: 20px 0;
     }
@@ -334,7 +323,6 @@ echo '</div>';
         color: #95a5a6;
     }
 
-    /* Not Logged In State */
     .not-logged-in .user-avatar {
         background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     }
@@ -358,7 +346,6 @@ echo '</div>';
         color: #2980b9;
     }
 
-    /* Status Section */
     .status-section {
         margin: 20px 0;
     }
@@ -427,7 +414,6 @@ echo '</div>';
         font-size: 14px;
     }
 
-    /* Logout Button Positioning */
     #signoutbutton {
         top: 80px !important;
         z-index: 1000 !important;
@@ -438,7 +424,6 @@ echo '</div>';
         transform: scale(1.05);
     }
 
-    /* Responsive Design */
     @media (max-width: 768px) {
         .header-content {
             flex-direction: column;
@@ -500,7 +485,6 @@ echo '</div>';
         }
     }
 
-    /* Animation for spinning icon */
     @keyframes spin {
         from {
             transform: rotate(0deg);
@@ -517,11 +501,10 @@ echo '</div>';
 </style>
 
 <script>
-    // Hàm cập nhật thời gian thực
+
     function updateCurrentTime() {
         const now = new Date();
 
-        // Định dạng thời gian theo múi giờ Việt Nam
         const options = {
             timeZone: 'Asia/Ho_Chi_Minh',
             hour: '2-digit',
@@ -536,20 +519,17 @@ echo '</div>';
         const formatter = new Intl.DateTimeFormat('vi-VN', options);
         const parts = formatter.formatToParts(now);
 
-        // Tạo chuỗi thời gian theo định dạng H:i:s - d/m/Y
         const timeString = `${parts.find(p => p.type === 'hour').value}:${parts.find(p => p.type === 'minute').value}:${parts.find(p => p.type === 'second').value} - ${parts.find(p => p.type === 'day').value}/${parts.find(p => p.type === 'month').value}/${parts.find(p => p.type === 'year').value}`;
 
-        // Cập nhật hiển thị
         const timeDisplay = document.getElementById('time-display');
         if (timeDisplay) {
             timeDisplay.textContent = timeString;
         }
     }
 
-    // Cập nhật thời gian ngay khi trang tải
     document.addEventListener('DOMContentLoaded', function() {
         updateCurrentTime();
-        // Cập nhật mỗi giây
+
         setInterval(updateCurrentTime, 1000);
     });
 </script>

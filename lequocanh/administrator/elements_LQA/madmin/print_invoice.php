@@ -3,37 +3,31 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
-    // Điều hướng về trang đăng nhập (nằm ở thư mục administrator)
+
     header('Location: ../../userLogin.php');
     exit();
 }
 
-// Tắt hiển thị lỗi
 ini_set('display_errors', 0);
 ini_set('display_startup_errors', 0);
 error_reporting(0);
 
-// Sử dụng __DIR__ để định vị đúng đường dẫn file
 require_once __DIR__ . '/../mod/database.php';
 require_once __DIR__ . '/../mod/hanghoaCls.php';
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Kiểm tra kết nối cơ sở dữ liệu
 if (!$conn) {
     die('<div class="alert alert-danger">Không thể kết nối đến cơ sở dữ liệu.</div>');
 }
 
-// Kiểm tra ID đơn hàng
 if (!isset($_GET['id']) || empty($_GET['id'])) {
     die('<div class="alert alert-danger">Không tìm thấy đơn hàng.</div>');
 }
 
 $orderId = (int)$_GET['id'];
 
-// Lấy thông tin đơn hàng
-// Nếu là user thường, chỉ xem được đơn của mình
 if (isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     $orderSql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
     $orderStmt = $conn->prepare($orderSql);
@@ -50,7 +44,6 @@ if (!$order) {
     die('<div class="alert alert-danger">Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn hàng này.</div>');
 }
 
-// Lấy thông tin chi tiết đơn hàng
 $orderItemsSql = "SELECT oi.*, h.tenhanghoa 
                  FROM chi_tiet_don_hang oi
                  JOIN hanghoa h ON oi.ma_san_pham = h.idhanghoa
@@ -59,7 +52,6 @@ $orderItemsStmt = $conn->prepare($orderItemsSql);
 $orderItemsStmt->execute([$orderId]);
 $orderItems = $orderItemsStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Lấy thông tin khách hàng nếu có
 $customerName = "Khách vãng lai";
 $customerPhone = "";
 $customerEmail = "";
@@ -77,16 +69,13 @@ if (isset($order['ma_nguoi_dung']) && !empty($order['ma_nguoi_dung'])) {
     }
 }
 
-// Lấy thông tin cửa hàng (Hardcoded hoặc lấy từ DB cấu hình nếu có)
 $shopName = "Cửa hàng điện thoại LQA";
 $shopAddress = "123 Đường ABC, Quận Ninh Kiều, TP. Cần Thơ";
 $shopPhone = "0123 456 789";
 $shopEmail = "contact@lqa-store.com";
 
-// Định dạng ngày tháng
 $orderDate = date('d/m/Y H:i', strtotime($order['ngay_tao']));
 
-// Tính toán các khoản tiền
 $subtotal = 0;
 foreach ($orderItems as $item) {
     $subtotal += $item['gia'] * $item['so_luong'];
@@ -98,7 +87,6 @@ $shippingMethodName = isset($order['shipping_method_name']) ? $order['shipping_m
 $couponCode = isset($order['coupon_code']) ? $order['coupon_code'] : null;
 $couponDiscount = isset($order['coupon_discount']) ? floatval($order['coupon_discount']) : 0;
 
-// Định dạng trạng thái đơn hàng
 $orderStatus = "";
 switch ($order['trang_thai']) {
     case 'pending':
@@ -120,7 +108,6 @@ switch ($order['trang_thai']) {
         $orderStatus = "Không xác định";
 }
 
-// Định dạng phương thức thanh toán
 $paymentMethod = "";
 switch ($order['phuong_thuc_thanh_toan']) {
     case 'bank_transfer':

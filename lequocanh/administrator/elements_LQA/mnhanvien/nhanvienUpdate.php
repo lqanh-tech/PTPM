@@ -3,16 +3,13 @@ require_once __DIR__ . '/../mod/nhanvienCls.php';
 require_once __DIR__ . '/../mod/userCls.php';
 require_once __DIR__ . '/../mod/phanHeQuanLyCls.php';
 
-// Debugging - show all input
 $debug = [];
 $debug['POST'] = $_POST;
 $debug['GET'] = $_GET;
 $debug['REQUEST'] = $_REQUEST;
 
-// Try to get ID from various sources
 $idNhanVien = isset($_POST['idNhanVien']) ? $_POST['idNhanVien'] : (isset($_GET['idNhanVien']) ? $_GET['idNhanVien'] : (isset($_REQUEST['idNhanVien']) ? $_REQUEST['idNhanVien'] : null));
 
-// If still no ID, try alternative forms
 if (!$idNhanVien) {
     if (isset($_POST['data-id'])) {
         $idNhanVien = $_POST['data-id'];
@@ -23,7 +20,6 @@ if (!$idNhanVien) {
 
 $debug['ID detected'] = $idNhanVien;
 
-// Output debug if requested
 if (isset($_GET['debug']) || isset($_POST['debug'])) {
     echo "<pre>";
     print_r($debug);
@@ -51,7 +47,6 @@ if (!$getNhanVienUpdate) {
     exit;
 }
 
-// Lấy danh sách người dùng cho dropdown
 $userObj = new user();
 $listUsers = $userObj->UserGetAll();
 ?>
@@ -117,11 +112,10 @@ $listUsers = $userObj->UserGetAll();
                 </div>
                 <div class="phan-he-list" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-top: 10px;">
                     <?php
-                    // Lấy danh sách phần hệ quản lý
+
                     $phanHeObj = new PhanHeQuanLy();
                     $listPhanHe = $phanHeObj->getAllPhanHe();
 
-                    // Lấy danh sách phần hệ đã được gán cho nhân viên
                     $assignedPhanHe = $phanHeObj->getPhanHeByNhanVienId($idNhanVien);
                     $assignedPhanHeIds = [];
 
@@ -215,12 +209,12 @@ $listUsers = $userObj->UserGetAll();
 
 <script>
     $(document).ready(function() {
-        // Xử lý khi thay đổi user trong dropdown
+
         $('#iduser_update').change(function() {
             var userId = $(this).val();
 
             if (userId) {
-                // Lấy thông tin user qua AJAX
+
                 $.ajax({
                     url: './elements_LQA/mUser/getUserInfo.php',
                     type: 'GET',
@@ -230,7 +224,7 @@ $listUsers = $userObj->UserGetAll();
                     dataType: 'json',
                     success: function(response) {
                         if (response.success) {
-                            // Điền thông tin vào form
+
                             var userData = response.data;
                             $('#tenNV_update').val(userData.hoten);
                             $('#SDT_update').val(userData.dienthoai);
@@ -248,13 +242,11 @@ $listUsers = $userObj->UserGetAll();
             }
         });
 
-        // Xử lý chọn tất cả phần hệ
         $('#selectAllPhanHe').change(function() {
             var isChecked = $(this).prop('checked');
             $('.phan-he-checkbox').prop('checked', isChecked);
         });
 
-        // Cập nhật trạng thái "Chọn tất cả" khi thay đổi các checkbox riêng lẻ
         $('.phan-he-checkbox').change(function() {
             var totalCheckboxes = $('.phan-he-checkbox').length;
             var checkedCheckboxes = $('.phan-he-checkbox:checked').length;
@@ -262,19 +254,15 @@ $listUsers = $userObj->UserGetAll();
             $('#selectAllPhanHe').prop('checked', totalCheckboxes === checkedCheckboxes);
         });
 
-        // Kiểm tra ban đầu xem tất cả các checkbox đã được chọn chưa
         var totalCheckboxes = $('.phan-he-checkbox').length;
         var checkedCheckboxes = $('.phan-he-checkbox:checked').length;
         $('#selectAllPhanHe').prop('checked', totalCheckboxes === checkedCheckboxes && totalCheckboxes > 0);
 
-        // Xử lý submit form cập nhật
         $('#updatenhanvien').submit(function(e) {
-            e.preventDefault(); // Ngăn chặn form submit bình thường
+            e.preventDefault();
 
-            // Hiển thị trạng thái đang xử lý
             $('#noteForm').html('<span style="color:blue">Đang xử lý...</span>');
 
-            // Thu thập dữ liệu từ form
             var formData = {
                 reqact: 'updatenhanvien',
                 idNhanVien: $('input[name="idNhanVien"]').val(),
@@ -287,17 +275,14 @@ $listUsers = $userObj->UserGetAll();
                 iduser: $('#iduser_update').val() || null
             };
 
-            // Thu thập dữ liệu phần hệ quản lý
             var selectedPhanHe = [];
             $('input[name="phanHe[]"]:checked').each(function() {
                 selectedPhanHe.push($(this).val());
             });
             formData.phanHe = selectedPhanHe;
 
-            // Hiển thị thông tin debug trong console
             console.log('Sending data:', formData);
 
-            // Gửi AJAX request
             $.ajax({
                 url: './elements_LQA/mnhanvien/nhanvienAct.php',
                 type: 'POST',
@@ -307,7 +292,6 @@ $listUsers = $userObj->UserGetAll();
                     if (response.success) {
                         $('#noteForm').html('<span style="color:green">Cập nhật thành công!</span>');
 
-                        // Đóng popup sau 1 giây và reload trang
                         setTimeout(function() {
                             $('#w_update_nv').hide();
                             location.reload();

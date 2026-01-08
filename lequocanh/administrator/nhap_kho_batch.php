@@ -7,7 +7,6 @@ try {
     $db = Database::getInstance()->getConnection();
     $db->beginTransaction();
 
-    // 1. Lấy danh sách tất cả hàng hóa
     echo "<h3>1. Lấy danh sách hàng hóa...</h3>";
     $sql = "SELECT idhanghoa, tenhanghoa, giathamkhao FROM hanghoa ORDER BY idhanghoa";
     $stmt = $db->prepare($sql);
@@ -21,12 +20,11 @@ try {
         exit;
     }
 
-    // 2. Tạo phiếu nhập
     echo "<h3>2. Tạo phiếu nhập...</h3>";
-    $maPhieuNhap = "PN_" . date("YmdHis"); // Mã phiếu nhập duy nhất
+    $maPhieuNhap = "PN_" . date("YmdHis");
     $ngayNhap = date("Y-m-d H:i:s");
-    $idNhanVien = 3; // ID nhân viên từ database
-    $idNCC = 1; // ID nhà cung cấp từ database
+    $idNhanVien = 3;
+    $idNCC = 1;
     $ghiChu = "Nhập kho hàng loạt - Thêm 10 đơn vị cho mỗi sản phẩm";
     
     $sqlPhieuNhap = "INSERT INTO phieunhap (maPhieuNhap, ngayNhap, idNhanVien, idNCC, ghiChu, trangThai) 
@@ -37,10 +35,9 @@ try {
     $idPhieuNhap = $db->lastInsertId();
     echo "<p style='color: green;'>✅ Tạo phiếu nhập thành công. Mã phiếu: <strong>$maPhieuNhap</strong>, ID: $idPhieuNhap</p>";
 
-    // 3. Thêm chi tiết phiếu nhập và cập nhật tồn kho
     echo "<h3>3. Xử lý từng sản phẩm...</h3>";
     $tongTien = 0;
-    $soLuongNhap = 10; // Số lượng nhập cho mỗi sản phẩm
+    $soLuongNhap = 10;
     $processedCount = 0;
     $errorCount = 0;
     
@@ -50,11 +47,9 @@ try {
             $tenhanghoa = $product['tenhanghoa'];
             $giathamkhao = $product['giathamkhao'];
             
-            // Giá nhập = 80% giá bán để có lợi nhuận hợp lý
             $giaNhap = $giathamkhao * 0.8;
             $thanhTien = $giaNhap * $soLuongNhap;
             
-            // 3.1. Thêm chi tiết phiếu nhập
             $sqlCTPN = "INSERT INTO chitietphieunhap (idPhieuNhap, idhanghoa, soLuong, donGia, giaNhap, thanhTien) 
                         VALUES (?, ?, ?, ?, ?, ?)";
             $stmtCTPN = $db->prepare($sqlCTPN);
@@ -62,20 +57,18 @@ try {
                 $idPhieuNhap, 
                 $idhanghoa, 
                 $soLuongNhap, 
-                $giathamkhao, // donGia = giá bán
-                $giaNhap,     // giaNhap = giá nhập
+                $giathamkhao,
+                $giaNhap,
                 $thanhTien
             ]);
             
-            // 3.2. Cập nhật tồn kho
-            // Kiểm tra xem đã có bản ghi tồn kho chưa
             $sqlCheckTonKho = "SELECT idTonKho, soLuong FROM tonkho WHERE idhanghoa = ?";
             $stmtCheck = $db->prepare($sqlCheckTonKho);
             $stmtCheck->execute([$idhanghoa]);
             $existingStock = $stmtCheck->fetch(PDO::FETCH_ASSOC);
             
             if ($existingStock) {
-                // Cập nhật tồn kho hiện tại
+
                 $soLuongMoi = $existingStock['soLuong'] + $soLuongNhap;
                 $sqlUpdateTonKho = "UPDATE tonkho SET soLuong = ?, ngayCapNhat = CURRENT_TIMESTAMP WHERE idhanghoa = ?";
                 $stmtUpdate = $db->prepare($sqlUpdateTonKho);
@@ -83,7 +76,7 @@ try {
                 
                 echo "<small>✅ ID $idhanghoa - '$tenhanghoa': Tồn kho {$existingStock['soLuong']} → $soLuongMoi (+$soLuongNhap)</small><br>";
             } else {
-                // Tạo mới bản ghi tồn kho
+
                 $sqlInsertTonKho = "INSERT INTO tonkho (idhanghoa, soLuong, soLuongToiThieu, ngayCapNhat) VALUES (?, ?, 10, CURRENT_TIMESTAMP)";
                 $stmtInsert = $db->prepare($sqlInsertTonKho);
                 $stmtInsert->execute([$idhanghoa, $soLuongNhap]);
@@ -91,7 +84,6 @@ try {
                 echo "<small>✅ ID $idhanghoa - '$tenhanghoa': Tạo mới tồn kho với số lượng $soLuongNhap</small><br>";
             }
             
-            // 3.3. Ghi lịch sử tồn kho (nếu bảng có sẵn)
             try {
                 $sqlLichSu = "INSERT INTO tonkho_lichsu (idhanghoa, soLuongTruoc, soLuongSau, soLuongThayDoi, loaiThayDoi, lyDoThayDoi, ngayThayDoi, idPhieuNhap) 
                              VALUES (?, ?, ?, ?, 'NHAP', 'Nhập kho hàng loạt', CURRENT_TIMESTAMP, ?)";
@@ -100,7 +92,7 @@ try {
                 $soLuongSau = $soLuongTruoc + $soLuongNhap;
                 $stmtLichSu->execute([$idhanghoa, $soLuongTruoc, $soLuongSau, $soLuongNhap, $idPhieuNhap]);
             } catch (Exception $e) {
-                // Bỏ qua lỗi lịch sử nếu bảng không tồn tại hoặc có vấn đề
+
                 echo "<small style='color: orange;'>⚠️ Không thể ghi lịch sử cho sản phẩm ID $idhanghoa</small><br>";
             }
             
@@ -113,13 +105,11 @@ try {
         }
     }
     
-    // 4. Cập nhật tổng tiền phiếu nhập
     echo "<h3>4. Hoàn tất phiếu nhập...</h3>";
     $sqlUpdateTongTien = "UPDATE phieunhap SET tongTien = ? WHERE idPhieuNhap = ?";
     $stmtUpdateTongTien = $db->prepare($sqlUpdateTongTien);
     $stmtUpdateTongTien->execute([$tongTien, $idPhieuNhap]);
     
-    // Commit transaction
     $db->commit();
     
     echo "<div style='border: 2px solid green; padding: 15px; background-color: #f0fff0; margin: 20px 0;'>";
@@ -142,7 +132,7 @@ try {
     echo "<p><strong>Tổng số lượng tồn kho:</strong> " . number_format($thongKe['total_stock']) . " đơn vị</p>";
 
 } catch (Exception $e) {
-    // Rollback nếu có lỗi
+
     if ($db->inTransaction()) {
         $db->rollback();
     }

@@ -1,7 +1,4 @@
 <?php
-/**
- * Thêm dữ liệu mẫu cho News và Promotions
- */
 
 require_once 'administrator/elements_LQA/mod/database.php';
 require_once 'administrator/elements_LQA/mod/NewsManager.php';
@@ -14,7 +11,6 @@ echo "========================================\n";
 echo "THÊM DỮ LIỆU MẪU\n";
 echo "========================================\n\n";
 
-// Thêm tin tức mẫu
 echo "1. Thêm tin tức mẫu...\n";
 $newsData = [
     [
@@ -38,9 +34,9 @@ foreach ($newsData as $news) {
     $result = $newsManager->addNews(
         $news['title'],
         $news['content'],
-        '', // Không có ảnh
+        '',
         $news['author'],
-        1, // Đã xuất bản
+        1,
         date('Y-m-d H:i:s')
     );
     
@@ -80,7 +76,7 @@ foreach ($promoData as $promo) {
         $promo['discount'],
         date('Y-m-d'),
         date('Y-m-d', strtotime("+{$promo['days']} days")),
-        1 // Kích hoạt
+        1
     );
     
     if ($result) {

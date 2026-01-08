@@ -1,7 +1,4 @@
 <?php
-/**
- * Script kiểm tra tổng hợp cho Banner, News, Promotions
- */
 
 require_once '../mod/database.php';
 
@@ -10,7 +7,6 @@ $errors = [];
 
 echo "<h1>Kiểm tra hệ thống Marketing Content</h1>";
 
-// 1. Kiểm tra kết nối database
 echo "<h2>1. Kiểm tra Database</h2>";
 try {
     $db = Database::getInstance()->getConnection();
@@ -21,7 +17,6 @@ try {
     exit;
 }
 
-// 2. Kiểm tra các bảng
 echo "<h2>2. Kiểm tra các bảng</h2>";
 $tables = ['banners', 'news', 'promotions'];
 $missingTables = [];
@@ -32,7 +27,6 @@ foreach ($tables as $table) {
         if ($stmt->rowCount() > 0) {
             $results[] = "✓ Bảng '$table' đã tồn tại";
             
-            // Đếm số bản ghi
             $stmt = $db->query("SELECT COUNT(*) as count FROM $table");
             $count = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
             $results[] = "&nbsp;&nbsp;&nbsp;→ Số bản ghi: $count";
@@ -45,7 +39,6 @@ foreach ($tables as $table) {
     }
 }
 
-// Nút tạo bảng nếu thiếu
 if (!empty($missingTables)) {
     echo "<div class='warning'>";
     echo "<p>Các bảng sau chưa tồn tại: " . implode(', ', $missingTables) . "</p>";
@@ -108,7 +101,6 @@ CREATE TABLE IF NOT EXISTS promotions (
     echo "</div>";
 }
 
-// 3. Kiểm tra thư mục upload
 echo "<h2>3. Kiểm tra thư mục Upload</h2>";
 $uploadDir = __DIR__ . '/../../../administrator/uploads/';
 
@@ -128,7 +120,6 @@ if (is_writable($uploadDir)) {
     $errors[] = "✗ Thư mục không có quyền ghi";
 }
 
-// 4. Kiểm tra các Manager class
 echo "<h2>4. Kiểm tra Manager Classes</h2>";
 $managers = [
     'BannerManager' => '../mod/BannerManager.php',
@@ -151,7 +142,6 @@ foreach ($managers as $className => $filePath) {
     }
 }
 
-// 5. Kiểm tra cấu hình PHP
 echo "<h2>5. Cấu hình PHP Upload</h2>";
 $phpConfig = [
     'upload_max_filesize' => ini_get('upload_max_filesize'),
@@ -164,7 +154,6 @@ foreach ($phpConfig as $key => $value) {
     $results[] = "$key: $value";
 }
 
-// Hiển thị kết quả
 echo "<h2>Kết quả kiểm tra</h2>";
 echo "<div class='results'>";
 foreach ($results as $result) {
@@ -175,7 +164,6 @@ foreach ($errors as $error) {
 }
 echo "</div>";
 
-// Kết luận
 echo "<hr>";
 echo "<h2>Kết luận</h2>";
 if (empty($errors)) {

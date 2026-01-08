@@ -3,28 +3,24 @@ require_once 'elements_LQA/security/securityMonitor.php';
 require_once 'elements_LQA/security/intrusionDetector.php';
 require_once 'elements_LQA/security/threatAnalyzer.php';
 
-// Simulate some security events for demonstration
 SecurityMonitor::logFailedLoginAttempt('attacker_user');
 SecurityMonitor::logFailedLoginAttempt('attacker_user');
 IntrusionDetector::recordFailedLogin('192.168.1.100');
 IntrusionDetector::recordFailedLogin('192.168.1.100');
 IntrusionDetector::recordFailedLogin('192.168.1.100');
 IntrusionDetector::recordFailedLogin('192.168.1.100');
-IntrusionDetector::recordFailedLogin('192.168.1.100'); // This should trigger a flag
+IntrusionDetector::recordFailedLogin('192.168.1.100');
 
 SecurityMonitor::logCsrfAttempt('http://malicious.com', 'invalid_token', 'expected_token');
 SecurityMonitor::logSuspiciousActivity('Unusual API calls', 'user123');
 
-// Get all security events
 $allSecurityEvents = SecurityMonitor::getSecurityEvents();
 
-// Analyze events
 $analyzedEvents = [];
 foreach ($allSecurityEvents as $event) {
     $analyzedEvents[] = ThreatAnalyzer::analyzeEvent($event);
 }
 
-// Analyze multiple events for broader threats
 $correlatedThreats = ThreatAnalyzer::analyzeMultipleEvents($allSecurityEvents);
 
 ?>

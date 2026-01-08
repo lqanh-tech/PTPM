@@ -1,8 +1,4 @@
 <?php
-/**
- * Setup Product Reviews Tables
- * Run this file once to create the review system tables
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -11,10 +7,8 @@ try {
     
     echo "Setting up product reviews tables...\n\n";
     
-    // Read SQL file
     $sql = file_get_contents(__DIR__ . '/create_product_reviews.sql');
     
-    // Split into individual statements
     $statements = array_filter(
         array_map('trim', explode(';', $sql)),
         function($stmt) {
@@ -49,7 +43,6 @@ try {
     echo "Errors: $error_count\n";
     echo str_repeat("=", 50) . "\n\n";
     
-    // Verify tables created
     echo "Verifying tables...\n";
     
     $tables = ['product_reviews', 'review_helpful'];
@@ -62,7 +55,6 @@ try {
         }
     }
     
-    // Check hoadon trangthai column
     $stmt = $db->query("SHOW COLUMNS FROM hoadon LIKE 'trangthai'");
     if ($stmt->rowCount() > 0) {
         echo "✓ Column 'trangthai' exists in hoadon table\n";

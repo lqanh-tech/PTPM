@@ -20,7 +20,6 @@ class MChiTietPhieuNhap
         $this->createTableIfNotExists();
     }
 
-    // Tạo bảng mchitietphieunhap nếu chưa tồn tại
     private function createTableIfNotExists()
     {
         try {
@@ -42,7 +41,6 @@ class MChiTietPhieuNhap
         }
     }
 
-    // Lấy tất cả chi tiết phiếu nhập theo ID phiếu nhập
     public function getChiTietByPhieuNhapId($idPhieuNhap)
     {
         $sql = "SELECT ct.*, h.tenhanghoa, h.mota, dvt.tenDonViTinh
@@ -57,7 +55,6 @@ class MChiTietPhieuNhap
         return $stmt->fetchAll();
     }
 
-    // Lấy chi tiết phiếu nhập theo ID
     public function getChiTietById($idCTPN)
     {
         $sql = "SELECT ct.*, h.tenhanghoa, h.mota, dvt.tenDonViTinh
@@ -71,25 +68,22 @@ class MChiTietPhieuNhap
         return $stmt->fetch();
     }
 
-    // Thêm chi tiết phiếu nhập
     public function addChiTietPhieuNhap($idPhieuNhap, $idhanghoa, $soLuong, $donGia, $giaNhap)
     {
         try {
-            // Kiểm tra trạng thái phiếu nhập
+
             $checkSql = "SELECT trangThai FROM mphieunhap WHERE idPhieuNhap = ?";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute([$idPhieuNhap]);
             $trangThai = $checkStmt->fetchColumn();
             
             if ($trangThai != 0) {
-                // Không cho phép thêm chi tiết nếu phiếu nhập đã được duyệt hoặc hủy
+
                 return false;
             }
             
-            // Tính thành tiền
             $thanhTien = $soLuong * $giaNhap;
             
-            // Kiểm tra xem sản phẩm đã tồn tại trong phiếu nhập chưa
             $checkExistSql = "SELECT idCTPN, soLuong FROM mchitietphieunhap 
                              WHERE idPhieuNhap = ? AND idhanghoa = ?";
             $checkExistStmt = $this->db->prepare($checkExistSql);
@@ -97,7 +91,7 @@ class MChiTietPhieuNhap
             $existingItem = $checkExistStmt->fetch(PDO::FETCH_OBJ);
             
             if ($existingItem) {
-                // Nếu sản phẩm đã tồn tại, cập nhật số lượng và giá
+
                 $newSoLuong = $existingItem->soLuong + $soLuong;
                 $newThanhTien = $newSoLuong * $giaNhap;
                 
@@ -107,18 +101,16 @@ class MChiTietPhieuNhap
                 $updateStmt = $this->db->prepare($updateSql);
                 $updateStmt->execute([$newSoLuong, $donGia, $giaNhap, $newThanhTien, $existingItem->idCTPN]);
                 
-                // Cập nhật tổng tiền phiếu nhập
                 $this->updateTongTien($idPhieuNhap);
                 
                 return $existingItem->idCTPN;
             } else {
-                // Nếu sản phẩm chưa tồn tại, thêm mới
+
                 $sql = "INSERT INTO mchitietphieunhap (idPhieuNhap, idhanghoa, soLuong, donGia, giaNhap, thanhTien) 
                        VALUES (?, ?, ?, ?, ?, ?)";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$idPhieuNhap, $idhanghoa, $soLuong, $donGia, $giaNhap, $thanhTien]);
                 
-                // Cập nhật tổng tiền phiếu nhập
                 $this->updateTongTien($idPhieuNhap);
                 
                 return $this->db->lastInsertId();
@@ -129,38 +121,33 @@ class MChiTietPhieuNhap
         }
     }
 
-    // Cập nhật chi tiết phiếu nhập
     public function updateChiTietPhieuNhap($idCTPN, $soLuong, $donGia, $giaNhap)
     {
         try {
-            // Lấy thông tin chi tiết phiếu nhập
+
             $getInfoSql = "SELECT idPhieuNhap FROM mchitietphieunhap WHERE idCTPN = ?";
             $getInfoStmt = $this->db->prepare($getInfoSql);
             $getInfoStmt->execute([$idCTPN]);
             $idPhieuNhap = $getInfoStmt->fetchColumn();
             
-            // Kiểm tra trạng thái phiếu nhập
             $checkSql = "SELECT trangThai FROM mphieunhap WHERE idPhieuNhap = ?";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute([$idPhieuNhap]);
             $trangThai = $checkStmt->fetchColumn();
             
             if ($trangThai != 0) {
-                // Không cho phép cập nhật chi tiết nếu phiếu nhập đã được duyệt hoặc hủy
+
                 return false;
             }
             
-            // Tính thành tiền
             $thanhTien = $soLuong * $giaNhap;
             
-            // Cập nhật chi tiết phiếu nhập
             $sql = "UPDATE mchitietphieunhap 
                    SET soLuong = ?, donGia = ?, giaNhap = ?, thanhTien = ? 
                    WHERE idCTPN = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$soLuong, $donGia, $giaNhap, $thanhTien, $idCTPN]);
             
-            // Cập nhật tổng tiền phiếu nhập
             $this->updateTongTien($idPhieuNhap);
             
             return $stmt->rowCount();
@@ -170,33 +157,29 @@ class MChiTietPhieuNhap
         }
     }
 
-    // Xóa chi tiết phiếu nhập
     public function deleteChiTietPhieuNhap($idCTPN)
     {
         try {
-            // Lấy thông tin chi tiết phiếu nhập
+
             $getInfoSql = "SELECT idPhieuNhap FROM mchitietphieunhap WHERE idCTPN = ?";
             $getInfoStmt = $this->db->prepare($getInfoSql);
             $getInfoStmt->execute([$idCTPN]);
             $idPhieuNhap = $getInfoStmt->fetchColumn();
             
-            // Kiểm tra trạng thái phiếu nhập
             $checkSql = "SELECT trangThai FROM mphieunhap WHERE idPhieuNhap = ?";
             $checkStmt = $this->db->prepare($checkSql);
             $checkStmt->execute([$idPhieuNhap]);
             $trangThai = $checkStmt->fetchColumn();
             
             if ($trangThai != 0) {
-                // Không cho phép xóa chi tiết nếu phiếu nhập đã được duyệt hoặc hủy
+
                 return false;
             }
             
-            // Xóa chi tiết phiếu nhập
             $sql = "DELETE FROM mchitietphieunhap WHERE idCTPN = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idCTPN]);
             
-            // Cập nhật tổng tiền phiếu nhập
             $this->updateTongTien($idPhieuNhap);
             
             return $stmt->rowCount();
@@ -206,7 +189,6 @@ class MChiTietPhieuNhap
         }
     }
 
-    // Cập nhật tổng tiền phiếu nhập
     private function updateTongTien($idPhieuNhap)
     {
         try {

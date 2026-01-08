@@ -1,13 +1,10 @@
 <?php
-/**
- * PageManager - Quản lý Blog và Trang tĩnh
- */
+
 require_once __DIR__ . '/database.php';
 
 class PageManager {
     private $db;
     
-    // Các loại trang
     const TYPE_BLOG = 'blog';
     const TYPE_ABOUT = 'about';
     const TYPE_POLICY = 'policy';
@@ -18,9 +15,6 @@ class PageManager {
         $this->ensureTableExists();
     }
     
-    /**
-     * Tạo bảng nếu chưa tồn tại
-     */
     private function ensureTableExists() {
         $sql = "CREATE TABLE IF NOT EXISTS pages (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -46,9 +40,6 @@ class PageManager {
         $this->db->exec($sql);
     }
     
-    /**
-     * Tạo slug từ tiêu đề
-     */
     public function createSlug($title) {
         $slug = $this->removeVietnameseAccents($title);
         $slug = strtolower($slug);
@@ -56,7 +47,6 @@ class PageManager {
         $slug = preg_replace('/[\s-]+/', '-', $slug);
         $slug = trim($slug, '-');
         
-        // Kiểm tra trùng lặp
         $originalSlug = $slug;
         $counter = 1;
         while ($this->slugExists($slug)) {
@@ -67,9 +57,6 @@ class PageManager {
         return $slug;
     }
     
-    /**
-     * Bỏ dấu tiếng Việt
-     */
     private function removeVietnameseAccents($str) {
         $accents = [
             'à','á','ạ','ả','ã','â','ầ','ấ','ậ','ẩ','ẫ','ă','ằ','ắ','ặ','ẳ','ẵ',
@@ -106,9 +93,6 @@ class PageManager {
         return str_replace($accents, $noAccents, $str);
     }
     
-    /**
-     * Kiểm tra slug đã tồn tại
-     */
     public function slugExists($slug, $excludeId = null) {
         $sql = "SELECT id FROM pages WHERE slug = ?";
         $params = [$slug];
@@ -123,9 +107,6 @@ class PageManager {
         return $stmt->rowCount() > 0;
     }
     
-    /**
-     * Thêm trang mới
-     */
     public function addPage($data) {
         try {
             $slug = $data['slug'] ?? $this->createSlug($data['title']);
@@ -155,9 +136,6 @@ class PageManager {
         }
     }
     
-    /**
-     * Cập nhật trang
-     */
     public function updatePage($id, $data) {
         try {
             $fields = [];
@@ -186,9 +164,6 @@ class PageManager {
         }
     }
     
-    /**
-     * Xóa trang
-     */
     public function deletePage($id) {
         try {
             $stmt = $this->db->prepare("DELETE FROM pages WHERE id = ?");
@@ -199,24 +174,17 @@ class PageManager {
         }
     }
     
-    /**
-     * Lấy trang theo ID
-     */
     public function getPageById($id) {
         $stmt = $this->db->prepare("SELECT * FROM pages WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Lấy trang theo slug
-     */
     public function getPageBySlug($slug) {
         $stmt = $this->db->prepare("SELECT * FROM pages WHERE slug = ? AND status = 'published'");
         $stmt->execute([$slug]);
         $page = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Tăng view count
         if ($page) {
             $this->db->prepare("UPDATE pages SET view_count = view_count + 1 WHERE id = ?")->execute([$page['id']]);
         }
@@ -224,9 +192,6 @@ class PageManager {
         return $page;
     }
     
-    /**
-     * Lấy tất cả trang theo loại
-     */
     public function getPagesByType($type, $publishedOnly = false) {
         $sql = "SELECT * FROM pages WHERE type = ?";
         if ($publishedOnly) {
@@ -239,16 +204,10 @@ class PageManager {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Lấy tất cả bài blog
-     */
     public function getAllBlogs($publishedOnly = false) {
         return $this->getPagesByType(self::TYPE_BLOG, $publishedOnly);
     }
     
-    /**
-     * Lấy tất cả trang tĩnh (about, policy, guide)
-     */
     public function getAllStaticPages($publishedOnly = false) {
         $sql = "SELECT * FROM pages WHERE type IN ('about', 'policy', 'guide')";
         if ($publishedOnly) {
@@ -261,17 +220,11 @@ class PageManager {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Lấy tất cả trang
-     */
     public function getAllPages() {
         $stmt = $this->db->query("SELECT * FROM pages ORDER BY type, position ASC, created_at DESC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    /**
-     * Upload thumbnail
-     */
     public function uploadThumbnail($file) {
         $uploadDir = __DIR__ . '/../../uploads/pages/';
         if (!is_dir($uploadDir)) {
@@ -289,9 +242,6 @@ class PageManager {
         return null;
     }
     
-    /**
-     * Lấy label cho loại trang
-     */
     public static function getTypeLabel($type) {
         $labels = [
             'blog' => 'Bài viết Blog',
@@ -302,9 +252,6 @@ class PageManager {
         return $labels[$type] ?? $type;
     }
     
-    /**
-     * Lấy badge class cho status
-     */
     public static function getStatusBadge($status) {
         $badges = [
             'draft' => '<span class="badge bg-secondary">Nháp</span>',

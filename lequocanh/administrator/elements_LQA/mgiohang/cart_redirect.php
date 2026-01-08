@@ -1,9 +1,8 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 $referrer = isset($_GET['referrer']) ? $_GET['referrer'] : '../../../index.php';
 ?>
@@ -66,7 +65,7 @@ $referrer = isset($_GET['referrer']) ? $_GET['referrer'] : '../../../index.php';
         </div>
     </div>
     <script>
-        // Tự động quay lại trang trước sau 3 giây
+
         setTimeout(function() {
             window.location.href = "<?php echo $referrer; ?>";
         }, 3000);

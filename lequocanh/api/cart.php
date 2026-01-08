@@ -1,14 +1,15 @@
 <?php
-/**
- * API Giỏ hàng
- * Cho phép thêm/xóa/cập nhật sản phẩm trong giỏ hàng
- */
 
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/giohangCls.php';
 
 SessionManager::start();
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('cart');
 
 class CartAPI {
     private $giohang;
@@ -17,9 +18,6 @@ class CartAPI {
         $this->giohang = new GioHang();
     }
     
-    /**
-     * Thêm sản phẩm vào giỏ hàng
-     */
     public function addToCart() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -55,9 +53,6 @@ class CartAPI {
         }
     }
     
-    /**
-     * Xóa sản phẩm khỏi giỏ hàng
-     */
     public function removeFromCart() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -88,9 +83,6 @@ class CartAPI {
         }
     }
     
-    /**
-     * Cập nhật số lượng
-     */
     public function updateQuantity() {
         try {
             if (!isset($_SESSION['USER'])) {
@@ -122,9 +114,6 @@ class CartAPI {
         }
     }
     
-    /**
-     * Lấy số lượng sản phẩm trong giỏ
-     */
     public function getCount() {
         try {
             $count = $this->giohang->getCartItemCount();
@@ -153,7 +142,6 @@ class CartAPI {
     }
 }
 
-// Router
 $api = new CartAPI();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 

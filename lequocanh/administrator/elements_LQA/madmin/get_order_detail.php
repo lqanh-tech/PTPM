@@ -1,14 +1,8 @@
 <?php
-/**
- * Get Order Detail
- * API endpoint để lấy thông tin chi tiết đơn hàng
- */
 
-// Use SessionManager for safe session handling
 require_once '../mod/sessionManager.php';
 SessionManager::start();
 
-// Kiểm tra quyền truy cập
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     http_response_code(403);
     echo '<div class="alert alert-danger">Bạn không có quyền truy cập!</div>';
@@ -28,7 +22,6 @@ try {
     $db = Database::getInstance();
     $conn = $db->getConnection();
     
-    // Lấy thông tin đơn hàng
     $orderSql = "SELECT * FROM don_hang WHERE id = ?";
     $orderStmt = $conn->prepare($orderSql);
     $orderStmt->execute([$orderId]);
@@ -39,7 +32,6 @@ try {
         exit();
     }
     
-    // Lấy chi tiết sản phẩm
     $itemsSql = "SELECT cdh.*, h.tenhanghoa, h.hinhanh 
                  FROM chi_tiet_don_hang cdh
                  LEFT JOIN hanghoa h ON cdh.ma_san_pham = h.idhanghoa
@@ -48,7 +40,6 @@ try {
     $itemsStmt->execute([$orderId]);
     $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Tính toán
     $subtotal = 0;
     foreach ($items as $item) {
         $subtotal += $item['gia'] * $item['so_luong'];
@@ -253,7 +244,7 @@ try {
                 </div>
                 
                 <?php
-                // Hiển thị thông tin đổi/trả nếu có
+
                 $returnStatus = isset($order['trang_thai_doi_tra']) ? $order['trang_thai_doi_tra'] : 'none';
                 if ($returnStatus != 'none'):
                 ?>
@@ -341,7 +332,7 @@ try {
             </div>
             
             <?php 
-            // Lấy thông tin phương thức vận chuyển
+
             $shippingMethodName = isset($order['shipping_method_name']) ? $order['shipping_method_name'] : '';
             $estimatedDelivery = isset($order['estimated_delivery']) ? $order['estimated_delivery'] : '';
             ?>
@@ -365,7 +356,7 @@ try {
             </div>
             
             <?php 
-            // Hiển thị mã giảm giá nếu có
+
             $couponCode = isset($order['coupon_code']) ? $order['coupon_code'] : null;
             $couponDiscount = isset($order['coupon_discount']) ? floatval($order['coupon_discount']) : 0;
             

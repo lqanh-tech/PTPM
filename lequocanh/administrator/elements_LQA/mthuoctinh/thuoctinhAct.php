@@ -1,9 +1,8 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 require_once __DIR__ . '/../mod/thuoctinhCls.php';
 
@@ -12,7 +11,7 @@ if (isset($_GET['reqact'])) {
     $lh = new ThuocTinh();
 
     switch ($requestAction) {
-        case 'addnew': // Thêm mới
+        case 'addnew':
             $tenThuocTinh = isset($_POST['tenThuocTinh']) ? $_POST['tenThuocTinh'] : '';
             $ghiChu = isset($_POST['ghiChu']) ? $_POST['ghiChu'] : '';
             if (empty($_FILES['fileimage']['tmp_name'])) {
@@ -26,7 +25,7 @@ if (isset($_GET['reqact'])) {
             header('location: ../../index.php?req=thuoctinhview&result=' . ($kq ? 'ok' : 'notok'));
             break;
 
-        case 'deletethuoctinh': // Xóa
+        case 'deletethuoctinh':
             $idThuocTinh = isset($_GET['idThuocTinh']) ? $_GET['idThuocTinh'] : null;
 
             if (!$idThuocTinh) {
@@ -34,19 +33,17 @@ if (isset($_GET['reqact'])) {
                 break;
             }
 
-            // Lấy thông tin thuộc tính trước khi xóa để ghi nhật ký
             $thuoctinhInfo = $lh->thuoctinhGetById($idThuocTinh);
             $tenThuocTinh = $thuoctinhInfo ? $thuoctinhInfo->tenThuocTinh : "Không xác định";
 
             $result = $lh->thuoctinhDelete($idThuocTinh);
 
-            // Xử lý kết quả mới từ method thuoctinhDelete
             if (is_array($result)) {
                 if ($result['success']) {
-                    // Xóa thành công
+
                     header('location: ../../index.php?req=thuoctinhview&result=ok&message=' . urlencode($result['message']));
                 } else {
-                    // Xóa thất bại - có thông tin chi tiết
+
                     $errorParams = [
                         'result=notok',
                         'error_type=' . urlencode($result['error_type']),
@@ -64,18 +61,17 @@ if (isset($_GET['reqact'])) {
                     header('location: ../../index.php?req=thuoctinhview&' . implode('&', $errorParams));
                 }
             } else {
-                // Xử lý theo cách cũ (tương thích ngược)
+
                 header('location: ../../index.php?req=thuoctinhview&result=' . ($result ? 'ok' : 'notok'));
             }
             break;
 
-        case 'updatethuoctinh': // Cập nhật
-            // Đảm bảo không có output trước khi trả về JSON
+        case 'updatethuoctinh':
+
             if (ob_get_level()) {
                 ob_clean();
             }
 
-            // Debug logging - using Logger
             if (class_exists('Logger')) {
                 Logger::debug("Processing attribute update request", [
                     'post_data' => $_POST,
@@ -95,7 +91,6 @@ if (isset($_GET['reqact'])) {
                 ]);
             }
 
-            // Xử lý hình ảnh
             if (isset($_FILES['fileimage']) && $_FILES['fileimage']['error'] == 0 && file_exists($_FILES['fileimage']['tmp_name'])) {
                 $hinhanh_file = $_FILES['fileimage']['tmp_name'];
                 $hinhanh = base64_encode(file_get_contents($hinhanh_file));
@@ -103,7 +98,6 @@ if (isset($_GET['reqact'])) {
                 $hinhanh = isset($_POST['hinhanh']) ? $_POST['hinhanh'] : '';
             }
 
-            // Kiểm tra dữ liệu đầu vào
             if (!$idThuocTinh) {
                 header('Content-Type: application/json; charset=utf-8');
                 echo json_encode([

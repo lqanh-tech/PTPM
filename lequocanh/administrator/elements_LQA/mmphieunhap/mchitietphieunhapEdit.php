@@ -5,12 +5,10 @@ require_once './elements_LQA/mod/mphieunhapCls.php';
 require_once './elements_LQA/mod/mchitietphieunhapCls.php';
 require_once './elements_LQA/mod/hanghoaCls.php';
 
-// Khởi tạo các đối tượng
 $phieuNhapObj = new MPhieuNhap();
 $chiTietObj = new MChiTietPhieuNhap();
 $hanghoaObj = new hanghoa();
 
-// Lấy thông tin chi tiết phiếu nhập cần sửa
 if (isset($_GET['idct'])) {
     $idCTPN = $_GET['idct'];
     $chiTiet = $chiTietObj->getChiTietById($idCTPN);
@@ -21,10 +19,8 @@ if (isset($_GET['idct'])) {
         exit;
     }
     
-    // Lấy thông tin phiếu nhập
     $phieuNhap = $phieuNhapObj->getPhieuNhapById($chiTiet->idPhieuNhap);
     
-    // Kiểm tra trạng thái phiếu nhập
     if ($phieuNhap->trangThai != 0) {
         echo "<div class='alert alert-warning'>Không thể sửa chi tiết phiếu nhập đã được duyệt hoặc đã hủy!</div>";
         echo "<a href='index.php?req=mchitietphieunhap&idpn=" . $chiTiet->idPhieuNhap . "' class='btn btn-primary'>Quay lại</a>";
@@ -77,7 +73,7 @@ if (isset($_GET['idct'])) {
 </div>
 
 <script>
-    // Tính thành tiền
+
     function tinhThanhTien() {
         var soLuong = document.getElementById('soLuong').value || 0;
         var giaNhap = document.getElementById('giaNhap').value || 0;

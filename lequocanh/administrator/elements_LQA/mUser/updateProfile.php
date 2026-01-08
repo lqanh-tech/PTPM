@@ -1,13 +1,11 @@
 <?php
 session_start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     header('location: ../../../userLogin.php');
     exit();
 }
 
-// Tìm đường dẫn đúng đến các file cần thiết
 $paths = [
     __DIR__ . '/../../elements_LQA/mod/database.php',
     __DIR__ . '/../mod/database.php',
@@ -30,11 +28,11 @@ if (!$found) {
     die("Không thể kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau.");
 }
 
-// Lấy username từ session
+require_once __DIR__ . '/../mod/EmailService.php';
+
 $username = isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : $_SESSION['USER'];
 error_log("updateProfile.php - Username: " . $username);
 
-// Kết nối database
 try {
     $db = Database::getInstance()->getConnection();
     error_log("updateProfile.php - Kết nối database thành công");
@@ -43,7 +41,6 @@ try {
     die("Không thể kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau.");
 }
 
-// Lấy thông tin người dùng
 try {
     $sql = "SELECT * FROM user WHERE username = ?";
     $stmt = $db->prepare($sql);
@@ -61,12 +58,11 @@ try {
     die("Lỗi khi lấy thông tin người dùng. Vui lòng thử lại sau.");
 }
 
-// Xử lý form cập nhật
 $success_message = "";
 $error_message = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Lấy dữ liệu từ form
+
     $hoten = isset($_POST['hoten']) ? trim($_POST['hoten']) : '';
     $gioitinh = isset($_POST['gioitinh']) ? (int)$_POST['gioitinh'] : 1;
     $ngaysinh = isset($_POST['ngaysinh']) ? $_POST['ngaysinh'] : '';
@@ -74,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $dienthoai = isset($_POST['dienthoai']) ? trim($_POST['dienthoai']) : '';
     $email = isset($_POST['email']) ? trim($_POST['email']) : null;
 
-    // Validate dữ liệu
     $isValid = true;
 
     if (empty($hoten)) {
@@ -97,9 +92,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $isValid = false;
     }
 
-    // Cập nhật thông tin nếu dữ liệu hợp lệ
     if ($isValid) {
         try {
+
+            $oldEmail = isset($currentUser->email) ? $currentUser->email : '';
+            
             $sql = "UPDATE user SET hoten = ?, gioitinh = ?, ngaysinh = ?, diachi = ?, dienthoai = ?, email = ? WHERE iduser = ?";
             $stmt = $db->prepare($sql);
             $result = $stmt->execute([$hoten, $gioitinh, $ngaysinh, $diachi, $dienthoai, $email, $currentUser->iduser]);
@@ -107,52 +104,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($result) {
                 $success_message = "Cập nhật thông tin thành công";
                 error_log("updateProfile.php - Cập nhật thông tin thành công cho user: " . $username);
+                
+                if (!empty($email) && $email !== $oldEmail) {
+                    try {
+                        $emailService = new EmailService();
+                        $emailService->sendEmailUpdateNotification($email, $hoten, $username);
+                        error_log("updateProfile.php - Đã gửi email thông báo cập nhật email mới cho: " . $email);
+                    } catch (Exception $e) {
+                        error_log("updateProfile.php - Lỗi gửi email thông báo: " . $e->getMessage());
+                    }
+                }
 
-                // Cập nhật lại thông tin người dùng
                 $stmt = $db->prepare("SELECT * FROM user WHERE iduser = ?");
                 $stmt->execute([$currentUser->iduser]);
                 $currentUser = $stmt->fetch(PDO::FETCH_OBJ);
 
-                // Hiển thị thông báo thành công
                 echo '<div class="alert alert-success">Cập nhật thông tin thành công! Đang chuyển hướng...</div>';
 
-                // Chuyển hướng về trang profile sau 2 giây
+                $profileUrl = 'userProfile.php';
+                
                 echo '<script>
-                    // Kiểm tra xem đường dẫn có hoạt động không
-                    function checkUrl(url, fallbackUrl) {
-                        var xhr = new XMLHttpRequest();
-                        xhr.onreadystatechange = function() {
-                            if (xhr.readyState === 4) {
-                                if (xhr.status === 200) {
-                                    window.location.href = url;
-                                } else {
-                                    console.log("Đường dẫn không hoạt động, sử dụng fallback");
-                                    window.location.href = fallbackUrl;
-                                }
-                            }
-                        };
-                        xhr.open("HEAD", url, true);
-                        xhr.send();
-                    }
-
                     setTimeout(function() {
-                        // Chuyển hướng trực tiếp đến trang thông tin người dùng
-                        window.location.href = "http://localhost:8081/administrator/elements_LQA/mUser/userProfile.php";
+                        window.location.href = "' . $profileUrl . '";
                     }, 2000);
                 </script>';
 
-                // Thêm nút quay lại ngay lập tức với JavaScript để kiểm tra đường dẫn
                 echo '<div style="text-align: center; margin-top: 20px;">
-                        <button onclick="tryRedirect()" class="btn btn-primary">Quay lại ngay</button>
+                        <button onclick="window.location.href=\'' . $profileUrl . '\'" class="btn btn-primary">Quay lại ngay</button>
                       </div>';
-
-                // Thêm script để xử lý chuyển hướng khi nhấn nút
-                echo '<script>
-                    function tryRedirect() {
-                        // Chuyển hướng trực tiếp đến trang thông tin người dùng
-                        window.location.href = "http://localhost:8081/administrator/elements_LQA/mUser/userProfile.php";
-                    }
-                </script>';
             } else {
                 $error_message = "Có lỗi xảy ra, vui lòng thử lại sau";
                 error_log("updateProfile.php - Lỗi khi cập nhật thông tin cho user: " . $username);
@@ -336,7 +315,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <script>
                 function tryRedirect() {
-                    // Chuyển hướng trực tiếp đến trang thông tin người dùng
+
                     window.location.href = "http://localhost:8081/administrator/elements_LQA/mUser/userProfile.php";
                 }
             </script>

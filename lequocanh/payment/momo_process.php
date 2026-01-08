@@ -1,15 +1,14 @@
 <?php
-// MoMo Payment Processing
+
 header('Content-Type: application/json');
 session_start();
 
-// Bật log lỗi
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 error_reporting(E_ALL);
 
 try {
-    // Đọc JSON input
+
     $input = file_get_contents('php://input');
     $data = json_decode($input, true);
 
@@ -19,12 +18,10 @@ try {
         throw new Exception('Invalid JSON input');
     }
 
-    // Kiểm tra action
     if (!isset($data['action'])) {
         throw new Exception('Missing action parameter');
     }
 
-    // Load config và class
     require_once '../config/payment_config.php';
     require_once 'MoMoPayment.php';
 
@@ -32,7 +29,7 @@ try {
 
     switch ($data['action']) {
         case 'test':
-            // Test action
+
             echo json_encode([
                 'success' => true,
                 'message' => 'MoMo process hoạt động!',
@@ -42,7 +39,7 @@ try {
             break;
 
         case 'create_payment':
-            // Tạo payment request
+
             if (!isset($data['amount']) || !isset($data['orderInfo'])) {
                 throw new Exception('Missing required payment data');
             }

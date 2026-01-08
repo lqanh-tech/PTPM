@@ -1,3 +1,7 @@
+<?php
+
+require_once __DIR__ . '/../includes/csrf_helper.php';
+?>
 <!doctype html>
 <html lang="en">
 
@@ -5,6 +9,7 @@
     <title>Đăng nhập</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <?= csrf_meta() ?>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css_LQA/toast-notification.css" rel="stylesheet">
@@ -113,7 +118,6 @@
             transform: scaleX(1);
         }
 
-        /* Animation cho form validation */
         .form-floating input.is-invalid {
             animation: shake 0.5s;
         }
@@ -134,7 +138,6 @@
             }
         }
 
-        /* Thêm style cho thông báo lỗi */
         .error-message {
             color: #dc3545;
             background-color: #f8d7da;
@@ -175,6 +178,7 @@
         </div>
 
         <form name="login" method="post" action="./elements_LQA/mUser/userAct.php?reqact=checklogin" id="loginForm">
+            <?= csrf_field() ?>
             <?php if (isset($_GET['register']) && $_GET['register'] == 'success'): ?>
                 <div class="alert alert-success" role="alert">
                     <i class="fas fa-check-circle me-2"></i>
@@ -221,16 +225,14 @@
                 let isValid = true;
                 $('.form-control').removeClass('is-invalid');
 
-                // Validate username
                 let username = $('#username').val().trim();
-                $('#username').val(username); // Cập nhật giá trị đã trim vào input
+                $('#username').val(username);
 
                 if (username === '') {
                     $('#username').addClass('is-invalid');
                     isValid = false;
                 }
 
-                // Validate password
                 if ($('#password').val() === '') {
                     $('#password').addClass('is-invalid');
                     isValid = false;
@@ -240,20 +242,21 @@
                     e.preventDefault();
                     Toast.error('Vui lòng điền đầy đủ thông tin đăng nhập');
                 } else {
-                    // Ghi log thông tin đăng nhập (chỉ để debug)
+
                     console.log('Đang đăng nhập với username: ' + username);
                 }
             });
 
-            // Remove invalid class on input
             $('.form-control').on('input', function() {
                 $(this).removeClass('is-invalid');
             });
 
-            // Tự động focus vào trường username khi trang tải xong
             $('#username').focus();
         });
     </script>
+    
+    <!-- CSRF Protection Helper -->
+    <script src="../public_files/js/csrf-helper.js"></script>
 </body>
 
 </html>

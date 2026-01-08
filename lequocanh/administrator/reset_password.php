@@ -1,8 +1,4 @@
 <?php
-/**
- * Trang đặt lại mật khẩu
- * User truy cập từ link trong email
- */
 
 require_once __DIR__ . '/elements_LQA/mod/PasswordResetManager.php';
 
@@ -25,12 +21,10 @@ if (!empty($token)) {
     $error = 'Không tìm thấy token. Vui lòng sử dụng link trong email.';
 }
 
-// Xử lý form submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
     $newPassword = isset($_POST['password']) ? $_POST['password'] : '';
     $confirmPassword = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
     
-    // Validate
     if (empty($newPassword)) {
         $error = 'Vui lòng nhập mật khẩu mới';
     } elseif (strlen($newPassword) < 6) {
@@ -38,12 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
     } elseif ($newPassword !== $confirmPassword) {
         $error = 'Mật khẩu xác nhận không khớp';
     } else {
-        // Reset password
+
         $result = $resetManager->resetPassword($token, $newPassword);
         
         if ($result) {
             $success = 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập với mật khẩu mới.';
-            $validToken = false; // Ẩn form sau khi thành công
+            $validToken = false;
         } else {
             $error = 'Có lỗi xảy ra. Vui lòng thử lại.';
         }
@@ -295,7 +289,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Toggle password visibility
+
             $('.password-toggle').on('click', function() {
                 const input = $(this).siblings('input');
                 const type = input.attr('type') === 'password' ? 'text' : 'password';
@@ -303,7 +297,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
                 $(this).toggleClass('fa-eye fa-eye-slash');
             });
             
-            // Password strength indicator
             $('#password').on('input', function() {
                 const password = $(this).val();
                 const strength = checkPasswordStrength(password);
@@ -332,7 +325,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
                 return strength;
             }
             
-            // Form validation
             $('#resetForm').on('submit', function(e) {
                 const password = $('#password').val();
                 const confirm = $('#confirm_password').val();
@@ -350,7 +342,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $validToken) {
                 }
             });
             
-            // Auto focus
             $('#password').focus();
         });
     </script>

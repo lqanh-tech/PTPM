@@ -1,5 +1,5 @@
 <?php
-// Quick database check script
+
 $pdo = new PDO('mysql:host=localhost;dbname=trainingdb;charset=utf8mb4', 'root', '');
 echo "Database connection: OK\n\n";
 

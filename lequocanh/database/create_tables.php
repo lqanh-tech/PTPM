@@ -1,22 +1,17 @@
 <?php
-/**
- * Create Tables Script (Robust Version)
- * Tries multiple credentials to connect and create tables
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 $dbname = 'sales_management';
 
-// List of credentials to try
 $configs = [
-    ['host' => 'mysql', 'user' => 'app_user', 'pass' => 'app_password'], // From .env
-    ['host' => 'mysql', 'user' => 'root', 'pass' => 'root'],             // From docker-compose
-    ['host' => 'mysql', 'user' => 'root', 'pass' => 'pw'],               // From database.php
-    ['host' => 'mysql', 'user' => 'app_user', 'pass' => 'pw'],           // From database.php
-    ['host' => 'mysql', 'user' => 'root', 'pass' => ''],                 // Empty password
-    ['host' => '127.0.0.1', 'user' => 'root', 'pass' => ''],             // Localhost fallback
+    ['host' => 'mysql', 'user' => 'app_user', 'pass' => 'app_password'],
+    ['host' => 'mysql', 'user' => 'root', 'pass' => 'root'],
+    ['host' => 'mysql', 'user' => 'root', 'pass' => 'pw'],
+    ['host' => 'mysql', 'user' => 'app_user', 'pass' => 'pw'],
+    ['host' => 'mysql', 'user' => 'root', 'pass' => ''],
+    ['host' => '127.0.0.1', 'user' => 'root', 'pass' => ''],
 ];
 
 $pdo = null;
@@ -48,7 +43,7 @@ if (!$pdo) {
 echo "\nUsing credentials: {$connectedConfig['user']}@{$connectedConfig['host']}\n";
 
 try {
-    // SQL to create tables
+
     $sql = "
     CREATE TABLE IF NOT EXISTS provinces (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -98,14 +93,12 @@ try {
     $pdo->exec($sql);
     echo "Tables created successfully.\n";
     
-    // Verify
     $tables = ['provinces', 'districts', 'wards'];
     foreach ($tables as $t) {
         $stmt = $pdo->query("SHOW TABLES LIKE '$t'");
         echo "Table '$t': " . ($stmt->rowCount() > 0 ? 'EXISTS' : 'NOT FOUND') . "\n";
     }
     
-    // Save successful config to a file for other scripts to use
     $configContent = "<?php\nreturn " . var_export($connectedConfig, true) . ";\n";
     file_put_contents(__DIR__ . '/db_config.php', $configContent);
     echo "Saved working configuration to db_config.php\n";

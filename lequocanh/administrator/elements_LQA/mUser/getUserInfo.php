@@ -2,14 +2,12 @@
 session_start();
 require '../../elements_LQA/mod/userCls.php';
 
-// Kiểm tra quyền truy cập
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => 'Không có quyền truy cập']);
     exit;
 }
 
-// Kiểm tra dữ liệu đầu vào
 $iduser = isset($_GET['iduser']) ? intval($_GET['iduser']) : 0;
 
 if ($iduser <= 0) {
@@ -18,12 +16,11 @@ if ($iduser <= 0) {
     exit;
 }
 
-// Lấy thông tin người dùng
 $userObj = new user();
 $userData = $userObj->UserGetbyId($iduser);
 
 if ($userData) {
-    // Trả về thông tin người dùng dưới dạng JSON
+
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true,

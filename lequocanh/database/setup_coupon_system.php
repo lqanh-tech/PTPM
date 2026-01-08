@@ -1,8 +1,4 @@
 <?php
-/**
- * Script setup hệ thống Coupon
- * Chạy file này để tạo bảng và dữ liệu mẫu
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -12,7 +8,6 @@ try {
     $db = Database::getInstance();
     $conn = $db->getConnection();
     
-    // 1. Tạo bảng coupons
     echo "<h3>1. Tạo bảng coupons...</h3>";
     
     $sql = "CREATE TABLE IF NOT EXISTS coupons (
@@ -48,7 +43,6 @@ try {
     $conn->exec($sql);
     echo "<p style='color:green'>✅ Bảng coupons đã được tạo!</p>";
     
-    // 2. Tạo bảng coupon_usage
     echo "<h3>2. Tạo bảng coupon_usage...</h3>";
     
     $sql2 = "CREATE TABLE IF NOT EXISTS coupon_usage (
@@ -67,7 +61,6 @@ try {
     $conn->exec($sql2);
     echo "<p style='color:green'>✅ Bảng coupon_usage đã được tạo!</p>";
     
-    // 3. Thêm cột coupon vào bảng don_hang
     echo "<h3>3. Thêm cột coupon vào bảng don_hang...</h3>";
     
     $columns = ['coupon_code', 'coupon_discount'];
@@ -85,7 +78,6 @@ try {
         }
     }
     
-    // 4. Thêm dữ liệu mẫu
     echo "<h3>4. Thêm dữ liệu mẫu...</h3>";
     
     $sampleCoupons = [
@@ -158,7 +150,6 @@ try {
         }
     }
     
-    // 5. Hiển thị danh sách coupon
     echo "<h3>5. Danh sách mã giảm giá hiện có:</h3>";
     
     $coupons = $conn->query("SELECT * FROM coupons ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);

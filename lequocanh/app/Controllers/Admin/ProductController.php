@@ -1,18 +1,11 @@
 <?php
 
-/**
- * Product Controller
- * Handles product-related requests in admin panel
- */
-
 require_once __DIR__ . '/../BaseController.php';
 require_once __DIR__ . '/../../Models/Product.php';
 
 class ProductController extends BaseController
 {
-    /**
-     * Display all products
-     */
+
     public function index()
     {
         $this->requireAuth();
@@ -37,9 +30,6 @@ class ProductController extends BaseController
         }
     }
 
-    /**
-     * Show create product form
-     */
     public function create()
     {
         $this->requireAuth();
@@ -55,9 +45,6 @@ class ProductController extends BaseController
         $this->render('admin.products.create', $data);
     }
 
-    /**
-     * Store new product
-     */
     public function store()
     {
         $this->requireAuth();
@@ -67,7 +54,6 @@ class ProductController extends BaseController
             return;
         }
 
-        // Validate input
         $rules = Product::getValidationRules();
         $errors = $this->validate($rules);
 
@@ -77,7 +63,7 @@ class ProductController extends BaseController
         }
 
         try {
-            // Create new product
+
             $productData = [
                 'tenhanghoa' => $this->input('tenhanghoa'),
                 'mota' => $this->input('mota', ''),
@@ -103,9 +89,6 @@ class ProductController extends BaseController
         }
     }
 
-    /**
-     * Show edit product form
-     */
     public function edit()
     {
         $this->requireAuth();
@@ -134,9 +117,6 @@ class ProductController extends BaseController
         $this->render('admin.products.edit', $data);
     }
 
-    /**
-     * Update product
-     */
     public function update()
     {
         $this->requireAuth();
@@ -158,7 +138,6 @@ class ProductController extends BaseController
             return;
         }
 
-        // Validate input
         $rules = Product::getValidationRules();
         $errors = $this->validate($rules);
 
@@ -168,7 +147,7 @@ class ProductController extends BaseController
         }
 
         try {
-            // Update product
+
             $product->tenhanghoa = $this->input('tenhanghoa');
             $product->mota = $this->input('mota', '');
             $product->giathamkhao = $this->input('giathamkhao');
@@ -190,9 +169,6 @@ class ProductController extends BaseController
         }
     }
 
-    /**
-     * Delete product
-     */
     public function delete()
     {
         $this->requireAuth();
@@ -223,9 +199,6 @@ class ProductController extends BaseController
         }
     }
 
-    /**
-     * Search products (AJAX)
-     */
     public function search()
     {
         $this->requireAuth();
@@ -258,9 +231,6 @@ class ProductController extends BaseController
         }
     }
 
-    /**
-     * Get product details (AJAX)
-     */
     public function show()
     {
         $this->requireAuth();
@@ -288,8 +258,6 @@ class ProductController extends BaseController
 
         $this->json($data);
     }
-
-    // Helper methods
 
     private function getCategories()
     {

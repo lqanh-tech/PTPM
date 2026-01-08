@@ -6,7 +6,7 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        /* CSS cho form thêm người dùng */
+
         #formMessages {
             margin-bottom: 15px;
         }
@@ -35,7 +35,6 @@
             border: 1px solid #bee5eb;
         }
 
-        /* CSS cho nút trong bảng */
         .btn-action {
             display: inline-block;
             margin-right: 5px;
@@ -73,7 +72,6 @@
     $list_user = $userObj->UserGetAll();
     $l = count($list_user);
 
-    // Thống kê
     $totalUsers = count($list_user);
     $activeUsers = 0;
     $last30DaysLogins = 0;
@@ -82,7 +80,6 @@
     foreach ($list_user as $u) {
         if ($u->setlock == 1) $activeUsers++;
 
-        // Đếm người dùng đăng nhập trong 30 ngày
         if (isset($_COOKIE[$u->username])) {
             $lastLogin = strtotime($_COOKIE[$u->username]);
             if ((time() - $lastLogin) <= (30 * 24 * 60 * 60)) {
@@ -90,7 +87,6 @@
             }
         }
 
-        // Đếm người dùng mới trong tháng này
         if (isset($u->ngaydangki)) {
             $registerDate = strtotime($u->ngaydangki);
             if (date('Y-m', $registerDate) === date('Y-m')) {
@@ -206,7 +202,7 @@
 
     <script>
         $(document).ready(function() {
-            // Hàm làm mới danh sách người dùng
+
             window.refreshUserList = function() {
                 $.ajax({
                     url: "./elements_LQA/mUser/userAjax.php?action=getUsers",
@@ -215,10 +211,9 @@
                         "X-Requested-With": "XMLHttpRequest"
                     },
                     success: function(data) {
-                        // Cập nhật bảng người dùng
+
                         $(".content_user table tbody").html(data);
 
-                        // Cập nhật số lượng người dùng
                         $.ajax({
                             url: "./elements_LQA/mUser/userAjax.php?action=getUserCount",
                             type: "GET",
@@ -236,14 +231,11 @@
                 });
             };
 
-            // Xử lý form thêm người dùng
             $("#formreg").submit(function(e) {
-                e.preventDefault(); // Ngăn form submit theo cách thông thường
+                e.preventDefault();
 
-                // Hiển thị thông báo đang xử lý
                 $("#formMessages").html('<div class="alert alert-info">Đang xử lý...</div>');
 
-                // Kiểm tra các trường dữ liệu
                 var username = $("input[name='username']").val();
                 var password = $("input[name='password']").val();
                 var hoten = $("input[name='hoten']").val();
@@ -251,19 +243,16 @@
                 var diachi = $("input[name='diachi']").val();
                 var dienthoai = $("input[name='dienthoai']").val();
 
-                // Kiểm tra dữ liệu
                 if (!username || !password || !hoten || !ngaysinh || !diachi || !dienthoai) {
                     $("#formMessages").html('<div class="alert alert-danger">Vui lòng điền đầy đủ thông tin!</div>');
                     return false;
                 }
 
-                // Kiểm tra số điện thoại
                 if (!/^[0-9]{10}$/.test(dienthoai)) {
                     $("#formMessages").html('<div class="alert alert-danger">Số điện thoại phải có 10 chữ số!</div>');
                     return false;
                 }
 
-                // Gửi dữ liệu bằng AJAX
                 $.ajax({
                     url: "./elements_LQA/mUser/userAct.php?reqact=addnew",
                     type: "POST",
@@ -274,25 +263,22 @@
                     dataType: "json",
                     success: function(response) {
                         if (response.success) {
-                            // Hiển thị thông báo thành công
+
                             $("#formMessages").html('<div class="alert alert-success">' + response.message + '</div>');
 
-                            // Xóa dữ liệu trong form
                             $("#formreg")[0].reset();
 
-                            // Thay vì tải lại trang, chỉ hiển thị thông báo thành công
-                            // và làm mới danh sách người dùng bằng AJAX
                             setTimeout(function() {
-                                // Thêm người dùng mới vào bảng mà không cần tải lại trang
+
                                 refreshUserList();
                             }, 1000);
                         } else {
-                            // Hiển thị thông báo lỗi
+
                             $("#formMessages").html('<div class="alert alert-danger">' + response.message + '</div>');
                         }
                     },
                     error: function() {
-                        // Hiển thị thông báo lỗi
+
                         $("#formMessages").html('<div class="alert alert-danger">Có lỗi xảy ra, vui lòng thử lại!</div>');
                     }
                 });
@@ -391,7 +377,7 @@
     </div>
 
     <style>
-        /* Scrollable Table Container */
+
         .table-scroll-container {
             max-height: 60vh;
             min-height: 300px;
@@ -482,7 +468,7 @@
     integrity="sha384-1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1n1" crossorigin="anonymous"></script>
 <script>
     $(document).ready(function() {
-        // Xử lý hiển thị/ẩn mật khẩu khi click vào biểu tượng con mắt
+
         $('.toggle-password').on('click', function() {
             var passwordDots = $(this).siblings('.password-dots');
             var passwordText = $(this).siblings('.password-text');

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Widget hiển thị carousel kết hợp sản phẩm và banner quảng cáo
- * Mục đích: Tích hợp banner quảng cáo vào carousel như các sản phẩm khác
- */
-
 require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/FeaturedProductsCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/BannerManager.php';
@@ -13,23 +8,19 @@ $hanghoa = new hanghoa();
 $featuredProducts = new FeaturedProducts();
 $bannerManager = new BannerManager();
 
-// Lấy sản phẩm nổi bật, sản phẩm mới và sản phẩm khuyến mãi (ưu tiên hiển thị)
-$featuredProductsList = $featuredProducts->getFeaturedProducts(3); // Lấy 3 sản phẩm nổi bật
-$newProductsList = $featuredProducts->getNewProducts(3); // Lấy 3 sản phẩm mới
-$saleProductsList = $featuredProducts->getSaleProducts(3); // Lấy 3 sản phẩm khuyến mãi
+$featuredProductsList = $featuredProducts->getFeaturedProducts(3);
+$newProductsList = $featuredProducts->getNewProducts(3);
+$saleProductsList = $featuredProducts->getSaleProducts(3);
 $activeBanners = $bannerManager->getActiveBanners();
 
-// Xác định thời điểm hiện tại để quyết định loại nội dung nào được ưu tiên
 $currentTime = time();
-$cycleTime = 120; // Mỗi chu kỳ 120 giây (2 phút)
-$timeSlot = floor(($currentTime % $cycleTime) / ($cycleTime / 4)); // Chia thành 4 slot: 0=featured, 1=new, 2=sale, 3=banner
+$cycleTime = 120;
+$timeSlot = floor(($currentTime % $cycleTime) / ($cycleTime / 4));
 
-// Kết hợp sản phẩm và banner vào một mảng chung để hiển thị trong carousel
 $carouselItems = [];
 
-// Dựa trên thời điểm hiện tại, ưu tiên loại nội dung tương ứng
-if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
-    // Thêm sản phẩm nổi bật vào mảng carousel (ưu tiên đầu tiên)
+if ($timeSlot == 0) {
+
     foreach ($featuredProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -44,13 +35,13 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'price' => $product->gia_hien_tai ?? $product->giathamkhao,
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
-            'is_featured' => $product->is_featured ?? 1, // Đánh dấu là sản phẩm nổi bật
+            'is_featured' => $product->is_featured ?? 1,
             'is_new' => $product->is_new ?? 0,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm mới vào mảng carousel (thứ 2)
+
     foreach ($newProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -66,12 +57,12 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
-            'is_new' => $product->is_new ?? 1, // Đánh dấu là sản phẩm mới
+            'is_new' => $product->is_new ?? 1,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm khuyến mãi vào mảng carousel (thứ 3)
+
     foreach ($saleProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -88,11 +79,11 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
             'is_new' => $product->is_new ?? 0,
-            'is_sale' => $product->is_sale ?? 1, // Đánh dấu là sản phẩm khuyến mãi
+            'is_sale' => $product->is_sale ?? 1,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm banner vào mảng carousel (cuối cùng)
+
     foreach ($activeBanners as $banner) {
         $carouselItems[] = [
             'type' => 'banner',
@@ -104,8 +95,8 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'position' => $banner['position']
         ];
     }
-} elseif ($timeSlot == 1) { // Ưu tiên sản phẩm mới (30-60s)
-    // Thêm sản phẩm mới vào mảng carousel (ưu tiên đầu tiên)
+} elseif ($timeSlot == 1) {
+
     foreach ($newProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -121,12 +112,12 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
-            'is_new' => $product->is_new ?? 1, // Đánh dấu là sản phẩm mới
+            'is_new' => $product->is_new ?? 1,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm nổi bật vào mảng carousel (thứ 2)
+
     foreach ($featuredProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -141,13 +132,13 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'price' => $product->gia_hien_tai ?? $product->giathamkhao,
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
-            'is_featured' => $product->is_featured ?? 1, // Đánh dấu là sản phẩm nổi bật
+            'is_featured' => $product->is_featured ?? 1,
             'is_new' => $product->is_new ?? 0,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm khuyến mãi vào mảng carousel (thứ 3)
+
     foreach ($saleProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -164,11 +155,11 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
             'is_new' => $product->is_new ?? 0,
-            'is_sale' => $product->is_sale ?? 1, // Đánh dấu là sản phẩm khuyến mãi
+            'is_sale' => $product->is_sale ?? 1,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm banner vào mảng carousel (cuối cùng)
+
     foreach ($activeBanners as $banner) {
         $carouselItems[] = [
             'type' => 'banner',
@@ -180,8 +171,8 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'position' => $banner['position']
         ];
     }
-} elseif ($timeSlot == 2) { // Ưu tiên sản phẩm khuyến mãi (60-90s)
-    // Thêm sản phẩm khuyến mãi vào mảng carousel (ưu tiên đầu tiên)
+} elseif ($timeSlot == 2) {
+
     foreach ($saleProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -198,11 +189,11 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
             'is_new' => $product->is_new ?? 0,
-            'is_sale' => $product->is_sale ?? 1, // Đánh dấu là sản phẩm khuyến mãi
+            'is_sale' => $product->is_sale ?? 1,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm nổi bật vào mảng carousel (thứ 2)
+
     foreach ($featuredProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -217,13 +208,13 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'price' => $product->gia_hien_tai ?? $product->giathamkhao,
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
-            'is_featured' => $product->is_featured ?? 1, // Đánh dấu là sản phẩm nổi bật
+            'is_featured' => $product->is_featured ?? 1,
             'is_new' => $product->is_new ?? 0,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm mới vào mảng carousel (thứ 3)
+
     foreach ($newProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -239,12 +230,12 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
-            'is_new' => $product->is_new ?? 1, // Đánh dấu là sản phẩm mới
+            'is_new' => $product->is_new ?? 1,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm banner vào mảng carousel (cuối cùng)
+
     foreach ($activeBanners as $banner) {
         $carouselItems[] = [
             'type' => 'banner',
@@ -256,8 +247,8 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'position' => $banner['position']
         ];
     }
-} else { // Ưu tiên banner quảng cáo (90-120s)
-    // Thêm banner vào mảng carousel (ưu tiên đầu tiên)
+} else {
+
     foreach ($activeBanners as $banner) {
         $carouselItems[] = [
             'type' => 'banner',
@@ -269,7 +260,7 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'position' => $banner['position']
         ];
     }
-    // Thêm sản phẩm nổi bật vào mảng carousel (thứ 2)
+
     foreach ($featuredProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -284,13 +275,13 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'price' => $product->gia_hien_tai ?? $product->giathamkhao,
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
-            'is_featured' => $product->is_featured ?? 1, // Đánh dấu là sản phẩm nổi bật
+            'is_featured' => $product->is_featured ?? 1,
             'is_new' => $product->is_new ?? 0,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm mới vào mảng carousel (thứ 3)
+
     foreach ($newProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -306,12 +297,12 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'discount_price' => $product->giakhuyenmai ?? null,
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
-            'is_new' => $product->is_new ?? 1, // Đánh dấu là sản phẩm mới
+            'is_new' => $product->is_new ?? 1,
             'is_sale' => $product->is_sale ?? 0,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
-    // Thêm sản phẩm khuyến mãi vào mảng carousel (cuối cùng)
+
     foreach ($saleProductsList as $product) {
         $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
         $imageUrl = ($hinhanh && !empty($hinhanh->duong_dan))
@@ -328,16 +319,14 @@ if ($timeSlot == 0) { // Ưu tiên sản phẩm nổi bật (0-30s)
             'description' => $product->mota ?? '',
             'is_featured' => $product->is_featured ?? 0,
             'is_new' => $product->is_new ?? 0,
-            'is_sale' => $product->is_sale ?? 1, // Đánh dấu là sản phẩm khuyến mãi
+            'is_sale' => $product->is_sale ?? 1,
             'discount_percent' => $product->discount_percent ?? 0
         ];
     }
 }
 
-// Trộn ngẫu nhiên các mục trong carousel để banner và sản phẩm xen kẽ
 shuffle($carouselItems);
 
-// Giới hạn số lượng mục trong carousel
 $carouselItems = array_slice($carouselItems, 0, 12);
 ?>
 
@@ -432,7 +421,7 @@ $carouselItems = array_slice($carouselItems, 0, 12);
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Khởi tạo carousel
+
         var carousel = document.getElementById('productBannerCarousel');
         if (carousel) {
             var bsCarousel = new bootstrap.Carousel(carousel, {

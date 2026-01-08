@@ -103,9 +103,5 @@ $l = count($list_lh);
 </div>
 
 <script>
-    /*
-     * This custom script is no longer needed as the modal-handler.js
-     * now handles all updates centrally.
-     * Delete this script and use the global handler instead.
-     */
+
 </script>

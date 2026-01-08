@@ -1,25 +1,20 @@
 <?php
-// Enable error reporting for debugging
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Use SessionManager for safe session handling
 require_once __DIR__ . '/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/elements_LQA/config/logger_config.php';
 
-// Start session safely
 SessionManager::start();
 
-// Check if user is logged in
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     header('location:userLogin.php');
-    exit(); // Add exit to prevent further execution
+    exit();
 }
 
-// Process marketing content forms BEFORE HTML output
 require_once __DIR__ . '/elements_LQA/madmin/marketing_content_handler.php';
 
-// Tích hợp hệ thống ghi nhật ký truy cập menu
 require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
 ?>
 <!DOCTYPE html>
@@ -42,7 +37,7 @@ require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
 
     <!-- Inject BASE_URL from PHP to JavaScript -->
     <script>
-        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http://localhost:20080', '/'); ?>';
+        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http://localhost', '/'); ?>';
     </script>
 
     <!-- Thêm style trực tiếp để sửa vấn đề hình ảnh -->
@@ -71,7 +66,6 @@ require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
             border: none;
         }
 
-        /* Modal styles */
         .modal-dialog {
             max-width: 600px;
         }
@@ -90,19 +84,19 @@ require_once './elements_LQA/mnhatkyhoatdong/menuAccessLogger.php';
 <body>
     <div id="top_div">
         <?php
-        //top page processing
+
         require "./elements_LQA/top.php";
         ?>
     </div>
     <div id="left_div">
         <?php
-        //left page processing
+
         require "./elements_LQA/left.php";
         ?>
     </div>
     <div id="center_div">
         <?php
-        //center page processing
+
         require "./elements_LQA/center.php";
         ?>
     </div>

@@ -5,12 +5,10 @@
         window.history.back();
     }
 
-    // Function để thêm sản phẩm vào giỏ hàng bằng AJAX
     function addToCart(productId) {
-        // Hiển thị loading
+
         toast.info('⏳ Đang thêm vào giỏ hàng...');
 
-        // Sử dụng fetch API với header AJAX
         fetch('administrator/elements_LQA/mgiohang/giohangAct.php?action=add&productId=' + productId + '&quantity=1', {
             method: 'GET',
             credentials: 'same-origin',
@@ -21,13 +19,12 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Thành công
+
                 toast.success('✅ ' + data.message);
                 
-                // Cập nhật số lượng trong giỏ hàng trên navbar (nếu có)
                 updateCartCount();
             } else {
-                // Lỗi
+
                 toast.error('❌ ' + data.message);
             }
         })
@@ -37,7 +34,6 @@
         });
     }
 
-    // Function để cập nhật số lượng giỏ hàng
     function updateCartCount() {
         fetch('administrator/elements_LQA/mgiohang/getCartCount.php', {
             method: 'GET',
@@ -46,7 +42,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Cập nhật badge số lượng giỏ hàng
+
                 const cartBadges = document.querySelectorAll('.cart-count, .badge');
                 cartBadges.forEach(badge => {
                     badge.textContent = data.count;
@@ -58,12 +54,10 @@
         });
     }
 
-    // Function để mua ngay (thêm vào giỏ và chuyển đến trang giỏ hàng)
     function buyNow(productId) {
-        // Hiển thị loading
+
         toast.info('⏳ Đang xử lý...');
 
-        // Thêm sản phẩm vào giỏ hàng với header AJAX
         fetch('administrator/elements_LQA/mgiohang/giohangAct.php?action=add&productId=' + productId + '&quantity=1', {
             method: 'GET',
             credentials: 'same-origin',
@@ -74,13 +68,13 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Thành công - chuyển đến trang giỏ hàng
+
                 toast.success('✅ ' + data.message);
                 setTimeout(() => {
                     window.location.href = 'administrator/elements_LQA/mgiohang/giohangView.php';
                 }, 500);
             } else {
-                // Lỗi
+
                 toast.error('❌ ' + data.message);
             }
         })
@@ -90,25 +84,22 @@
         });
     }
 
-    // Xử lý thông báo khi thêm giỏ hàng thành công hoặc có lỗi
     document.addEventListener('DOMContentLoaded', function() {
-        // Kiểm tra xem URL có chứa tham số cartAdded không
+
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('cartAdded')) {
-            // Hiển thị thông báo
+
             toast.success('Đã thêm sản phẩm vào giỏ hàng!');
 
-            // Xóa tham số cartAdded khỏi URL để tránh hiển thị lại thông báo khi refresh
             const newUrl = window.location.href.replace(/[&?]cartAdded=1/, '');
             window.history.replaceState({}, document.title, newUrl);
         }
 
-        // Kiểm tra xem có thông báo lỗi từ giỏ hàng không
         <?php if (isset($_SESSION['cart_error'])): ?>
-            // Hiển thị thông báo lỗi
+
             toast.error('<?php echo $_SESSION['cart_error']; ?>');
             <?php
-            // Xóa thông báo lỗi sau khi hiển thị
+
             unset($_SESSION['cart_error']);
             ?>
         <?php endif; ?>
@@ -123,18 +114,24 @@ require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/thuoctinhhhCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/thuoctinhCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/mtonkhoCls.php';
+require_once __DIR__ . '/../includes/query_builder.php';
+require_once __DIR__ . '/../includes/advanced_cache.php';
+
 $hanghoa = new hanghoa();
 $tonkho = new MTonKho();
 
 if (isset($_GET['reqHanghoa'])) {
     $idhanghoa = $_GET['reqHanghoa'];
-    $obj = $hanghoa->HanghoaGetbyId($idhanghoa);
+    
+    $obj = cache_remember('product_detail_' . $idhanghoa, 300, function() use ($hanghoa, $idhanghoa) {
+        return $hanghoa->HanghoaGetbyId($idhanghoa);
+    });
 
-    // Thêm truy vấn để lấy thông tin thuộc tính hàng hóa
     $thuocTinhHHObj = new ThuocTinhHH();
-    $listThuocTinh = $thuocTinhHHObj->thuoctinhhhGetbyIdHanghoa($idhanghoa);
+    $listThuocTinh = cache_remember('product_attributes_' . $idhanghoa, 600, function() use ($thuocTinhHHObj, $idhanghoa) {
+        return $thuocTinhHHObj->thuoctinhhhGetbyIdHanghoa($idhanghoa);
+    });
 
-    // Lấy thông tin tồn kho của sản phẩm
     $tonkhoInfo = $tonkho->getTonKhoByIdHangHoa($idhanghoa);
 }
 ?>
@@ -146,15 +143,15 @@ if (isset($_GET['reqHanghoa'])) {
     <div class="row g-0">
         <div class="col-md-4">
             <?php
-            // Get the image data from the hinhanh table
+
             $hinhanh = $hanghoa->GetHinhAnhById($obj->hinhanh);
 
             if ($hinhanh && !empty($hinhanh->duong_dan)) {
-                // Sử dụng displayImage.php để hiển thị hình ảnh
+
                 echo '<img src="./administrator/elements_LQA/mhanghoa/displayImage.php?id=' . $obj->hinhanh . '"
                     class="img-fluid rounded-start" alt="' . htmlspecialchars($obj->tenhanghoa) . '">';
             } else {
-                // Hiển thị ảnh "no-image" thay vì cố gắng tải hình ảnh không tồn tại
+
                 echo '<div class="text-center p-3 border rounded" style="height: 100%;">
                         <img src="./administrator/elements_LQA/img_LQA/no-image.png" class="img-fluid rounded-start" style="max-height: 200px"
                             alt="Không có hình ảnh">
@@ -168,7 +165,7 @@ if (isset($_GET['reqHanghoa'])) {
                 <p class="card-text"><?php echo $obj->mota; ?></p>
                 <p class="card-text">
                     <?php
-                    // Kiểm tra có khuyến mãi không
+
                     $hasPromotion = isset($obj->giakhuyenmai) && $obj->giakhuyenmai > 0 && $obj->giakhuyenmai < $obj->giathamkhao;
 
                     if ($hasPromotion) {
@@ -241,7 +238,7 @@ if (isset($_GET['reqHanghoa'])) {
             <p class="card-text">
                 <strong>Tình trạng: </strong>
                 <?php
-                // Kiểm tra trạng thái sản phẩm
+
                 $statusMessage = '';
                 $statusClass = '';
 
@@ -253,7 +250,7 @@ if (isset($_GET['reqHanghoa'])) {
                         $statusMessage = 'Hết hàng';
                         $statusClass = 'text-danger';
                     } elseif ($obj->trang_thai == 1) {
-                        // Kiểm tra tồn kho thực tế
+
                         if ($tonkhoInfo && $tonkhoInfo->soLuong > 0) {
                             $statusMessage = 'Còn hàng (' . $tonkhoInfo->soLuong . ' sản phẩm)';
                             $statusClass = 'text-success';
@@ -263,7 +260,7 @@ if (isset($_GET['reqHanghoa'])) {
                         }
                     }
                 } else {
-                    // Fallback nếu không có trang_thai
+
                     if ($tonkhoInfo && $tonkhoInfo->soLuong > 0) {
                         $statusMessage = 'Còn hàng (' . $tonkhoInfo->soLuong . ' sản phẩm)';
                         $statusClass = 'text-success';
@@ -282,7 +279,7 @@ if (isset($_GET['reqHanghoa'])) {
                     <ul class="specs-list">
                         <?php foreach ($listThuocTinh as $tt): ?>
                             <?php
-                            // Lấy tên thuộc tính từ bảng thuoctinh
+
                             $thuocTinhObj = new ThuocTinh();
                             $thuocTinh = $thuocTinhObj->thuoctinhGetbyId($tt->idThuocTinh);
                             ?>
@@ -298,7 +295,7 @@ if (isset($_GET['reqHanghoa'])) {
             <!-- Action buttons -->
             <div style="margin-top: 20px; margin-bottom: 15px;">
                 <?php
-                // Kiểm tra xem sản phẩm có thể mua được không
+
                 $canPurchase = true;
                 $purchaseMessage = '';
 
@@ -379,7 +376,6 @@ if (isset($_GET['reqHanghoa'])) {
         color: #dc3545 !important;
     }
 
-    /* Thêm style cho các nút */
     .btn-lg {
         font-weight: bold;
         padding: 10px 20px;
@@ -457,8 +453,8 @@ if (isset($_GET['reqHanghoa'])) {
 <?php endif; ?>
 
 <?php
-// Product Reviews Section - Sử dụng component mới
-$productId = $idhanghoa; // ID sản phẩm hiện tại
+
+$productId = $idhanghoa;
 include __DIR__ . '/../components/product_review_display.php';
 ?>
 
@@ -470,7 +466,7 @@ include __DIR__ . '/../components/product_review_display.php';
     </h4>
 
     <?php
-    // Get related products: same brand or similar price range
+
     $relatedProducts = $hanghoa->getRelatedProducts($idhanghoa, 4);
 
     if (!empty($relatedProducts)):

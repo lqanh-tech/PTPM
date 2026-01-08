@@ -1,7 +1,4 @@
 <?php
-/**
- * Thêm/Sửa Khuyến Mãi
- */
 
 require_once __DIR__ . '/../mod/database.php';
 
@@ -11,7 +8,6 @@ $messageType = 'success';
 $editMode = false;
 $product = null;
 
-// Kiểm tra mode sửa
 if (isset($_GET['id'])) {
     $editMode = true;
     $idhanghoa = intval($_GET['id']);
@@ -26,13 +22,11 @@ if (isset($_GET['id'])) {
     }
 }
 
-// Xử lý form submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $idhanghoa = intval($_POST['idhanghoa']);
         $giakhuyenmai = floatval($_POST['giakhuyenmai']);
         
-        // Lấy thông tin sản phẩm
         $stmt = $db->prepare("SELECT giathamkhao FROM hanghoa WHERE idhanghoa = ?");
         $stmt->execute([$idhanghoa]);
         $currentProduct = $stmt->fetch(PDO::FETCH_OBJ);
@@ -41,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Sản phẩm không tồn tại");
         }
         
-        // Validate
         if ($giakhuyenmai <= 0) {
             throw new Exception("Giá khuyến mãi phải lớn hơn 0");
         }
@@ -50,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Giá khuyến mãi phải nhỏ hơn giá hiện tại (" . number_format($currentProduct->giathamkhao) . "đ)");
         }
         
-        // Cập nhật
         $stmt = $db->prepare("UPDATE hanghoa SET giakhuyenmai = ? WHERE idhanghoa = ?");
         $stmt->execute([$giakhuyenmai, $idhanghoa]);
         
@@ -62,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy danh sách sản phẩm (nếu không phải edit mode)
 if (!$editMode) {
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.giakhuyenmai,
             th.tenTH as ten_thuonghieu
@@ -305,7 +296,6 @@ if (!$editMode) {
         window.location.href = '?req=addPromotion&id=' + id;
     }
     
-    // Search products
     <?php if (!$editMode): ?>
     document.getElementById('searchProduct').addEventListener('input', function(e) {
         const search = e.target.value.toLowerCase();
@@ -318,7 +308,6 @@ if (!$editMode) {
     });
     <?php endif; ?>
     
-    // Auto update preview on load
     <?php if ($editMode && $product->giakhuyenmai): ?>
     updatePreview();
     <?php endif; ?>

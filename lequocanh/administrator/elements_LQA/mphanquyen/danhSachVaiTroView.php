@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,38 +9,31 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('danhSachVaiTroView',
     exit;
 }
 
-// Lấy danh sách vai trò
 require_once './elements_LQA/mod/roleCls.php';
 $roleObj = new Role();
 
-// Lấy danh sách người dùng
 require_once './elements_LQA/mod/userCls.php';
 $userObj = new user();
 $list_users = $userObj->UserGetAll();
 
-// Xử lý tìm kiếm
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $filter_role = isset($_GET['filter_role']) ? $_GET['filter_role'] : '';
 
-// Lọc danh sách người dùng theo tìm kiếm và vai trò
 $filtered_users = [];
 foreach ($list_users as $user) {
-    // Lấy vai trò của người dùng
+
     $userRoles = $roleObj->getUserRoles($user->iduser);
     $primaryRole = $roleObj->getPrimaryRole($user->iduser);
 
-    // Thêm thông tin vai trò vào đối tượng người dùng
     $user->roles = $userRoles;
     $user->primary_role = $primaryRole;
 
-    // Lọc theo tìm kiếm
     $searchMatch = empty($search) ||
         stripos($user->username, $search) !== false ||
         stripos($user->hoten, $search) !== false ||
         stripos($user->dienthoai, $search) !== false ||
         (isset($user->email) && stripos($user->email, $search) !== false);
 
-    // Lọc theo vai trò
     $roleMatch = empty($filter_role) || $primaryRole === $filter_role;
 
     if ($searchMatch && $roleMatch) {
@@ -48,7 +41,6 @@ foreach ($list_users as $user) {
     }
 }
 
-// Lấy danh sách tất cả vai trò để hiển thị trong bộ lọc
 $all_roles = $roleObj->getAllRoles();
 ?>
 
@@ -182,7 +174,7 @@ $all_roles = $roleObj->getAllRoles();
 </div>
 
 <style>
-    /* Cải thiện giao diện bảng */
+
     .table th {
         background-color: #f8f9fa;
         border-top: none;
@@ -196,7 +188,6 @@ $all_roles = $roleObj->getAllRoles();
         border-color: #dee2e6;
     }
 
-    /* Cải thiện nút thao tác */
     .btn-primary {
         transition: all 0.3s ease;
         box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
@@ -209,20 +200,17 @@ $all_roles = $roleObj->getAllRoles();
         box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
     }
 
-    /* Cải thiện badge */
     .badge {
         font-size: 0.75rem;
         padding: 0.375rem 0.5rem;
         font-weight: 500;
     }
 
-    /* Hover effect cho hàng */
     .table tbody tr:hover {
         background-color: #f8f9fa;
         cursor: pointer;
     }
 
-    /* Đảm bảo nút không bị ảnh hưởng bởi hover của hàng */
     .table tbody tr:hover td .btn {
         cursor: pointer;
     }
@@ -230,11 +218,11 @@ $all_roles = $roleObj->getAllRoles();
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Hiệu ứng khi hover vào hàng trong bảng
+
         const tableRows = document.querySelectorAll('tbody tr');
         tableRows.forEach(row => {
             row.addEventListener('click', function(e) {
-                // Không chuyển hướng nếu nhấp vào nút
+
                 if (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.closest('a') || e.target.closest('button')) {
                     return;
                 }
@@ -244,7 +232,6 @@ $all_roles = $roleObj->getAllRoles();
             });
         });
 
-        // Thêm tooltip cho các nút
         const buttons = document.querySelectorAll('.btn[title]');
         buttons.forEach(button => {
             button.addEventListener('mouseenter', function() {

@@ -2,7 +2,6 @@
 require_once '../../elements_LQA/mod/database.php';
 require_once '../../elements_LQA/mod/thuonghieuCls.php';
 
-// Debug info array
 $debugInfo = [
     'source' => 'thuonghieuUpdate.php',
     'post' => $_POST,
@@ -12,14 +11,12 @@ $debugInfo = [
 
 function sendJsonResponse($success, $message = '', $data = null, $debug = null)
 {
-    // Clear any previous output
+
     if (ob_get_contents()) ob_clean();
 
-    // Set headers
     header('Content-Type: application/json');
     header("Cache-Control: no-cache, must-revalidate");
 
-    // Create response
     $response = ['success' => $success, 'message' => $message];
     if ($data !== null) {
         $response['data'] = $data;
@@ -32,7 +29,6 @@ function sendJsonResponse($success, $message = '', $data = null, $debug = null)
     exit;
 }
 
-// Kiểm tra ID thương hiệu từ các nguồn
 $idThuongHieu = null;
 if (isset($_POST['idThuongHieu'])) {
     $idThuongHieu = $_POST['idThuongHieu'];
@@ -47,13 +43,11 @@ if (isset($_POST['idThuongHieu'])) {
 
 $debugInfo['idThuongHieu'] = $idThuongHieu;
 
-// Nếu không tìm thấy ID hoặc ID không hợp lệ
 if ($idThuongHieu === null || !is_numeric($idThuongHieu)) {
     sendJsonResponse(false, 'ID thương hiệu không hợp lệ hoặc không tìm thấy', null, $debugInfo);
     exit;
 }
 
-// Lấy thông tin thương hiệu
 $thuonghieu = new ThuongHieu();
 $item = $thuonghieu->thuonghieuGetById($idThuongHieu);
 
@@ -62,13 +56,10 @@ if (!$item) {
     exit;
 }
 
-// Kiểm tra nếu là AJAX request
 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-    // Hiển thị form HTML thay vì trả về JSON
-    // Phần còn lại của file là HTML form, không cần exit ở đây
+
 }
 
-// HTML form cho tất cả các requests
 ?>
 <div class="update-form-container">
     <div class="update-header">
@@ -169,18 +160,17 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
 
 <script>
     document.getElementById('close-btn').addEventListener('click', function() {
-        // Emit custom event for parent window to handle closing
+
         if (window.parent) {
             window.parent.postMessage('closeUpdateForm', '*');
         }
-        // Also handle close if this is used in a native popup
+
         var parentElement = window.frameElement && window.frameElement.parentElement;
         if (parentElement) {
             parentElement.style.display = 'none';
         }
     });
 
-    // Xử lý submit form
     document.getElementById('update-form').addEventListener('submit', function(e) {
         e.preventDefault();
 
@@ -188,7 +178,6 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
 
         var formData = new FormData(this);
 
-        // Gửi request ajax
         $.ajax({
             url: "./elements_LQA/mthuonghieu/thuonghieuAct.php?reqact=updatethuonghieu",
             type: "POST",
@@ -198,10 +187,8 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
             success: function(response) {
                 console.log("Phản hồi từ server:", response);
 
-                // Đóng popup và tải lại trang
                 $("#w_update_th").hide();
 
-                // Tải lại trang với tham số cache-busting
                 window.location.href = "index.php?req=thuonghieuview&t=" + new Date().getTime();
             },
             error: function(xhr, status, error) {

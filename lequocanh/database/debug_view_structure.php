@@ -1,7 +1,4 @@
 <?php
-/**
- * Debug View Structure - Kiểm tra VIEW và cấu trúc database thực tế
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -20,7 +17,6 @@ try {
         .alert-success { background-color: #d4edda; border: 1px solid #c3e6cb; }
     </style>\n";
     
-    // 1. Kiểm tra VIEW có tồn tại không
     echo "<h3>1. Kiểm Tra VIEW v_shipping_methods_with_fees</h3>\n";
     $stmt = $db->query("SHOW FULL TABLES WHERE Table_type = 'VIEW'");
     $views = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -47,7 +43,6 @@ try {
         echo "\n</pre>\n";
     }
     
-    // 2. Kiểm tra cấu trúc bảng shipping_methods
     echo "<h3>3. Cấu Trúc Bảng shipping_methods</h3>\n";
     $stmt = $db->query("SHOW COLUMNS FROM shipping_methods");
     $columns = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -66,7 +61,6 @@ try {
     }
     echo "</table>\n";
     
-    // 3. Kiểm tra dữ liệu thực tế
     echo "<h3>4. Dữ Liệu Thực Tế Trong shipping_methods (sắp xếp theo sort_order DESC)</h3>\n";
     $stmt = $db->query("SELECT * FROM shipping_methods ORDER BY sort_order DESC");
     $methods = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -87,7 +81,6 @@ try {
     }
     echo "</table>\n";
     
-    // 4. Kiểm tra dữ liệu trùng lặp
     echo "<h3>5. Kiểm Tra Dữ Liệu Trùng Lặp</h3>\n";
     $stmt = $db->query("
         SELECT code, name, COUNT(*) as count 
@@ -115,10 +108,8 @@ try {
         echo "</div>\n";
     }
     
-    // 5. So sánh data giữa admin và frontend query
     echo "<h3>6. So Sánh Query Admin vs Frontend</h3>\n";
     
-    // Admin query (KHÔNG có filter is_active)
     if ($viewExists) {
         $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees ORDER BY sort_order DESC");
     } else {
@@ -126,7 +117,6 @@ try {
     }
     $adminMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Frontend query (CÓ filter is_active = 1)
     if ($viewExists) {
         $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees WHERE is_active = 1 ORDER BY sort_order DESC");
     } else {
@@ -136,7 +126,6 @@ try {
     
     echo "<div style='display: flex; gap: 20px;'>\n";
     
-    // Admin results
     echo "<div style='flex: 1;'>\n";
     echo "<h4>Admin (ALL records) - " . count($adminMethods) . " records</h4>\n";
     echo "<table>\n";
@@ -154,7 +143,6 @@ try {
     echo "</table>\n";
     echo "</div>\n";
     
-    // Frontend results  
     echo "<div style='flex: 1;'>\n";
     echo "<h4>Frontend (is_active=1 only) - " . count($frontendMethods) . " records</h4>\n";
     echo "<table>\n";
@@ -173,7 +161,6 @@ try {
     
     echo "</div>\n";
     
-    // 6. Kiểm tra bảng shipping_fees
     echo "<h3>7. Kiểm Tra Bảng shipping_fees</h3>\n";
     $stmt = $db->query("SHOW TABLES LIKE 'shipping_fees'");
     $shippingFeesExists = $stmt->rowCount() > 0;
@@ -183,14 +170,12 @@ try {
         $feeCount = $stmt->fetch(PDO::FETCH_ASSOC);
         echo "<div class='alert alert-info'>✅ Bảng shipping_fees tồn tại. Có <strong>" . $feeCount['count'] . "</strong> bản ghi.</div>\n";
         
-        // Kiểm tra shipping_method_id column
         $stmt = $db->query("SHOW COLUMNS FROM shipping_fees LIKE 'shipping_method_id'");
         $hasMethodIdCol = $stmt->rowCount() > 0;
         
         if ($hasMethodIdCol) {
             echo "<div class='alert alert-success'>✅ Có cột shipping_method_id trong bảng shipping_fees</div>\n";
             
-            // Show sample data
             $stmt = $db->query("SELECT sf.*, sm.name as method_name FROM shipping_fees sf LEFT JOIN shipping_methods sm ON sf.shipping_method_id = sm.id LIMIT 5");
             $fees = $stmt->fetchAll(PDO::FETCH_ASSOC);
             

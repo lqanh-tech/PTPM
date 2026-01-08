@@ -1,10 +1,5 @@
 <?php
 
-/**
- * Widget thống kê đơn giá
- */
-
-// Tìm đường dẫn đúng đến dongiaCls.php
 $dongiaPaths = [
     '../mod/dongiaCls.php',
     './elements_LQA/mod/dongiaCls.php',
@@ -26,7 +21,6 @@ if (!$foundDongia) {
     throw new Exception("Không thể tải file dongiaCls.php");
 }
 
-// Tìm đường dẫn đúng đến hanghoaCls.php
 $hanghoaPaths = [
     '../mod/hanghoaCls.php',
     './elements_LQA/mod/hanghoaCls.php',
@@ -52,13 +46,10 @@ try {
     $dongiaObj = new Dongia();
     $hanghoaObj = new hanghoa();
 
-    // Lấy tất cả đơn giá
     $allPrices = $dongiaObj->DongiaGetAll();
 
-    // Lấy tất cả sản phẩm
     $allProducts = $hanghoaObj->HanghoaGetAll();
 
-    // Thống kê
     $totalPrices = count($allPrices);
     $activePrices = 0;
     $expiredPrices = 0;
@@ -66,7 +57,6 @@ try {
     $productsWithoutPrice = 0;
     $totalValue = 0;
 
-    // Đếm đơn giá đang áp dụng và hết hạn
     foreach ($allPrices as $price) {
         if ($price->apDung) {
             $activePrices++;
@@ -78,7 +68,6 @@ try {
         }
     }
 
-    // Đếm sản phẩm có/không có giá
     foreach ($allProducts as $product) {
         $hasActivePrice = false;
         foreach ($allPrices as $price) {

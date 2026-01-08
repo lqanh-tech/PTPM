@@ -1,18 +1,12 @@
 <?php
-/**
- * CSV Data Analysis Script
- * Analyzes the ward/commune CSV file and checks mapping compatibility
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
-// Configuration
 $csvFile = __DIR__ . '/../../Danh-muc-Phuong-xa_moi.csv';
 $logFile = __DIR__ . '/import.log';
 
-// Database configuration
 $dbConfig = [
     'host' => 'mysql',
     'dbname' => 'sales_management',
@@ -21,7 +15,6 @@ $dbConfig = [
     'charset' => 'utf8mb4'
 ];
 
-// Logger function
 function logMessage($message, $level = 'INFO') {
     global $logFile;
     $timestamp = date('Y-m-d H:i:s');
@@ -33,7 +26,6 @@ function logMessage($message, $level = 'INFO') {
 try {
     logMessage("=== CSV Data Analysis Started ===");
     
-    // Check if CSV file exists
     if (!file_exists($csvFile)) {
         throw new Exception("CSV file not found: $csvFile");
     }
@@ -41,7 +33,6 @@ try {
     logMessage("CSV file found: $csvFile");
     logMessage("File size: " . number_format(filesize($csvFile)) . " bytes");
     
-    // Connect to database
     $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
     $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -49,7 +40,6 @@ try {
     ]);
     logMessage("Database connected successfully");
     
-    // Check if tables exist
     $requiredTables = ['provinces', 'districts', 'wards'];
     foreach ($requiredTables as $table) {
         $stmt = $pdo->query("SHOW TABLES LIKE '$table'");
@@ -61,7 +51,6 @@ try {
         }
     }
     
-    // Read and analyze CSV
     logMessage("\n=== Analyzing CSV Data ===");
     
     $handle = fopen($csvFile, 'r');
@@ -69,7 +58,6 @@ try {
         throw new Exception("Cannot open CSV file");
     }
     
-    // Set UTF-8 encoding
     stream_filter_append($handle, 'convert.iconv.UTF-8/UTF-8');
     
     $provinces = [];
@@ -82,14 +70,12 @@ try {
     while (($row = fgetcsv($handle, 0, ',')) !== false) {
         $lineNumber++;
         
-        // Skip empty rows and header rows (lines 1-3)
         if ($lineNumber <= 3 || empty($row[1])) {
             continue;
         }
         
         $dataStarted = true;
         
-        // Parse columns (accounting for empty first column)
         $stt = trim($row[1] ?? '');
         $provinceCodeBNV = trim($row[2] ?? '');
         $provinceName = trim($row[3] ?? '');
@@ -101,12 +87,10 @@ try {
         $wardName = trim($row[9] ?? '');
         $reviewStatus = trim($row[10] ?? '');
         
-        // Skip if no ward code
         if (empty($wardCode)) {
             continue;
         }
         
-        // Collect unique provinces
         if (!isset($provinces[$provinceCodeTMS])) {
             $provinces[$provinceCodeTMS] = [
                 'code_tms' => $provinceCodeTMS,
@@ -117,7 +101,6 @@ try {
         }
         $provinces[$provinceCodeTMS]['count']++;
         
-        // Collect unique districts
         if (!isset($districts[$districtCodeTMS])) {
             $districts[$districtCodeTMS] = [
                 'code' => $districtCodeTMS,
@@ -128,7 +111,6 @@ try {
         }
         $districts[$districtCodeTMS]['count']++;
         
-        // Collect wards
         $wards[$wardCode] = [
             'code' => $wardCode,
             'name' => $wardName,
@@ -137,7 +119,6 @@ try {
             'review_status' => $reviewStatus
         ];
         
-        // Track special notes
         if (!empty($reviewStatus)) {
             $specialNotes[] = [
                 'line' => $lineNumber,
@@ -150,7 +131,6 @@ try {
     
     fclose($handle);
     
-    // Display statistics
     logMessage("\n=== CSV Statistics ===");
     logMessage("Total lines processed: " . ($lineNumber - 3));
     logMessage("Unique provinces: " . count($provinces));
@@ -158,7 +138,6 @@ try {
     logMessage("Total wards: " . count($wards));
     logMessage("Special notes found: " . count($specialNotes));
     
-    // Show top provinces by ward count
     logMessage("\n=== Top 10 Provinces by Ward Count ===");
     uasort($provinces, function($a, $b) {
         return $b['count'] - $a['count'];
@@ -168,7 +147,6 @@ try {
         logMessage(sprintf("%-30s (TMS: %s): %d wards", $info['name'], $code, $info['count']));
     }
     
-    // Show special notes
     if (!empty($specialNotes)) {
         logMessage("\n=== Special Notes/Warnings ===");
         foreach ($specialNotes as $note) {
@@ -181,20 +159,16 @@ try {
         }
     }
     
-    // Check database mapping
     logMessage("\n=== Database Mapping Analysis ===");
     
-    // Check existing provinces in database
     $stmt = $pdo->query("SELECT id, code, name FROM provinces");
     $dbProvinces = $stmt->fetchAll(PDO::FETCH_ASSOC);
     logMessage("Provinces in database: " . count($dbProvinces));
     
-    // Check existing districts in database
     $stmt = $pdo->query("SELECT id, code, name, province_id FROM districts");
     $dbDistricts = $stmt->fetchAll(PDO::FETCH_ASSOC);
     logMessage("Districts in database: " . count($dbDistricts));
     
-    // Save analysis to JSON for next step
     $analysisData = [
         'csv_provinces' => $provinces,
         'csv_districts' => $districts,

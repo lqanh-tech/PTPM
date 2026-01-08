@@ -1,8 +1,4 @@
 <?php
-/**
- * Trang Hỗ Trợ Khách Hàng
- * User có thể tạo ticket và chat với admin
- */
 
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
 SessionManager::start();

@@ -19,7 +19,6 @@ $current_id = isset($_GET['reqView']) ? $_GET['reqView'] : null;
                     $obj = new loaihang();
                     $list_lh = $obj->LoaihangGetAll();
 
-                    // Hiển thị tất cả các mục
                     foreach ($list_lh as $v) {
                         $active_class = ($current_id == $v->idloaihang) ? 'active' : '';
                 ?>
@@ -35,7 +34,7 @@ $current_id = isset($_GET['reqView']) ? $_GET['reqView'] : null;
                 <?php
                     }
                 } catch (Exception $e) {
-                    // Hiển thị thông báo lỗi thân thiện
+
                     echo '<li class="nav-item">';
                     echo '<span class="nav-link text-danger">';
                     echo '<i class="fas fa-exclamation-triangle me-2"></i>';
@@ -49,7 +48,6 @@ $current_id = isset($_GET['reqView']) ? $_GET['reqView'] : null;
                     echo '</a>';
                     echo '</li>';
 
-                    // Ghi log lỗi
                     error_log("Lỗi trong menuLoaihang.php: " . $e->getMessage());
                 }
                 ?>

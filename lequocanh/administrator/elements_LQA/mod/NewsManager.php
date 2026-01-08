@@ -1,10 +1,5 @@
 <?php
 
-/**
- * News Manager
- * Quản lý tin tức
- */
-
 require_once 'database.php';
 
 class NewsManager
@@ -16,9 +11,6 @@ class NewsManager
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Lấy tất cả tin tức đang được xuất bản
-     */
     public function getPublishedNews($limit = 10)
     {
         try {
@@ -33,9 +25,6 @@ class NewsManager
         }
     }
 
-    /**
-     * Lấy tất cả tin tức (cho admin)
-     */
     public function getAllNews()
     {
         try {
@@ -49,9 +38,6 @@ class NewsManager
         }
     }
 
-    /**
-     * Lấy tin tức theo ID
-     */
     public function getNewsById($id)
     {
         try {
@@ -65,26 +51,19 @@ class NewsManager
         }
     }
 
-    /**
-     * Thêm tin tức mới
-     */
     public function addNews($title, $content, $image_url, $author, $is_published, $published_at = null)
     {
         try {
-            // Kiểm tra title và content không trống
+
             if (empty($title) || empty($content)) {
                 error_log("Error adding news: Title or content is empty");
                 return false;
             }
 
-            // Tạo slug từ title
             $slug = $this->createSlug($title);
 
-            // Chuẩn bị summary từ content
             $summary = substr(strip_tags($content), 0, 200);
 
-            // SQL insert - sử dụng cấu trúc bảng thực tế
-            // Bảng news có: id, title, slug, summary, content, featured_image, author_id, category, tags, published_date, is_published, view_count, created_at, updated_at
             $sql = "INSERT INTO news (title, slug, summary, content, featured_image, is_published, published_date)
                     VALUES (?, ?, ?, ?, ?, ?, NOW())";
 
@@ -111,25 +90,19 @@ class NewsManager
         }
     }
 
-    /**
-     * Cập nhật tin tức
-     */
     public function updateNews($id, $title, $content, $image_url, $author, $is_published, $published_at = null)
     {
         try {
-            // Lấy tin tức hiện tại để giữ slug
+
             $current = $this->getNewsById($id);
             if (!$current) {
                 return false;
             }
 
-            // Nếu title thay đổi, tạo slug mới
             $slug = ($title !== $current['title']) ? $this->createSlug($title) : $current['slug'];
 
-            // Chuẩn bị summary từ content
             $summary = substr(strip_tags($content), 0, 200);
 
-            // Update - sử dụng cấu trúc bảng thực tế (không có cột 'author')
             $sql = "UPDATE news SET title = ?, slug = ?, summary = ?, content = ?, featured_image = ?,
                            is_published = ?, updated_at = NOW()
                     WHERE id = ?";
@@ -142,9 +115,6 @@ class NewsManager
         }
     }
 
-    /**
-     * Xóa tin tức
-     */
     public function deleteNews($id)
     {
         try {
@@ -157,9 +127,6 @@ class NewsManager
         }
     }
 
-    /**
-     * Upload hình ảnh tin tức
-     */
     public function uploadNewsImage($file)
     {
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
@@ -174,7 +141,6 @@ class NewsManager
         $uploadDir = __DIR__ . '/../../../administrator/uploads/';
         $uploadPath = $uploadDir . $newFileName;
 
-        // Kiểm tra và tạo thư mục nếu chưa tồn tại
         if (!file_exists($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true)) {
                 error_log("News upload error: Cannot create upload directory - " . $uploadDir);
@@ -182,7 +148,6 @@ class NewsManager
             }
         }
 
-        // Kiểm tra quyền ghi
         if (!is_writable($uploadDir)) {
             error_log("News upload error: Upload directory is not writable - " . $uploadDir);
             return false;
@@ -196,16 +161,12 @@ class NewsManager
         return false;
     }
 
-    /**
-     * Tạo slug từ tiêu đề
-     */
     private function createSlug($title)
     {
         try {
-            // Chuyển về chữ thường
+
             $slug = mb_strtolower($title, 'UTF-8');
 
-            // Thay thế ký tự có dấu
             $replacements = [
                 'à' => 'a',
                 'á' => 'a',
@@ -278,18 +239,15 @@ class NewsManager
 
             $slug = strtr($slug, $replacements);
 
-            // Thay thế khoảng trắng và ký tự đặc biệt bằng dấu gạch ngang
             $slug = preg_replace('/[^a-z0-9]+/', '-', $slug);
             $slug = trim($slug, '-');
 
-            // Nếu slug trống, dùng time()
             if (empty($slug)) {
                 $slug = 'news-' . time();
             }
 
             error_log("Generated slug: '$slug' from title: '$title'");
 
-            // Thêm unique ID nếu slug đã tồn tại
             $originalSlug = $slug;
             $counter = 1;
             $maxAttempts = 100;
@@ -301,7 +259,7 @@ class NewsManager
 
             if ($counter >= $maxAttempts) {
                 error_log("Warning: Max attempts to create unique slug reached");
-                // Dùng timestamp để đảm bảo unique
+
                 $slug = $originalSlug . '-' . time();
             }
 
@@ -309,14 +267,11 @@ class NewsManager
             return $slug;
         } catch (Exception $e) {
             error_log("Error in createSlug: " . $e->getMessage());
-            // Fallback: dùng timestamp
+
             return 'news-' . time();
         }
     }
 
-    /**
-     * Kiểm tra slug đã tồn tại chưa
-     */
     private function slugExists($slug)
     {
         try {

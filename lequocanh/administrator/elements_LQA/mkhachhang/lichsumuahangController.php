@@ -1,9 +1,5 @@
 <?php
-/**
- * Controller cho trang lịch sử mua hàng của khách hàng
- */
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER'])) {
     echo '<div class="alert alert-warning">Vui lòng đăng nhập để xem lịch sử mua hàng.</div>';
     return;
@@ -17,30 +13,27 @@ try {
     $conn = $db->getConnection();
     $username = $_SESSION['USER'];
     
-    // Lấy thông tin khách hàng
     $userSql = "SELECT * FROM user WHERE username = ?";
     $userStmt = $conn->prepare($userSql);
     $userStmt->execute([$username]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
     
-    // Xử lý hành động hủy đơn hàng
     if (isset($_GET['action']) && $_GET['action'] === 'cancel' && isset($_GET['order_id'])) {
         $orderId = (int)$_GET['order_id'];
         
-        // Kiểm tra đơn hàng thuộc về user này và đang ở trạng thái pending
         $checkOrderSql = "SELECT id, trang_thai FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
         $checkStmt = $conn->prepare($checkOrderSql);
         $checkStmt->execute([$orderId, $username]);
         $orderToCancel = $checkStmt->fetch(PDO::FETCH_ASSOC);
         
         if ($orderToCancel && $orderToCancel['trang_thai'] === 'pending') {
-            // Hủy đơn hàng
+
             $cancelSql = "UPDATE don_hang SET trang_thai = 'cancelled', ngay_cap_nhat = NOW() WHERE id = ?";
             $cancelStmt = $conn->prepare($cancelSql);
             $cancelResult = $cancelStmt->execute([$orderId]);
             
             if ($cancelResult) {
-                // Gửi thông báo hủy đơn
+
                 $notificationManager = new CustomerNotificationManager();
                 $notificationManager->notifyOrderCancelled($orderId, $username, 'Khách hàng tự hủy đơn hàng');
                 
@@ -55,24 +48,20 @@ try {
             $_SESSION['message_type'] = 'warning';
         }
         
-        // Redirect để tránh resubmit
         echo '<script>window.location.href = "index.php?req=lichsumuahang";</script>';
         exit();
     }
     
-    // Lấy lịch sử đơn hàng với phân trang
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $limit = 10;
     $offset = ($page - 1) * $limit;
     
-    // Đếm tổng số đơn hàng
     $countSql = "SELECT COUNT(*) as total FROM don_hang WHERE ma_nguoi_dung = ?";
     $countStmt = $conn->prepare($countSql);
     $countStmt->execute([$username]);
     $totalOrders = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     $totalPages = ceil($totalOrders / $limit);
     
-    // Lấy danh sách đơn hàng
     $ordersSql = "SELECT * FROM don_hang 
                   WHERE ma_nguoi_dung = ? 
                   ORDER BY ngay_tao DESC 
@@ -81,7 +70,6 @@ try {
     $ordersStmt->execute([$username, $limit, $offset]);
     $orders = $ordersStmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Lấy chi tiết sản phẩm cho từng đơn hàng
     foreach ($orders as &$order) {
         $itemsSql = "SELECT cth.*, h.tenhanghoa 
                      FROM chi_tiet_don_hang cth 
@@ -92,7 +80,6 @@ try {
         $order['items'] = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    // Lấy thông báo chưa đọc
     $notificationManager = new CustomerNotificationManager();
     $unreadCount = $notificationManager->getUnreadCount($username);
     

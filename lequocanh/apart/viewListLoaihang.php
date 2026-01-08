@@ -5,14 +5,15 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../administrator/elements_LQA/mod/loaihangCls.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/../includes/query_builder.php';
+require_once __DIR__ . '/../includes/advanced_cache.php';
+
 $hanghoa = new hanghoa();
 
-// Check for filter parameters in URL
 $hasFilters = isset($_GET['min_price']) || isset($_GET['max_price']) ||
     isset($_GET['colors']) || isset($_GET['sizes']) || isset($_GET['min_rating']);
 
 if ($hasFilters) {
-    // Apply filters from URL parameters
     $filters = [
         'min_price' => isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0,
         'max_price' => isset($_GET['max_price']) ? (int)$_GET['max_price'] : 100000000,
@@ -21,20 +22,21 @@ if ($hasFilters) {
         'category' => isset($_GET['reqView']) ? (int)$_GET['reqView'] : null,
         'min_rating' => isset($_GET['min_rating']) ? (int)$_GET['min_rating'] : 0
     ];
-
     $list_hanghoa = $hanghoa->filterProducts($filters);
 } elseif (isset($_GET['reqView'])) {
     $idloaihang = $_GET['reqView'];
-    $list_hanghoa = $hanghoa->HanghoaGetbyIdloaihang($idloaihang);
+    
+    $list_hanghoa = cache_remember('products_category_' . $idloaihang, 300, function() use ($hanghoa, $idloaihang) {
+        return $hanghoa->HanghoaGetbyIdloaihang($idloaihang);
+    });
 } else {
-    $list_hanghoa = $hanghoa->HanghoaGetAll();
+    $list_hanghoa = cache_remember('all_products', 300, function() use ($hanghoa) {
+        return $hanghoa->HanghoaGetAll();
+    });
 }
 
-// Lấy 5 sản phẩm mới nhất cho carousel
 $carousel_items = array_slice($list_hanghoa, 0, 5);
 
-// Debug: Kiểm tra số lượng sản phẩm
-// echo "Số sản phẩm trong carousel: " . count($carousel_items);
 ?>
 
 <!-- Rating Styles -->
@@ -53,7 +55,7 @@ $carousel_items = array_slice($list_hanghoa, 0, 5);
         <?php
         if (!empty($carousel_items)) {
             foreach ($carousel_items as $index => $item):
-                // Get image from hinhanh table
+
                 $hinhanh = $hanghoa->GetHinhAnhById($item->hinhanh);
         ?>
         <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>" data-bs-interval="3000">
@@ -93,15 +95,15 @@ $carousel_items = array_slice($list_hanghoa, 0, 5);
 <script src="administrator/elements_LQA/js_LQA/jscript.js"></script>
 
 <?php
-// Load News and Promotions
+
 require_once __DIR__ . '/../administrator/elements_LQA/mod/NewsManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/PromotionManager.php';
 
 $newsManager = new NewsManager();
 $promotionManager = new PromotionManager();
 
-$latestNews = $newsManager->getPublishedNews(3); // Lấy 3 tin mới nhất
-$activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi đang hiệu lực
+$latestNews = $newsManager->getPublishedNews(3);
+$activePromotions = $promotionManager->getActivePromotions();
 ?>
 
 <!-- News Section -->
@@ -189,7 +191,7 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
 </h3>
 
 <style>
-    /* Section Titles */
+
     .section-title {
         font-weight: 700;
         color: #333;
@@ -198,7 +200,6 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
         display: inline-block;
     }
 
-    /* Promotion Cards */
     .promotion-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border-left: 4px solid #dc3545 !important;
@@ -209,7 +210,6 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
         box-shadow: 0 8px 16px rgba(220, 53, 69, 0.2);
     }
 
-    /* News Cards */
     .news-card {
         transition: transform 0.3s ease, box-shadow 0.3s ease;
         border: 1px solid #e0e0e0;
@@ -279,7 +279,6 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
         background-color: #f8f9fa;
     }
     
-    /* Override for products container - Fixed height with scroll */
     .products-container {
         display: flex !important;
         gap: 30px;
@@ -311,7 +310,6 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
         border-radius: 8px;
     }
     
-    /* Custom scrollbar */
     .products-column::-webkit-scrollbar,
     .filter-sidebar::-webkit-scrollbar {
         width: 8px;
@@ -446,10 +444,9 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
 
         <div class="row row-cols-1 row-cols-md-3 g-4 product-list-grid">
             <?php foreach ($list_hanghoa as $v):
-                // Get image from hinhanh table
+
                 $hinhanh = $hanghoa->GetHinhAnhById($v->hinhanh);
 
-                // Kiểm tra khuyến mãi (ONLY - không còn tự động đánh dấu nổi bật/mới)
                 $hasDiscount = false;
                 $discountPercent = 0;
                 if (isset($v->giakhuyenmai) && $v->giakhuyenmai > 0 && $v->giakhuyenmai < $v->giathamkhao) {
@@ -460,7 +457,7 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
                 <div class="col">
                     <div class="card h-100 position-relative">
                         <?php
-                        // Hiển thị ONLY discount badge (nếu có khuyến mãi)
+
                         if ($hasDiscount): ?>
                             <span class="discount-badge">-<?php echo $discountPercent; ?>%</span>
                         <?php endif; ?>
@@ -486,14 +483,14 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
                             <h5 class="card-title"><?php echo $v->tenhanghoa; ?></h5>
 
                             <?php
-                            // Display product code
+
                             ?>
                             <div class="product-code" style="font-size: 11px; color: #6c757d; margin: 4px 0 8px 0;">
                                 Mã: SP-<?php echo str_pad($v->idhanghoa, 5, '0', STR_PAD_LEFT); ?>
                             </div>
 
                             <?php
-                            // Get and display average rating
+
                             $ratingInfo = $hanghoa->getAverageRating($v->idhanghoa);
                             $avgRating = $ratingInfo['average'];
                             $reviewCount = $ratingInfo['count'];
@@ -503,7 +500,7 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
                             ?>
                                 <div class="product-rating <?php echo $highRating; ?>" style="display: flex; align-items: center; gap: 4px; margin-bottom: 8px; font-size: 13px;">
                                     <?php
-                                    // Display stars
+
                                     for ($i = 1; $i <= 5; $i++):
                                         if ($i <= floor($avgRating)):
                                     ?>
@@ -571,7 +568,6 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
                 const compareCount = document.getElementById('compareCount');
                 let selectedProducts = [];
 
-                // Thêm đoạn code này để xóa trạng thái checked khi load trang
                 compareCheckboxes.forEach(checkbox => {
                     checkbox.checked = false;
                 });
@@ -609,17 +605,14 @@ $activePromotions = $promotionManager->getActivePromotions(); // Lấy ưu đãi
                 window.location.href = `sosanh.php?products=${selectedProducts.join(',')}`;
             }
 
-            // Xử lý thông báo khi thêm giỏ hàng thành công
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('cartAdded')) {
-                // Hiển thị thông báo
+
                 alert('Đã thêm sản phẩm vào giỏ hàng!');
 
-                // Xóa tham số cartAdded khỏi URL để tránh hiển thị lại thông báo khi refresh
                 const newUrl = window.location.href.replace(/[&?]cartAdded=1/, '');
                 window.history.replaceState({}, document.title, newUrl);
             }
-
 
         </script>
 

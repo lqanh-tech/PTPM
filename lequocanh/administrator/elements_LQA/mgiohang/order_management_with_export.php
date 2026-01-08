@@ -1,12 +1,7 @@
 <?php
-/**
- * Order Management with Export Features
- * Demo tích hợp chức năng xuất đơn hàng
- */
 
 session_start();
 
-// Kiểm tra quyền admin
 if (!isset($_SESSION['ADMIN'])) {
     header('Location: ../../userLogin.php');
     exit();
@@ -14,11 +9,9 @@ if (!isset($_SESSION['ADMIN'])) {
 
 require_once '../../elements_LQA/mod/database.php';
 
-// Lấy danh sách đơn hàng
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Xử lý bộ lọc
 $where = ["1=1"];
 $params = [];
 
@@ -71,7 +64,6 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Thống kê
 $totalOrders = count($orders);
 $totalRevenue = array_sum(array_column($orders, 'tong_tien'));
 ?>
@@ -293,13 +285,12 @@ $totalRevenue = array_sum(array_column($orders, 'tong_tien'));
     <script src="../../js_LQA/order_export.js"></script>
     
     <script>
-        // Sync checkbox select-all
+
         document.getElementById('select-all-orders-table').addEventListener('change', function(e) {
             document.getElementById('select-all-orders').checked = e.target.checked;
             document.getElementById('select-all-orders').dispatchEvent(new Event('change'));
         });
         
-        // Update selected count
         document.addEventListener('change', function(e) {
             if (e.target.classList.contains('order-checkbox') || e.target.id === 'select-all-orders') {
                 const count = document.querySelectorAll('.order-checkbox:checked').length;

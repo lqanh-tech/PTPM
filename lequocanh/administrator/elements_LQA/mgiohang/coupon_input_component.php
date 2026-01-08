@@ -1,10 +1,5 @@
 <?php
-/**
- * Component nhập mã Coupon cho trang Checkout
- * Include vào checkout.php
- */
 
-// Lấy thông tin coupon đã áp dụng từ session
 $appliedCoupon = $_SESSION['applied_coupon'] ?? null;
 $couponDiscount = $_SESSION['coupon_discount'] ?? 0;
 $couponData = $_SESSION['coupon_data'] ?? null;
@@ -96,15 +91,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const couponCodeHidden = document.getElementById('coupon_code_hidden');
     const couponDiscountHidden = document.getElementById('coupon_discount_hidden');
     
-    // Biến lưu trữ coupon discount
     window.currentCouponDiscount = <?php echo $couponDiscount; ?>;
     
-    // Áp dụng mã coupon
     applyBtn.addEventListener('click', function() {
         applyCoupon();
     });
     
-    // Enter để áp dụng
     couponInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -112,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Click vào gợi ý
     document.querySelectorAll('.coupon-suggestion').forEach(function(el) {
         el.addEventListener('click', function() {
             couponInput.value = this.dataset.code;
@@ -120,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Xóa coupon
     removeBtn.addEventListener('click', function() {
         removeCoupon();
     });
@@ -132,7 +122,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Lấy tổng tiền hàng (subtotal)
         const subtotal = window.currentSubtotal || <?php echo $totalAmount ?? 0; ?>;
         
         applyBtn.disabled = true;
@@ -151,22 +140,18 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Cập nhật UI
+
                 document.getElementById('applied-coupon-code').textContent = code;
                 document.getElementById('applied-discount-amount').textContent = data.data.discount_formatted;
                 
-                // Cập nhật hidden inputs
                 couponCodeHidden.value = code;
                 couponDiscountHidden.value = data.data.discount_amount;
                 
-                // Cập nhật biến global
                 window.currentCouponDiscount = data.data.discount_amount;
                 
-                // Hiển thị coupon đã áp dụng
                 couponInputForm.style.display = 'none';
                 couponApplied.style.display = 'block';
                 
-                // Cập nhật tổng tiền
                 updateFinalTotalWithCoupon();
                 
                 hideError();
@@ -193,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            // Reset UI
+
             couponInput.value = '';
             couponCodeHidden.value = '';
             couponDiscountHidden.value = '0';
@@ -203,7 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
             couponInputForm.style.display = 'block';
             couponApplied.style.display = 'none';
             
-            // Cập nhật tổng tiền
             updateFinalTotalWithCoupon();
         })
         .catch(error => {
@@ -220,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
         couponError.style.display = 'none';
     }
     
-    // Hàm cập nhật tổng tiền (gọi từ checkout.php)
     window.updateFinalTotalWithCoupon = function() {
         const subtotal = window.currentSubtotal || 0;
         const vatAmount = window.currentVatAmount || 0;
@@ -229,13 +212,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const finalTotal = subtotal + vatAmount + shippingFee - couponDiscount;
         
-        // Cập nhật hiển thị
         const finalTotalDisplay = document.getElementById('final-total-display');
         if (finalTotalDisplay) {
             finalTotalDisplay.textContent = new Intl.NumberFormat('vi-VN').format(finalTotal) + ' ₫';
         }
         
-        // Cập nhật dòng giảm giá coupon
         const couponDiscountRow = document.getElementById('coupon-discount-row');
         const couponDiscountDisplay = document.getElementById('coupon-discount-display');
         

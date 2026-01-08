@@ -10,7 +10,6 @@ if (file_exists($s)) {
 }
 require_once $f;
 
-// Tìm đường dẫn đúng đến roleCls.php
 $rolePaths = [
     '../../elements_LQA/mod/roleCls.php',
     './elements_LQA/mod/roleCls.php',
@@ -24,10 +23,6 @@ foreach ($rolePaths as $duong_dan) {
     }
 }
 
-/**
- * Lớp UserRole - Quản lý vai trò người dùng
- * Lớp này cung cấp các phương thức để gán vai trò mặc định cho người dùng mới
- */
 class UserRole
 {
     private $db;
@@ -41,9 +36,6 @@ class UserRole
         }
     }
 
-    /**
-     * Kiểm tra xem bảng vai_tro đã tồn tại chưa
-     */
     private function vai_troTableExists()
     {
         try {
@@ -57,9 +49,6 @@ class UserRole
         }
     }
 
-    /**
-     * Kiểm tra xem bảng user_vai_tro đã tồn tại chưa
-     */
     private function userRolesTableExists()
     {
         try {
@@ -73,36 +62,27 @@ class UserRole
         }
     }
 
-    /**
-     * Gán vai trò mặc định cho người dùng mới
-     * @param int $userId ID của người dùng
-     * @param string $roleName Tên vai trò (mặc định là 'customer')
-     * @return bool Kết quả gán vai trò
-     */
     public function assignDefaultRole($userId, $roleName = 'customer')
     {
-        // Kiểm tra xem bảng vai_tro và user_vai_tro đã tồn tại chưa
+
         if (!$this->roleManager) {
             error_log("Không tìm thấy Role Manager");
             return false;
         }
 
-        // Đảm bảo các bảng cần thiết đã được tạo
         if (!$this->vai_troTableExists() || !$this->userRolesTableExists()) {
             error_log("Bảng vai_tro hoặc user_vai_tro chưa tồn tại, đang tạo...");
-            // Tạo bảng nếu chưa tồn tại
+
             $this->createTablesIfNotExist();
         }
 
         try {
-            // Lấy ID của vai trò
+
             $role = $this->roleManager->getRoleByName($roleName);
 
-            // Nếu vai trò không tồn tại, tạo mới
             if (!$role) {
                 error_log("Không tìm thấy vai trò: $roleName, đang tạo mới...");
 
-                // Tạo mô tả cho vai trò tùy theo loại
                 $mo_ta = '';
                 switch ($roleName) {
                     case 'admin':
@@ -118,14 +98,12 @@ class UserRole
                         $mo_ta = 'Vai trò tùy chỉnh';
                 }
 
-                // Thêm vai trò mới
                 $addResult = $this->roleManager->addRole($roleName, $mo_ta);
                 if (!$addResult) {
                     error_log("Không thể tạo vai trò mới: $roleName");
                     return false;
                 }
 
-                // Lấy lại vai trò vừa tạo
                 $role = $this->roleManager->getRoleByName($roleName);
                 if (!$role) {
                     error_log("Không thể lấy vai trò vừa tạo: $roleName");
@@ -133,7 +111,6 @@ class UserRole
                 }
             }
 
-            // Gán vai trò cho người dùng
             $result = $this->roleManager->assignRoleToUser($userId, $role->id);
             if ($result) {
                 error_log("Đã gán vai trò $roleName (ID: {$role->id}) cho người dùng ID: $userId");
@@ -147,13 +124,10 @@ class UserRole
         }
     }
 
-    /**
-     * Tạo các bảng cần thiết nếu chưa tồn tại
-     */
     private function createTablesIfNotExist()
     {
         try {
-            // Tạo bảng vai_tro nếu chưa tồn tại
+
             if (!$this->vai_troTableExists()) {
                 $createRolesTable = "CREATE TABLE `vai_tro` (
                     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -167,7 +141,6 @@ class UserRole
                 $this->db->exec($createRolesTable);
                 error_log("Đã tạo bảng vai_tro");
 
-                // Thêm các vai trò mặc định
                 $insertDefaultRoles = "INSERT INTO `vai_tro` (`ten_vai_tro`, `mo_ta`) VALUES
                     ('admin', 'Quản trị viên - có toàn quyền trên hệ thống'),
                     ('staff', 'Nhân viên - có quyền quản lý sản phẩm, đơn hàng'),
@@ -177,7 +150,6 @@ class UserRole
                 error_log("Đã thêm các vai trò mặc định");
             }
 
-            // Tạo bảng user_vai_tro nếu chưa tồn tại
             if (!$this->userRolesTableExists()) {
                 $createUserRolesTable = "CREATE TABLE `user_vai_tro` (
                     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -199,21 +171,11 @@ class UserRole
         }
     }
 
-    /**
-     * Gán vai trò nhân viên cho người dùng
-     * @param int $userId ID của người dùng
-     * @return bool Kết quả gán vai trò
-     */
     public function assignStaffRole($userId)
     {
         return $this->assignDefaultRole($userId, 'staff');
     }
 
-    /**
-     * Gán vai trò admin cho người dùng
-     * @param int $userId ID của người dùng
-     * @return bool Kết quả gán vai trò
-     */
     public function assignAdminRole($userId)
     {
         return $this->assignDefaultRole($userId, 'admin');

@@ -1,19 +1,13 @@
 <?php
-/**
- * MoMo Init Payment
- * Dựa trên official MoMo PHP SDK - init_payment.php
- */
 
 header('Content-type: application/json');
 
-// MoMo API configuration
 $endpoint = "https://test-payment.momo.vn/v2/gateway/api/create";
 
 $partnerCode = 'MOMO';
 $accessKey = 'F8BBA842ECF85';
 $secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
 
-// Get order information from POST data
 $orderInfo = $_POST['orderInfo'] ?? "Thanh toán qua MoMo";
 $amount = $_POST['amount'] ?? "10000";
 $orderId = $_POST['orderId'] ?? time() . "";
@@ -24,7 +18,6 @@ $extraData = $_POST['extraData'] ?? "";
 $requestId = time() . "";
 $requestType = "payWithATM";
 
-// Create raw signature string
 $rawHash = "accessKey=" . $accessKey . "&amount=" . $amount . "&extraData=" . $extraData . "&ipnUrl=" . $ipnUrl . "&orderId=" . $orderId . "&orderInfo=" . $orderInfo . "&partnerCode=" . $partnerCode . "&redirectUrl=" . $redirectUrl . "&requestId=" . $requestId . "&requestType=" . $requestType;
 $signature = hash_hmac("sha256", $rawHash, $secretKey);
 
@@ -45,15 +38,13 @@ $data = array(
 );
 
 $result = execPostRequest($endpoint, json_encode($data));
-$jsonResult = json_decode($result, true);  // decode json
+$jsonResult = json_decode($result, true);
 
-// Log the transaction
 logMoMoTransaction('INIT_PAYMENT', [
     'request' => $data,
     'response' => $jsonResult
 ]);
 
-// Return result
 echo json_encode($jsonResult);
 
 function execPostRequest($url, $data)
@@ -68,9 +59,9 @@ function execPostRequest($url, $data)
     );
     curl_setopt($ch, CURLOPT_TIMEOUT, 5);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
-    //execute post
+
     $result = curl_exec($ch);
-    //close connection
+
     curl_close($ch);
     return $result;
 }

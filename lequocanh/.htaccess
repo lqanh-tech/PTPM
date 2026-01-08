@@ -1,123 +1,182 @@
-# ============================================
-# PERFORMANCE OPTIMIZATION FOR CLOUDFLARE
-# ============================================
+# ===================================
+# PERFORMANCE OPTIMIZATION v2.0
+# ===================================
 
-# PHP Settings
-php_value upload_max_filesize 50M
-php_value post_max_size 50M
-php_value max_execution_time 300
-php_value max_input_time 300
-php_value memory_limit 256M
-
-# Enable compression
+# Enable Gzip Compression
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript
-    AddOutputFilterByType DEFLATE application/javascript application/x-javascript application/json
-    AddOutputFilterByType DEFLATE application/xml application/xhtml+xml
-    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml application/x-font-ttf application/x-font-woff font/opentype
     
-    # Không compress files đã được compress
+    # Remove browser bugs
+    BrowserMatch ^Mozilla/4 gzip-only-text/html
+    BrowserMatch ^Mozilla/4\.0[678] no-gzip
+    BrowserMatch \bMSIE !no-gzip !gzip-only-text/html
+    
+    # Don't compress images
     SetEnvIfNoCase Request_URI \.(?:gif|jpe?g|png|webp)$ no-gzip dont-vary
 </IfModule>
 
-# Enable rewrite engine
-RewriteEngine On
-
-# ============================================
-# BROWSER CACHING - Static Assets
-# ============================================
-<IfModule mod_expires.c>
-    ExpiresActive On
-    
-    # Images - 1 year
-    ExpiresByType image/jpeg "access plus 1 year"
-    ExpiresByType image/png "access plus 1 year"
-    ExpiresByType image/gif "access plus 1 year"
-    ExpiresByType image/webp "access plus 1 year"
-    ExpiresByType image/svg+xml "access plus 1 year"
-    ExpiresByType image/x-icon "access plus 1 year"
-    
-    # CSS/JS - 1 year
-    ExpiresByType text/css "access plus 1 year"
-    ExpiresByType application/javascript "access plus 1 year"
-    ExpiresByType application/x-javascript "access plus 1 year"
-    
-    # Fonts - 1 year
-    ExpiresByType font/woff "access plus 1 year"
-    ExpiresByType font/woff2 "access plus 1 year"
-    ExpiresByType application/font-woff "access plus 1 year"
-    ExpiresByType application/font-woff2 "access plus 1 year"
-    
-    # HTML - 5 minutes
-    ExpiresByType text/html "access plus 5 minutes"
-    
-    # Default
-    ExpiresDefault "access plus 1 month"
+# Enable Brotli Compression (if available)
+<IfModule mod_brotli.c>
+    AddOutputFilterByType BROTLI_COMPRESS text/html text/plain text/xml text/css text/javascript application/javascript application/json
 </IfModule>
 
-# ============================================
-# CACHE-CONTROL HEADERS
-# ============================================
-<IfModule mod_headers.c>
-    # Static assets - immutable
-    <FilesMatch "\.(css|js|jpg|jpeg|png|gif|webp|svg|woff|woff2|ttf|eot|ico)$">
-        Header set Cache-Control "public, max-age=31536000, immutable"
-        Header set CDN-Cache-Control "max-age=31536000"
-    </FilesMatch>
-    
-    # HTML - short cache
-    <FilesMatch "\.(html|htm)$">
-        Header set Cache-Control "public, max-age=300"
-    </FilesMatch>
-    
-    # PHP - no cache by default (handled in code)
-    <FilesMatch "\.php$">
-        Header set Cache-Control "no-cache, must-revalidate"
-    </FilesMatch>
-    
-    # Security headers
-    Header always set X-Content-Type-Options "nosniff"
-    Header always set X-Frame-Options "SAMEORIGIN"
-    Header always set X-XSS-Protection "1; mode=block"
-    Header always set Referrer-Policy "strict-origin-when-cross-origin"
-    
-    # Remove server signature
-    Header unset Server
-    Header unset X-Powered-By
-</IfModule>
-
-# ============================================
-# ETAG - Enable for caching validation
-# ============================================
+# ETags
 <IfModule mod_headers.c>
     Header unset ETag
 </IfModule>
 FileETag None
 
-# ============================================
-# SECURITY SETTINGS
-# ============================================
+# Keep-Alive
+<IfModule mod_headers.c>
+    Header set Connection keep-alive
+</IfModule>
+
+# Browser Caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType application/x-javascript "access plus 1 month"
+    
+    ExpiresByType font/ttf "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+    
+    ExpiresDefault "access plus 2 days"
+</IfModule>
+
+# Add Cache-Control headers
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+    
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "max-age=2592000, public"
+    </FilesMatch>
+    
+    <FilesMatch "\.(woff|woff2|ttf|eot)$">
+        Header set Cache-Control "max-age=31536000, public"
+    </FilesMatch>
+</IfModule>
+
+# ===================================
+# SECURITY
+# ===================================
+
+# Disable directory browsing
 Options -Indexes
 
-# Block access to sensitive files
-<FilesMatch "\.(env|log|sql|ini|md|yml|yaml|json|lock)$">
+# Protect sensitive files
+<FilesMatch "^\.">
     Order allow,deny
     Deny from all
 </FilesMatch>
 
-# Block access to cache directory
+<FilesMatch "\.(env|ini|log|sql)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ===================================
+# URL REWRITING
+# ===================================
+
+RewriteEngine On
+
+# Force HTTPS (uncomment in production)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Remove trailing slash
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [R=301,L]
+
+
+# ===================================
+# ADVANCED PERFORMANCE
+# ===================================
+
+# Serve WebP images if available
 <IfModule mod_rewrite.c>
-    RewriteRule ^cache/ - [F,L]
+    RewriteCond %{HTTP_ACCEPT} image/webp
+    RewriteCond %{REQUEST_FILENAME} (.*)\.(jpe?g|png)$
+    RewriteCond %{REQUEST_FILENAME}.webp -f
+    RewriteRule ^(.+)\.(jpe?g|png)$ $1.$2.webp [T=image/webp,E=accept:1]
 </IfModule>
 
-# ============================================
-# URL REWRITING
-# ============================================
-<IfModule mod_rewrite.c>
-    # Service Worker
-    RewriteRule ^sw\.js$ sw.js [L]
+<IfModule mod_headers.c>
+    Header append Vary Accept env=REDIRECT_accept
+</IfModule>
+
+# Preload critical resources
+<IfModule mod_headers.c>
+    <FilesMatch "index\.php$">
+        Header add Link "</public_files/mycss.css>; rel=preload; as=style"
+        Header add Link "</administrator/elements_LQA/js_LQA/jscript.js>; rel=preload; as=script"
+    </FilesMatch>
+</IfModule>
+
+# ===================================
+# SECURITY HEADERS
+# ===================================
+
+<IfModule mod_headers.c>
+    # XSS Protection
+    Header set X-XSS-Protection "1; mode=block"
     
-    # Remove trailing slashes
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)/$ /$1 [L,R=301]
+    # Prevent MIME type sniffing
+    Header set X-Content-Type-Options "nosniff"
+    
+    # Clickjacking protection
+    Header set X-Frame-Options "SAMEORIGIN"
+    
+    # Referrer Policy
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (adjust as needed)
+    # Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:;"
+</IfModule>
+
+# ===================================
+# PHP OPTIMIZATION
+# ===================================
+
+<IfModule mod_php.c>
+    php_value memory_limit 256M
+    php_value max_execution_time 60
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_flag output_buffering On
+    php_value output_handler ob_gzhandler
+</IfModule>
+
+# ===================================
+# CACHE CONTROL EXTENDED
+# ===================================
+
+<IfModule mod_headers.c>
+    # HTML - short cache
+    <FilesMatch "\.(html|htm|php)$">
+        Header set Cache-Control "private, no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
+    
+    # API responses - no cache
+    <FilesMatch "api\.php$">
+        Header set Cache-Control "no-store, no-cache, must-revalidate"
+    </FilesMatch>
 </IfModule>

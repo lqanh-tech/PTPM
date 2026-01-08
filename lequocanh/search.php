@@ -5,7 +5,6 @@ $hanghoa = new hanghoa();
 $query = isset($_GET['query']) ? $_GET['query'] : '';
 $list_hanghoa = $hanghoa->searchHanghoa($query);
 
-// Lấy domain của trang web
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://';
 $host = $_SERVER['HTTP_HOST'];
 $baseUrl = $protocol . $host;
@@ -29,10 +28,9 @@ $baseUrl = $protocol . $host;
             <?php if (count($list_hanghoa) > 0): ?>
                 <?php foreach ($list_hanghoa as $v): ?>
                     <?php
-                    // Lấy thông tin hình ảnh từ bảng hinhanh
+
                     $hinhanh = $hanghoa->GetHinhAnhById($v->hinhanh);
 
-                    // Xác định đường dẫn hình ảnh
                     if ($v->hinhanh > 0) {
                         $imagePath = "./administrator/elements_LQA/mhanghoa/displayImage.php?id=" . $v->hinhanh;
                     } else {

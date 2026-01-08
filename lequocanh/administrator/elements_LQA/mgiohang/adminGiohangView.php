@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -142,10 +142,9 @@ foreach ($users as $u) {
 </div>
 
 <style>
-    /* Style cho chế độ in */
+
     @media print {
 
-        /* Ẩn các phần không cần in */
         body * {
             visibility: hidden;
         }
@@ -169,7 +168,6 @@ foreach ($users as $u) {
             display: none !important;
         }
 
-        /* Style cho header khi in */
         .print-header {
             text-align: center;
             margin-bottom: 20px;
@@ -185,7 +183,6 @@ foreach ($users as $u) {
             color: #666;
         }
 
-        /* Style cho bảng khi in */
         .table-responsive {
             overflow: visible;
             margin-top: 20px;
@@ -203,7 +200,6 @@ foreach ($users as $u) {
             text-align: left;
         }
 
-        /* Style cho dashboard summary khi in */
         .dashboard-summary {
             display: flex;
             justify-content: space-between;
@@ -217,7 +213,6 @@ foreach ($users as $u) {
             text-align: center;
         }
 
-        /* Định dạng trang in */
         @page {
             size: landscape;
             margin: 2cm;
@@ -252,7 +247,6 @@ foreach ($users as $u) {
         padding: 0.25rem 0.5rem;
     }
 
-    /* Style cho cột Thành tiền */
     .content-table th:nth-child(5),
     .content-table td:nth-child(5) {
         min-width: 120px;
@@ -273,12 +267,11 @@ foreach ($users as $u) {
 
     function removeItem(userId, productId) {
         if (confirm('Bạn có chắc chắn muốn xóa sản phẩm này khỏi giỏ hàng?')) {
-            // Thêm code xử lý xóa sản phẩm ở đây
+
             alert('Tính năng đang được phát triển');
         }
     }
 
-    // CSS cho chế độ in
     const style = document.createElement('style');
     style.textContent = `
     @media print {

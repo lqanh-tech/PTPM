@@ -1,15 +1,13 @@
 <?php
-// Bật hiển thị lỗi
+
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Kết nối database
-// Xác định đường dẫn tới file database.php
 $possible_paths = array(
-    dirname(__FILE__) . '/../mod/database.php',                    // Từ thư mục mkhachhang
-    dirname(dirname(__FILE__)) . '/mod/database.php',              // Từ thư mục elements_LQA
-    dirname(dirname(dirname(__FILE__))) . '/elements_LQA/mod/database.php'  // Từ thư mục administrator
+    dirname(__FILE__) . '/../mod/database.php',
+    dirname(dirname(__FILE__)) . '/mod/database.php',
+    dirname(dirname(dirname(__FILE__))) . '/elements_LQA/mod/database.php'
 );
 
 $database_file = null;
@@ -26,9 +24,6 @@ if ($database_file === null) {
 
 require_once $database_file;
 
-/**
- * Class SimpleDB - Wrapper cho class Database
- */
 class SimpleDB
 {
     private static $instance = null;
@@ -83,17 +78,10 @@ class SimpleDB
     }
 }
 
-/**
- * Class KhachHang
- * Lớp xử lý thông tin khách hàng
- */
 class KhachHang
 {
     private $db;
 
-    /**
-     * Khởi tạo đối tượng KhachHang
-     */
     public function __construct()
     {
         try {
@@ -103,16 +91,9 @@ class KhachHang
         }
     }
 
-
-
-    /**
-     * Kiểm tra xem username có phải là nhân viên không (legacy method)
-     * @param string $username Username cần kiểm tra
-     * @return bool True nếu là nhân viên, False nếu không phải
-     */
     private function isNhanVien($username)
     {
-        // Lấy user ID từ username
+
         $userSql = 'SELECT iduser FROM user WHERE username = ?';
         $userId = $this->db->queryValue($userSql, [$username]);
 
@@ -120,12 +101,10 @@ class KhachHang
             return false;
         }
 
-        // Kiểm tra trong bảng nhân viên (cách cũ)
         $sql = 'SELECT nv.* FROM nhanvien nv WHERE nv.iduser = ?';
         $result = $this->db->query($sql, [$userId]);
         $isStaffOld = count($result) > 0;
 
-        // Kiểm tra vai trò staff (cách mới)
         $roleSql = 'SELECT COUNT(*) as count FROM user_vai_tro ur
                     INNER JOIN vai_tro vt ON ur.ma_vai_tro = vt.id
                     WHERE ur.ma_nguoi_dung = ? AND vt.ten_vai_tro = "staff"';
@@ -134,13 +113,9 @@ class KhachHang
         return $isStaffOld || $isStaffNew;
     }
 
-    /**
-     * Lấy danh sách tất cả khách hàng (đơn giản hóa)
-     * @return array Danh sách khách hàng
-     */
     public function getAll()
     {
-        // Lấy tất cả người dùng không phải admin và không phải nhân viên
+
         $sql = "SELECT u.iduser as id, u.username, u.hoten, u.gioitinh, u.ngaysinh, u.diachi, u.dienthoai,
                        u.ngaydangki as ngaytao, u.setlock
                 FROM user u
@@ -161,11 +136,6 @@ class KhachHang
         return $this->db->query($sql);
     }
 
-    /**
-     * Lấy thông tin khách hàng theo ID
-     * @param int $id ID của khách hàng
-     * @return array|false Thông tin khách hàng hoặc false nếu không tìm thấy
-     */
     public function getById($id)
     {
         $sql = "SELECT u.iduser as id, u.username, u.hoten, u.gioitinh, u.ngaysinh, u.diachi, u.dienthoai,
@@ -174,19 +144,13 @@ class KhachHang
                 WHERE u.iduser = ? AND u.username != 'admin'";
         $user = $this->db->queryOne($sql, [$id]);
 
-        // Kiểm tra xem người dùng có phải là nhân viên không
         if ($user && $this->isNhanVien($user['username'])) {
-            return false; // Không trả về thông tin nếu là nhân viên
+            return false;
         }
 
         return $user;
     }
 
-    /**
-     * Lấy thông tin khách hàng theo username
-     * @param string $username Username của khách hàng
-     * @return array|false Thông tin khách hàng hoặc false nếu không tìm thấy
-     */
     public function getByUsername($username)
     {
         $sql = "SELECT u.iduser as id, u.username, u.hoten, u.gioitinh, u.ngaysinh, u.diachi, u.dienthoai,
@@ -195,23 +159,16 @@ class KhachHang
                 WHERE u.username = ? AND u.username != 'admin'";
         $user = $this->db->queryOne($sql, [$username]);
 
-        // Kiểm tra xem người dùng có phải là nhân viên không
         if ($user && $this->isNhanVien($user['username'])) {
-            return false; // Không trả về thông tin nếu là nhân viên
+            return false;
         }
 
         return $user;
     }
 
-    /**
-     * Tìm kiếm khách hàng theo từ khóa
-     * @param string $keyword Từ khóa tìm kiếm
-     * @param string $field Trường cần tìm kiếm (all, hoten, dienthoai, email, diachi)
-     * @return array Danh sách khách hàng tìm thấy
-     */
     public function search($keyword, $field = 'all')
     {
-        // Lấy danh sách tất cả người dùng không phải admin
+
         if ($field == 'all') {
             $sql = "SELECT u.iduser as id, u.username, u.hoten, u.gioitinh, u.ngaysinh, u.diachi, u.dienthoai,
                            u.ngaydangki as ngaytao, u.setlock
@@ -230,7 +187,6 @@ class KhachHang
 
         $users = $this->db->query($sql, $params);
 
-        // Lọc ra những người không phải nhân viên
         $customers = [];
         foreach ($users as $user) {
             if (!$this->isNhanVien($user['username'])) {
@@ -241,34 +197,27 @@ class KhachHang
         return $customers;
     }
 
-    /**
-     * Gán vai trò customer cho người dùng
-     * @param int $userId ID của người dùng
-     * @return bool Kết quả gán vai trò
-     */
     private function assignCustomerRole($userId)
     {
         try {
-            // Lấy ID của vai trò customer
+
             $roleSql = "SELECT id FROM vai_tro WHERE ten_vai_tro = 'customer'";
             $roleId = $this->db->queryValue($roleSql);
 
             if (!$roleId) {
-                // Tạo vai trò customer nếu chưa tồn tại
+
                 $createRoleSql = "INSERT INTO vai_tro (ten_vai_tro, mo_ta) VALUES ('customer', 'Khách hàng - chỉ có quyền mua hàng và quản lý tài khoản cá nhân')";
                 $this->db->execute($createRoleSql);
                 $roleId = $this->db->lastInsertId();
             }
 
-            // Kiểm tra xem đã có vai trò này chưa
             $checkSql = "SELECT COUNT(*) as count FROM user_vai_tro WHERE ma_nguoi_dung = ? AND ma_vai_tro = ?";
             $exists = $this->db->queryValue($checkSql, [$userId, $roleId]);
 
             if ($exists > 0) {
-                return true; // Đã có vai trò này rồi
+                return true;
             }
 
-            // Gán vai trò customer
             $assignSql = "INSERT INTO user_vai_tro (ma_nguoi_dung, ma_vai_tro) VALUES (?, ?)";
             $result = $this->db->execute($assignSql, [$userId, $roleId]);
 
@@ -279,28 +228,21 @@ class KhachHang
         }
     }
 
-    /**
-     * Thêm khách hàng mới
-     * @param array $data Dữ liệu khách hàng
-     * @return int|false ID của khách hàng mới hoặc false nếu thất bại
-     */
     public function add($data)
     {
-        // Kiểm tra xem username đã tồn tại chưa
+
         $checkSql = "SELECT iduser FROM user WHERE username = ?";
         $existingUser = $this->db->queryOne($checkSql, [$data['username']]);
 
         if ($existingUser) {
-            // Username đã tồn tại
+
             return false;
         }
 
-        // Thêm người dùng mới vào bảng user
         $sql = "INSERT INTO user (username, password, hoten, gioitinh, ngaysinh, diachi, dienthoai, setlock)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
 
-        // Tạo mật khẩu mặc định (có thể thay đổi theo yêu cầu)
-        $defaultPassword = md5('123456');
+        $defaultPassword = password_hash('123456', PASSWORD_BCRYPT, ['cost' => 12]);
 
         $params = [
             $data['username'],
@@ -317,7 +259,6 @@ class KhachHang
         if ($result) {
             $userId = $this->db->lastInsertId();
 
-            // Tự động gán vai trò customer cho khách hàng mới
             $this->assignCustomerRole($userId);
 
             return $userId;
@@ -326,15 +267,9 @@ class KhachHang
         return false;
     }
 
-    /**
-     * Cập nhật thông tin khách hàng
-     * @param int $id ID của khách hàng
-     * @param array $data Dữ liệu cập nhật
-     * @return bool Kết quả cập nhật
-     */
     public function update($id, $data)
     {
-        // Kiểm tra xem người dùng có phải là nhân viên không
+
         $user = $this->getById($id);
         if (!$user) {
             return false;
@@ -357,28 +292,17 @@ class KhachHang
         return $result > 0;
     }
 
-    /**
-     * Xóa khách hàng
-     * @param int $id ID của khách hàng
-     * @return bool Kết quả xóa
-     */
     public function delete($id)
     {
-        // Không thực sự xóa người dùng, chỉ vô hiệu hóa tài khoản
+
         $sql = "UPDATE user SET setlock = 0 WHERE iduser = ?";
         $result = $this->db->execute($sql, [$id]);
         return $result > 0;
     }
 
-    /**
-     * Lấy lịch sử mua hàng của khách hàng
-     * @param string $username Username của khách hàng
-     * @param int $limit Số lượng đơn hàng tối đa
-     * @return array Danh sách đơn hàng
-     */
     public function getOrderHistory($username, $limit = 5)
     {
-        // Kiểm tra xem bảng orders có tồn tại không
+
         try {
             $sql = "SELECT o.*,
                         (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
@@ -393,12 +317,6 @@ class KhachHang
         }
     }
 
-    /**
-     * Lấy sản phẩm đã mua của khách hàng
-     * @param string $username Username của khách hàng
-     * @param int $limit Số lượng sản phẩm tối đa
-     * @return array Danh sách sản phẩm
-     */
     public function getPurchasedProducts($username, $limit = 5)
     {
         try {
@@ -420,11 +338,6 @@ class KhachHang
         }
     }
 
-    /**
-     * Lấy tổng chi tiêu của khách hàng
-     * @param string $username Username của khách hàng
-     * @return float Tổng chi tiêu
-     */
     public function getTotalSpent($username)
     {
         try {
@@ -438,11 +351,6 @@ class KhachHang
         }
     }
 
-    /**
-     * Lấy số lượng đơn hàng của khách hàng
-     * @param string $username Username của khách hàng
-     * @return int Số lượng đơn hàng
-     */
     public function getOrderCount($username)
     {
         try {
@@ -456,13 +364,6 @@ class KhachHang
         }
     }
 
-
-
-    /**
-     * Định dạng giới tính
-     * @param int $gioitinh Giới tính (0: Nữ, 1: Nam, 2: Khác)
-     * @return string Giới tính đã định dạng
-     */
     public static function formatGender($gioitinh)
     {
         switch ($gioitinh) {

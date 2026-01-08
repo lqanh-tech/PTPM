@@ -1,12 +1,4 @@
 <?php
-/**
- * Shipment Tracking Page
- * 
- * Allows customers to track their orders using:
- * - Order code
- * - Tracking number
- * - GHN order code
- */
 
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/ShippingCls.php';
@@ -17,7 +9,6 @@ $trackingInfo = null;
 $error = null;
 $searchTerm = '';
 
-// Handle search
 if (isset($_GET['track']) && !empty($_GET['track'])) {
     $searchTerm = trim($_GET['track']);
     

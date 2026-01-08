@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -223,7 +223,7 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('baocaoview', $userna
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Thêm hiệu ứng hover cho các card
+
         const cards = document.querySelectorAll('.dashboard-card');
         cards.forEach(card => {
             card.addEventListener('mouseenter', function() {

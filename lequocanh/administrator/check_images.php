@@ -1,14 +1,8 @@
 <?php
 
-/**
- * Image Path Checker Script
- * This script checks if image paths are working correctly
- */
-
 echo "<h2>Image Path Checker</h2>";
 echo "<hr>";
 
-// Test paths
 $testPaths = [
     "lequocanh/administrator/elements_LQA/img_LQA/no-image.png",
     "lequocanh/administrator/uploads/",
@@ -20,7 +14,7 @@ foreach ($testPaths as $path) {
     if (file_exists($path)) {
         if (is_dir($path)) {
             echo "<p style='color: green;'>✓ Directory exists: $path</p>";
-            // List files in directory
+
             $files = scandir($path);
             foreach ($files as $file) {
                 if ($file !== '.' && $file !== '..') {

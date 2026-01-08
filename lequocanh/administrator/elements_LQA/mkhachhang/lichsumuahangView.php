@@ -1,20 +1,12 @@
 <?php
 
-/**
- * File: lichsumuahangView.php
- * Hiển thị lịch sử mua hàng của khách hàng
- */
-
-// Kết nối database
 require_once './elements_LQA/mod/database.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Lấy thông tin tìm kiếm
 $search_username = isset($_GET['search_username']) ? trim($_GET['search_username']) : '';
 $search_customer = isset($_GET['search_customer']) ? trim($_GET['search_customer']) : '';
 
-// Lấy danh sách khách hàng để hiển thị trong dropdown
 $customersSql = "SELECT DISTINCT u.iduser, u.username, u.hoten 
                  FROM user u 
                  WHERE u.username != 'admin' 
@@ -24,7 +16,6 @@ $customersStmt = $conn->prepare($customersSql);
 $customersStmt->execute();
 $customers = $customersStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Xây dựng câu truy vấn lịch sử mua hàng
 $whereClauses = [];
 $params = [];
 
@@ -44,7 +35,6 @@ if (!empty($whereClauses)) {
     $whereClause = 'WHERE ' . implode(' AND ', $whereClauses);
 }
 
-// Truy vấn lịch sử mua hàng
 $sql = "SELECT dh.*,
                MAX(u.hoten) as hoten,
                MAX(u.username) as username,
@@ -64,7 +54,6 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Hàm format trạng thái
 function formatStatus($status)
 {
     switch ($status) {
@@ -83,7 +72,6 @@ function formatStatus($status)
     }
 }
 
-// Hàm format trạng thái thanh toán
 function formatPaymentStatus($status)
 {
     switch ($status) {
@@ -98,7 +86,6 @@ function formatPaymentStatus($status)
     }
 }
 
-// Hàm format phương thức thanh toán
 function formatPaymentMethod($method)
 {
     switch ($method) {
@@ -316,11 +303,10 @@ function formatPaymentMethod($method)
 
 <script>
     function viewOrderDetail(orderId) {
-        // Hiển thị modal
+
         var modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
         modal.show();
 
-        // Reset nội dung modal với loading animation đẹp
         document.getElementById('orderDetailContent').innerHTML = `
             <div class="text-center py-5">
                 <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
@@ -331,7 +317,6 @@ function formatPaymentMethod($method)
             </div>
         `;
 
-        // Load chi tiết đơn hàng bằng AJAX
         fetch('elements_LQA/mkhachhang/orderDetailAjax.php?order_id=' + orderId)
             .then(response => {
                 if (!response.ok) {
@@ -340,11 +325,10 @@ function formatPaymentMethod($method)
                 return response.text();
             })
             .then(data => {
-                // Thêm hiệu ứng fade in
+
                 document.getElementById('orderDetailContent').style.opacity = '0';
                 document.getElementById('orderDetailContent').innerHTML = data;
 
-                // Fade in effect
                 setTimeout(() => {
                     document.getElementById('orderDetailContent').style.transition = 'opacity 0.3s ease-in-out';
                     document.getElementById('orderDetailContent').style.opacity = '1';

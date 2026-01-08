@@ -1,7 +1,4 @@
 <?php
-/**
- * FINAL CHECK - Verify ALL Shipping Methods
- */
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
@@ -27,7 +24,6 @@ try {
     echo "<div class='container'>\n";
     echo "<h2>🔍 FINAL CHECK - Tất Cả Phương Thức Vận Chuyển</h2>\n";
     
-    // 1. Check fee configs per method
     $stmt = $db->query("
         SELECT 
             sm.id,
@@ -97,7 +93,6 @@ try {
         echo "</div>\n";
     }
     
-    // 2. Show all fee configs
     echo "<h3>2. Chi Tiết Tất Cả Fee Configs</h3>\n";
     
     $stmt = $db->query("
@@ -141,7 +136,6 @@ try {
     }
     echo "</table>\n";
     
-    // 3. Test VIEW query
     echo "<h3>3. Test VIEW Query (Giống Checkout Page)</h3>\n";
     
     $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees WHERE is_active = 1 ORDER BY sort_order DESC");
@@ -166,7 +160,6 @@ try {
     }
     echo "</table>\n";
     
-    // 4. Final instructions
     echo "<h3>4. Các Bước Tiếp Theo</h3>\n";
     
     if (!$hasIssue) {

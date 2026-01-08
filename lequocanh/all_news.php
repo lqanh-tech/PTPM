@@ -6,7 +6,7 @@ require_once __DIR__ . '/administrator/elements_LQA/mod/NewsManager.php';
 SessionManager::start();
 
 $newsManager = new NewsManager();
-$allNews = $newsManager->getPublishedNews(100); // Lấy tất cả tin đã xuất bản
+$allNews = $newsManager->getPublishedNews(100);
 ?>
 <!DOCTYPE html>
 <html lang="vi">

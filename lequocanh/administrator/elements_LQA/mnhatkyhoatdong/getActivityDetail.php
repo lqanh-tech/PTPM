@@ -1,22 +1,14 @@
 <?php
 
-/**
- * File: getActivityDetail.php
- * Lấy thông tin chi tiết nhật ký hoạt động
- */
-
 session_start();
 
-// Kiểm tra quyền truy cập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     echo '<div class="alert alert-danger">Bạn không có quyền truy cập!</div>';
     exit;
 }
 
-// Include các file cần thiết
 require_once '../mod/nhatKyHoatDongCls.php';
 
-// Lấy ID nhật ký từ GET
 $activityId = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if ($activityId <= 0) {
@@ -25,10 +17,9 @@ if ($activityId <= 0) {
 }
 
 try {
-    // Khởi tạo đối tượng nhật ký
+
     $nhatKyObj = new NhatKyHoatDong();
 
-    // Lấy thông tin chi tiết nhật ký
     $activity = $nhatKyObj->getActivityById($activityId);
 
     if (!$activity) {
@@ -36,7 +27,6 @@ try {
         exit;
     }
 
-    // Hiển thị thông tin chi tiết
 ?>
     <div class="activity-detail">
         <table class="detail-table">

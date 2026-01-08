@@ -1,8 +1,4 @@
 <?php
-/**
- * Debug Checkout Shipping Display
- * Kiểm tra chính xác dữ liệu nào đang được hiển thị
- */
 
 session_start();
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
@@ -10,7 +6,6 @@ require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Set giả lập session như trong checkout
     $_SESSION['cart_weight'] = $_SESSION['cart_weight'] ?? 1.0;
     $_SESSION['cart_total'] = $_SESSION['cart_total'] ?? 100000;
     $_SESSION['province_id'] = $_SESSION['province_id'] ?? 1;
@@ -42,7 +37,6 @@ try {
     echo "District ID: {$districtId}<br>\n";
     echo "</div>\n";
     
-    // 1. Query giống CHÍNH XÁC như trong shipping_method_selector_v2.php
     echo "<h3>1. Query From VIEW (giống shipping_method_selector_v2.php)</h3>\n";
     
     $stmt = $db->query("SELECT * FROM v_shipping_methods_with_fees WHERE is_active = 1 ORDER BY sort_order DESC");
@@ -64,7 +58,6 @@ try {
     }
     echo "</table>\n";
     
-    // 2. Tính phí cho từng phương thức (giống logic trong file)
     echo "<h3>2. Calculate Fees (giống logic trong shipping_method_selector_v2.php)</h3>\n";
     
     echo "<table>\n";
@@ -72,13 +65,12 @@ try {
     
     $processedMethods = [];
     foreach ($shippingMethods as $index => &$method) {
-        // Gọi function tính phí
+
         $stmt = $db->prepare("SELECT calculate_shipping_fee(?, ?, ?, ?, ?) as fee");
         $stmt->execute([$method['id'], $provinceId, $districtId, $cartWeight, $cartValue]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $method['calculated_fee'] = $result['fee'] ?? 0;
         
-        // Lấy thông tin chi tiết phí
         $stmt = $db->prepare("
             SELECT base_fee, fee_per_kg, min_order_free_ship
             FROM shipping_fees
@@ -94,7 +86,6 @@ try {
         $method['min_free_ship'] = $feeDetail['min_order_free_ship'] ?? 0;
         $method['is_free'] = ($method['calculated_fee'] == 0);
         
-        // Check if this is a duplicate
         $isDuplicate = false;
         $key = $method['code'] . '_' . $method['name'] . '_' . $method['calculated_fee'];
         if (isset($processedMethods[$key])) {
@@ -118,7 +109,6 @@ try {
     }
     echo "</table>\n";
     
-    // 3. Kiểm tra có duplicate không
     echo "<h3>3. Check Duplicates</h3>\n";
     
     $duplicates = [];
@@ -148,7 +138,6 @@ try {
         echo "</div>\n";
     }
     
-    // 4. Show final array that will be rendered
     echo "<h3>4. Final Data (sẽ được render trong HTML)</h3>\n";
     echo "<pre>\n";
     foreach ($shippingMethods as $idx => $method) {
@@ -156,7 +145,6 @@ try {
     }
     echo "</pre>\n";
     
-    // 5. Direct query to shipping_methods table
     echo "<h3>5. Direct Query to shipping_methods (bypass VIEW)</h3>\n";
     $stmt = $db->query("SELECT * FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order DESC");
     $directMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);

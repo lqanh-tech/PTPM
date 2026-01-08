@@ -1,11 +1,7 @@
 <?php
-/**
- * Database Check - Kiểm tra các đơn hàng MoMo trong database
- */
 
-// Kết nối database
 try {
-    $host = 'mysql'; // Từ .env: DB_HOST
+    $host = 'mysql';
     $port = '3306';
     $dbname = 'sales_management';
     $username = 'app_user';
@@ -101,7 +97,7 @@ try {
         </div>
 
         <?php
-        // 1. Kiểm tra các đơn hàng MoMo
+
         try {
             $sql = "SELECT 
                         id,
@@ -205,7 +201,6 @@ try {
                 echo "</table>";
                 echo "</div>";
                 
-                // Tìm các đơn hàng pending
                 $pendingOrders = array_filter($orders, function($order) {
                     return $order['trang_thai_thanh_toan'] == 'pending';
                 });
@@ -217,7 +212,6 @@ try {
                     echo "<p class='mb-0'>Nếu bạn đã thanh toán thành công, vui lòng click nút \"Đánh dấu Paid\" hoặc chạy script SQL.</p>";
                     echo "</div>";
                     
-                    // Hiển thị thông tin để update
                     echo "<div class='info-box mt-3'>";
                     echo "<h5><i class='fas fa-code me-2'></i>SQL Commands để Update</h5>";
                     foreach ($pendingOrders as $order) {
@@ -242,7 +236,6 @@ try {
                 echo "</div>";
             }
             
-            // Kiểm tra giỏ hàng
             echo "<hr class='my-4'>";
             echo "<h4><i class='fas fa-shopping-cart me-2'></i>Giỏ Hàng</h4>";
             
@@ -282,7 +275,7 @@ try {
     <script>
         function updateOrder(orderId, status) {
             if (confirm('Bạn có chắc muốn cập nhật đơn hàng #' + orderId + ' thành ' + status + '?')) {
-                // Tạo form ẩn để submit
+
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = '';
@@ -325,10 +318,10 @@ try {
 </html>
 
 <?php
-// Xử lý POST requests
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Update order status
+
         if (isset($_POST['update_order_id']) && isset($_POST['update_status'])) {
             $orderId = intval($_POST['update_order_id']);
             $status = $_POST['update_status'];
@@ -341,14 +334,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare($updateSql);
             $stmt->execute([$status, $orderId]);
             
-            // Xóa giỏ hàng
             $deleteSql = "DELETE FROM tbl_giohang WHERE user_id = 'khachhang'";
             $pdo->exec($deleteSql);
             
             echo "<script>alert('Đã cập nhật đơn hàng #$orderId!'); location.reload();</script>";
         }
         
-        // Clear cart
         if (isset($_POST['clear_cart'])) {
             $deleteSql = "DELETE FROM tbl_giohang WHERE user_id = 'khachhang'";
             $pdo->exec($deleteSql);

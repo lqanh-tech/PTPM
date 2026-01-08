@@ -1,14 +1,13 @@
 <?php
 
-/**
- * API to get promotion data for editing
- * GET /administrator/elements_LQA/madmin/api_get_promotion.php?id=ID
- */
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header_remove('X-Powered-By');
 
 require_once __DIR__ . '/../mod/sessionManager.php';
 SessionManager::start();
 
-// Check access rights using PhanQuyen system
 require_once __DIR__ . '/../mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');

@@ -1,17 +1,15 @@
 <?php
 session_start();
 
-// Xử lý đăng nhập nhanh
 if (isset($_POST['login'])) {
     $_SESSION['username'] = $_POST['username'];
-    $_SESSION['phanquyen'] = 1; // Admin
+    $_SESSION['phanquyen'] = 1;
     $_SESSION['login'] = true;
     
     echo "<script>alert('Đăng nhập thành công!'); window.location.href = '?req=nhatKyHoatDongTichHop';</script>";
     exit;
 }
 
-// Kiểm tra đã đăng nhập chưa
 if (isset($_SESSION['login']) && $_SESSION['login']) {
     echo "<div style='background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px;'>";
     echo "<h3>✅ Đã đăng nhập với username: " . $_SESSION['username'] . "</h3>";
@@ -20,7 +18,6 @@ if (isset($_SESSION['login']) && $_SESSION['login']) {
     echo "</div>";
 }
 
-// Xử lý đăng xuất
 if (isset($_GET['logout'])) {
     session_destroy();
     echo "<script>alert('Đã đăng xuất!'); window.location.href = 'quick_login.php';</script>";

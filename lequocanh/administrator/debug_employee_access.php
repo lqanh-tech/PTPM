@@ -1,11 +1,7 @@
 <?php
-/**
- * Script debug để kiểm tra quyền truy cập của nhân viên
- */
 
 session_start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     die('Bạn cần đăng nhập để chạy script này.');
 }

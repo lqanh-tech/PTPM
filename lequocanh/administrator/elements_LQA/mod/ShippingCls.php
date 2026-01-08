@@ -1,13 +1,4 @@
 <?php
-/**
- * Shipping Management Class
- * 
- * Main class for handling all shipping-related operations
- * Coordinates between GHN API and fallback pricing
- * 
- * @author LQA E-commerce System
- * @version 1.0
- */
 
 require_once __DIR__ . '/GHNService.php';
 require_once __DIR__ . '/database.php';
@@ -22,33 +13,12 @@ class Shipping
     {
         $this->db = Database::getInstance()->getConnection();
         $this->ghnService = new GHNService();
-        $this->enableGHN = true; // Always enabled (will use mock if no API token)
+        $this->enableGHN = true;
     }
 
-    /**
-     * Calculate shipping fee with automatic fallback
-     * 
-     * @param array $params
-     *   - to_district_id (required for GHN)
-     *   - to_ward_code (required for GHN)
-     *   - to_province_name (required for fallback)
-     *   - latitude (optional for fallback)
-     *   - longitude (optional for fallback)
-     *   - weight (optional): Package weight in grams
-     *   - insurance_value (optional): Insurance value
-     * 
-     * @return array [
-     *   'success' => bool,
-     *   'shipping_fee' => float,
-     *   'method' => 'GHN' | 'FALLBACK',
-     *   'estimated_days' => int,
-     *   'distance_km' => float (if fallback),
-     *   'message' => string
-     * ]
-     */
     public function calculateShippingFee($params)
     {
-        // Try GHN Service first
+
         if ($this->enableGHN && !empty($params['to_district_id']) && !empty($params['to_ward_code'])) {
             $ghnResult = $this->ghnService->calculateShippingComplete([
                 'to_district_id' => $params['to_district_id'],
@@ -75,24 +45,12 @@ class Shipping
             }
         }
 
-        // Fallback to distance-based calculation
         return $this->calculateFallbackFee($params);
     }
 
-    /**
-     * Get estimated delivery time
-     * 
-     * @param array $params Same as calculateShippingFee
-     * @return array [
-     *   'success' => bool,
-     *   'estimated_days' => int,
-     *   'estimated_delivery' => DateTime,
-     *   'leadtime_seconds' => int
-     * ]
-     */
     public function getDeliveryTime($params)
     {
-        // Try GHN Service first
+
         if ($this->enableGHN && !empty($params['to_district_id']) && !empty($params['to_ward_code'])) {
             $ghnResult = $this->ghnService->calculateShippingComplete([
                 'to_district_id' => $params['to_district_id'],
@@ -111,7 +69,6 @@ class Shipping
             }
         }
 
-        // Fallback estimate
         $estimatedDays = $this->estimateFallbackDeliveryDays($params);
         
         return [
@@ -122,12 +79,6 @@ class Shipping
         ];
     }
 
-    /**
-     * Calculate both fee and delivery time in one call
-     * 
-     * @param array $params
-     * @return array Combined result
-     */
     public function calculateShippingComplete($params)
     {
         $feeResult = $this->calculateShippingFee($params);
@@ -149,25 +100,9 @@ class Shipping
         ];
     }
 
-    /**
-     * Create shipping order
-     * 
-     * @param array $orderData
-     *   - order_id: Internal order ID
-     *   - order_code: Order code for reference
-     *   - receiver_name
-     *   - receiver_phone
-     *   - receiver_address (full address string)
-     *   - to_province_id, to_district_id, to_ward_code
-     *   - weight
-     *   - cod_amount (optional)
-     *   - items (optional)
-     * 
-     * @return array Result with tracking_number
-     */
     public function createShippingOrder($orderData)
     {
-        // Try GHN if available
+
         if ($this->enableGHN && !empty($orderData['to_district_id']) && !empty($orderData['to_ward_code'])) {
             $ghnResult = $this->ghnApi->createShippingOrder([
                 'receiver_name' => $orderData['receiver_name'],
@@ -186,7 +121,6 @@ class Shipping
             if ($ghnResult['success']) {
                 $ghnOrderData = $ghnResult['data'];
                 
-                // Save to database
                 $trackingId = $this->saveShippingTracking([
                     'order_id' => $orderData['order_id'] ?? 0,
                     'order_code' => $orderData['order_code'],
@@ -214,7 +148,6 @@ class Shipping
             }
         }
 
-        // Fallback: Create manual tracking
         $trackingNumber = $this->generateTrackingNumber($orderData['order_code']);
         
         $trackingId = $this->saveShippingTracking([
@@ -238,13 +171,10 @@ class Shipping
         ];
     }
 
-    /**
-     * Save shipping tracking to database
-     */
     private function saveShippingTracking($data)
     {
         try {
-            // Get shipping method ID
+
             $methodSql = "SELECT id FROM shipping_methods WHERE code = ? LIMIT 1";
             $methodStmt = $this->db->prepare($methodSql);
             $methodStmt->execute([$data['shipping_method_code']]);
@@ -297,24 +227,20 @@ class Shipping
         }
     }
 
-    /**
-     * Track shipment by tracking number or order code
-     */
     public function trackShipment($trackingNumberOrOrderCode)
     {
-        // First check our database
+
         $localTracking = $this->getLocalTracking($trackingNumberOrOrderCode);
         
         if (!$localTracking) {
             return ['success' => false, 'message' => 'Tracking number not found'];
         }
 
-        // If using GHN and have carrier code, get live tracking
         if ($localTracking['shipping_method_code'] === 'GHN' && !empty($localTracking['carrier_order_code'])) {
             $ghnTracking = $this->ghnApi->trackOrder($localTracking['carrier_order_code']);
             
             if ($ghnTracking['success']) {
-                // Update local database with latest info
+
                 $this->updateTrackingFromGHN($localTracking['id'], $ghnTracking['data']);
                 
                 return [
@@ -325,7 +251,6 @@ class Shipping
             }
         }
 
-        // Return local tracking data
         return [
             'success' => true,
             'tracking_info' => $localTracking,
@@ -333,9 +258,6 @@ class Shipping
         ];
     }
 
-    /**
-     * Get local tracking from database
-     */
     private function getLocalTracking($trackingNumberOrOrderCode)
     {
         try {
@@ -351,9 +273,6 @@ class Shipping
         }
     }
 
-    /**
-     * Update tracking info from GHN response
-     */
     private function updateTrackingFromGHN($trackingId, $ghnData)
     {
         try {
@@ -377,9 +296,6 @@ class Shipping
         }
     }
 
-    /**
-     * Map GHN status to our status
-     */
     private function mapGHNStatus($ghnStatus)
     {
         $statusMap = [
@@ -409,13 +325,6 @@ class Shipping
         return $statusMap[$ghnStatus] ?? 'unknown';
     }
 
-    // ========================================
-    // FALLBACK METHODS
-    // ========================================
-
-    /**
-     * Calculate shipping fee using fallback method (database configuration)
-     */
     private function calculateFallbackFee($params)
     {
         require_once __DIR__ . '/ShippingFeeService.php';
@@ -424,45 +333,35 @@ class Shipping
         $provinceId = $params['to_province_id'] ?? 0;
         $districtId = $params['to_district_id'] ?? 0;
         $weight = $params['weight'] ?? 1000;
-        $orderTotal = $params['insurance_value'] ?? 0; // Using insurance value as order total proxy
+        $orderTotal = $params['insurance_value'] ?? 0;
 
         $result = $feeService->calculateFee($provinceId, $districtId, $weight, $orderTotal);
 
         return [
             'success' => true,
             'shipping_fee' => $result['fee'],
-            'method' => 'STANDARD', // Default method code
+            'method' => 'STANDARD',
             'method_name' => $result['name'],
-            'distance_km' => 0, // Not calculating distance anymore
+            'distance_km' => 0,
             'message' => $result['is_free'] ? $result['message'] : 'Calculated based on shipping configuration'
         ];
     }
 
-    /**
-     * Estimate delivery days for fallback
-     */
     private function estimateFallbackDeliveryDays($params)
     {
-        // Simple logic: 1 day for same city, 2-3 days for other cities
-        // This could be improved by adding delivery_time to shipping_fees table
+
         $toProvinceId = $params['to_province_id'] ?? 0;
         
-        // Hanoi (ID 1) and HCM (ID 50 - example)
-        if ($toProvinceId == 1 || $toProvinceId == 79) { // 79 is HCM usually
+        if ($toProvinceId == 1 || $toProvinceId == 79) {
             return 1;
         } else {
             return 3;
         }
     }
 
-
-
-    /**
-     * Calculate distance between two GPS coordinates (Haversine formula)
-     */
     private function calculateDistance($lat1, $lon1, $lat2, $lon2)
     {
-        $earthRadius = 6371; // km
+        $earthRadius = 6371;
 
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
@@ -477,25 +376,16 @@ class Shipping
         return $distance;
     }
 
-    /**
-     * Generate unique tracking number
-     */
     private function generateTrackingNumber($orderCode)
     {
         return 'LQA' . strtoupper($orderCode) . rand(1000, 9999);
     }
 
-    /**
-     * Get config from database
-     */
     private function getConfig($key, $default = null)
     {
         return $this->ghnApi->getConfigValue($key, $default);
     }
 
-    /**
-     * Get GHN API instance
-     */
     public function getGHNApi()
     {
         return $this->ghnApi;

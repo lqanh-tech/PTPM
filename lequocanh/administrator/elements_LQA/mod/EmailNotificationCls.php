@@ -1,11 +1,4 @@
 <?php
-/**
- * Email & SMS Notification Class
- * Gửi thông báo email/SMS khi xác nhận đơn hàng
- * 
- * @author LQA E-commerce System
- * @version 1.0
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -14,7 +7,6 @@ class EmailNotification
     private $db;
     private $config;
     
-    // Email templates
     const TEMPLATE_ORDER_CONFIRMATION = 'order_confirmation';
     const TEMPLATE_ORDER_APPROVED = 'order_approved';
     const TEMPLATE_ORDER_SHIPPED = 'order_shipped';
@@ -29,9 +21,6 @@ class EmailNotification
         $this->ensureTableExists();
     }
 
-    /**
-     * Load cấu hình email từ .env hoặc database
-     */
     private function loadConfig()
     {
         $this->config = [
@@ -46,9 +35,6 @@ class EmailNotification
         ];
     }
 
-    /**
-     * Đảm bảo bảng notification_logs tồn tại
-     */
     private function ensureTableExists()
     {
         try {
@@ -76,9 +62,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Gửi email xác nhận đơn hàng
-     */
     public function sendOrderConfirmation($orderId, $userEmail, $userName = '')
     {
         $order = $this->getOrderDetails($orderId);
@@ -97,9 +80,6 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Gửi email khi đơn hàng được duyệt
-     */
     public function sendOrderApproved($orderId, $userEmail, $userName = '')
     {
         $order = $this->getOrderDetails($orderId);
@@ -115,9 +95,6 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Gửi email khi đơn hàng được giao
-     */
     public function sendOrderShipped($orderId, $userEmail, $trackingNumber = '', $userName = '')
     {
         $order = $this->getOrderDetails($orderId);
@@ -133,9 +110,6 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Gửi SMS thông báo đơn hàng
-     */
     public function sendOrderSMS($orderId, $phoneNumber, $type = 'confirmation')
     {
         $order = $this->getOrderDetails($orderId);
@@ -150,14 +124,10 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Gửi cả email và SMS
-     */
     public function sendOrderNotifications($orderId, $email, $phone = null, $type = 'confirmation', $userName = '')
     {
         $results = ['email' => false, 'sms' => false];
 
-        // Gửi email
         if (!empty($email)) {
             switch ($type) {
                 case 'confirmation':
@@ -172,7 +142,6 @@ class EmailNotification
             }
         }
 
-        // Gửi SMS nếu có số điện thoại
         if (!empty($phone) && !empty($this->config['sms_api_key'])) {
             $results['sms'] = $this->sendOrderSMS($orderId, $phone, $type);
         }
@@ -180,12 +149,9 @@ class EmailNotification
         return $results;
     }
 
-    /**
-     * Gửi email thực tế
-     */
     private function sendEmail($to, $subject, $content, $metadata = [])
     {
-        // Log notification
+
         $logId = $this->logNotification([
             'order_id' => $metadata['order_id'] ?? null,
             'user_id' => $metadata['user_id'] ?? null,
@@ -198,9 +164,9 @@ class EmailNotification
         ]);
 
         try {
-            // Kiểm tra cấu hình SMTP
+
             if (empty($this->config['smtp_username']) || empty($this->config['smtp_password'])) {
-                // Fallback: sử dụng mail() function
+
                 $headers = [
                     'MIME-Version: 1.0',
                     'Content-type: text/html; charset=UTF-8',
@@ -222,8 +188,6 @@ class EmailNotification
                 }
             }
 
-            // Sử dụng SMTP (nếu có PHPMailer hoặc tương tự)
-            // Ở đây sử dụng fsockopen để gửi qua SMTP đơn giản
             $result = $this->sendViaSMTP($to, $subject, $content);
             
             if ($result) {
@@ -241,9 +205,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Gửi email qua SMTP sử dụng fsockopen
-     */
     private function sendViaSMTP($to, $subject, $content)
     {
         $host = $this->config['smtp_host'];
@@ -254,85 +215,73 @@ class EmailNotification
         $fromName = $this->config['from_name'];
 
         try {
-            // Kết nối đến SMTP server
+
             $smtp = fsockopen($host, $port, $errno, $errstr, 30);
             if (!$smtp) {
                 throw new Exception("Cannot connect to SMTP server: $errstr ($errno)");
             }
 
-            // Đọc response
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '220') {
                 throw new Exception("SMTP Error: $response");
             }
 
-            // EHLO
             fputs($smtp, "EHLO $host\r\n");
-            // Read all EHLO responses
+
             while ($line = fgets($smtp, 515)) {
-                if (substr($line, 3, 1) == ' ') break; // Last line
+                if (substr($line, 3, 1) == ' ') break;
             }
 
-            // STARTTLS
             fputs($smtp, "STARTTLS\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '220') {
                 throw new Exception("STARTTLS failed: $response");
             }
 
-            // Enable crypto
             stream_socket_enable_crypto($smtp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 
-            // EHLO again after STARTTLS
             fputs($smtp, "EHLO $host\r\n");
-            // Read all EHLO responses
+
             while ($line = fgets($smtp, 515)) {
-                if (substr($line, 3, 1) == ' ') break; // Last line
+                if (substr($line, 3, 1) == ' ') break;
             }
 
-            // AUTH LOGIN
             fputs($smtp, "AUTH LOGIN\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '334') {
                 throw new Exception("AUTH LOGIN failed: $response");
             }
 
-            // Username
             fputs($smtp, base64_encode($username) . "\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '334') {
                 throw new Exception("Username failed: $response");
             }
 
-            // Password
             fputs($smtp, base64_encode($password) . "\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '235') {
                 throw new Exception("Password failed: $response");
             }
 
-            // MAIL FROM
             fputs($smtp, "MAIL FROM: <$from>\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '250') {
                 throw new Exception("MAIL FROM failed: $response");
             }
 
-            // RCPT TO
             fputs($smtp, "RCPT TO: <$to>\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '250') {
                 throw new Exception("RCPT TO failed: $response");
             }
 
-            // DATA
             fputs($smtp, "DATA\r\n");
             $response = fgets($smtp, 515);
             if (substr($response, 0, 3) != '354') {
                 throw new Exception("DATA failed: $response");
             }
 
-            // Email headers and body
             $headers = "From: $fromName <$from>\r\n";
             $headers .= "To: $to\r\n";
             $headers .= "Subject: $subject\r\n";
@@ -346,7 +295,6 @@ class EmailNotification
                 throw new Exception("Message send failed: $response");
             }
 
-            // QUIT
             fputs($smtp, "QUIT\r\n");
             fclose($smtp);
 
@@ -361,12 +309,9 @@ class EmailNotification
         }
     }
 
-    /**
-     * Gửi SMS
-     */
     private function sendSMS($phoneNumber, $message, $metadata = [])
     {
-        // Log notification
+
         $logId = $this->logNotification([
             'order_id' => $metadata['order_id'] ?? null,
             'user_id' => $metadata['user_id'] ?? null,
@@ -378,7 +323,6 @@ class EmailNotification
             'status' => 'pending'
         ]);
 
-        // Kiểm tra API key
         if (empty($this->config['sms_api_key'])) {
             error_log("SMS API key not configured - SMS not sent to: $phoneNumber");
             $this->updateNotificationStatus($logId, 'failed', 'SMS API key not configured');
@@ -386,10 +330,9 @@ class EmailNotification
         }
 
         try {
-            // Chuẩn hóa số điện thoại Việt Nam
+
             $phoneNumber = $this->normalizePhoneNumber($phoneNumber);
             
-            // Gửi SMS qua provider đã cấu hình
             $provider = $this->config['sms_provider'] ?? 'speedsms';
             
             switch ($provider) {
@@ -400,7 +343,7 @@ class EmailNotification
                     $result = $this->sendViaESMS($phoneNumber, $message);
                     break;
                 default:
-                    // Development mode - chỉ log
+
                     error_log("SMS [DEV MODE] to: $phoneNumber - Message: $message");
                     $result = true;
             }
@@ -421,15 +364,11 @@ class EmailNotification
         }
     }
     
-    /**
-     * Chuẩn hóa số điện thoại Việt Nam
-     */
     private function normalizePhoneNumber($phone)
     {
-        // Loại bỏ khoảng trắng và ký tự đặc biệt
+
         $phone = preg_replace('/[^0-9]/', '', $phone);
         
-        // Chuyển đổi đầu số
         if (substr($phone, 0, 1) === '0') {
             $phone = '84' . substr($phone, 1);
         } elseif (substr($phone, 0, 2) !== '84') {
@@ -439,10 +378,6 @@ class EmailNotification
         return $phone;
     }
     
-    /**
-     * Gửi SMS qua SpeedSMS (Vietnam)
-     * Đăng ký tại: https://speedsms.vn
-     */
     private function sendViaSpeedSMS($phoneNumber, $message)
     {
         $apiKey = $this->config['sms_api_key'];
@@ -453,7 +388,7 @@ class EmailNotification
         $data = [
             'to' => [$phoneNumber],
             'content' => $message,
-            'sms_type' => 2, // 2 = Brandname, 3 = Notify
+            'sms_type' => 2,
             'sender' => $sender
         ];
         
@@ -487,10 +422,6 @@ class EmailNotification
         return false;
     }
     
-    /**
-     * Gửi SMS qua eSMS (Vietnam)
-     * Đăng ký tại: https://esms.vn
-     */
     private function sendViaESMS($phoneNumber, $message)
     {
         $apiKey = $this->config['sms_api_key'];
@@ -505,7 +436,7 @@ class EmailNotification
             'ApiKey' => $apiKey,
             'SecretKey' => $secretKey,
             'Brandname' => $brandname,
-            'SmsType' => 2 // 2 = Brandname
+            'SmsType' => 2
         ];
         
         $url .= '?' . http_build_query($params);
@@ -534,9 +465,6 @@ class EmailNotification
         return false;
     }
 
-    /**
-     * Build email xác nhận đơn hàng
-     */
     private function buildOrderConfirmationEmail($order, $userName)
     {
         $orderItems = $this->getOrderItems($order['id']);
@@ -562,9 +490,6 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Build email đơn hàng được duyệt
-     */
     private function buildOrderApprovedEmail($order, $userName)
     {
         return $this->getEmailTemplate('order_approved', [
@@ -575,9 +500,6 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Build email đơn hàng đang giao
-     */
     private function buildOrderShippedEmail($order, $trackingNumber, $userName)
     {
         return $this->getEmailTemplate('order_shipped', [
@@ -588,9 +510,6 @@ class EmailNotification
         ]);
     }
 
-    /**
-     * Build SMS message
-     */
     private function buildSMSMessage($order, $type)
     {
         $orderCode = $order['ma_don_hang_text'];
@@ -608,9 +527,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Get email template
-     */
     private function getEmailTemplate($templateName, $data)
     {
         $templates = [
@@ -749,7 +665,6 @@ class EmailNotification
 
         $template = $templates[$templateName] ?? $templates['order_confirmation'];
         
-        // Replace placeholders
         foreach ($data as $key => $value) {
             $template = str_replace('{' . $key . '}', $value, $template);
         }
@@ -757,9 +672,6 @@ class EmailNotification
         return $template;
     }
 
-    /**
-     * Build HTML cho danh sách sản phẩm
-     */
     private function buildOrderItemsHtml($items)
     {
         $html = '<table class="order-items"><tr><th>Sản phẩm</th><th>SL</th><th>Giá</th></tr>';
@@ -776,9 +688,6 @@ class EmailNotification
         return $html;
     }
 
-    /**
-     * Lấy chi tiết đơn hàng
-     */
     private function getOrderDetails($orderId)
     {
         try {
@@ -792,9 +701,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Lấy danh sách sản phẩm trong đơn hàng
-     */
     private function getOrderItems($orderId)
     {
         try {
@@ -811,9 +717,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Lấy tên phương thức thanh toán
-     */
     private function getPaymentMethodName($method)
     {
         $methods = [
@@ -824,9 +727,6 @@ class EmailNotification
         return $methods[$method] ?? $method;
     }
 
-    /**
-     * Log notification
-     */
     private function logNotification($data)
     {
         try {
@@ -851,9 +751,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Cập nhật trạng thái notification
-     */
     private function updateNotificationStatus($logId, $status, $errorMessage = null)
     {
         if (!$logId) return;
@@ -871,9 +768,6 @@ class EmailNotification
         }
     }
 
-    /**
-     * Lấy lịch sử thông báo của đơn hàng
-     */
     public function getOrderNotificationHistory($orderId)
     {
         try {

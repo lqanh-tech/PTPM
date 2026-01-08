@@ -1,11 +1,9 @@
 <?php
-// Use SessionManager for safe session handling
+
 require_once __DIR__ . '/../mod/sessionManager.php';
 
-// Start session safely
 SessionManager::start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     header('Location: ../../userLogin.php');
@@ -26,14 +24,13 @@ if ($orderId <= 0) {
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-// Lấy thông tin đơn hàng
 if (isset($_SESSION['ADMIN'])) {
-    // Admin có thể xem tất cả đơn hàng
+
     $sql = "SELECT * FROM don_hang WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$orderId]);
 } else {
-    // User chỉ xem đơn hàng của mình
+
     $sql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$orderId, $username]);
@@ -47,7 +44,6 @@ if (!$order) {
     exit();
 }
 
-// Lấy chi tiết sản phẩm
 $itemsSql = "SELECT oi.*, h.tenhanghoa 
              FROM chi_tiet_don_hang oi
              JOIN hanghoa h ON oi.ma_san_pham = h.idhanghoa
@@ -241,19 +237,16 @@ $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
                         </tbody>
                         <tfoot>
                             <?php
-                            // Lấy thông tin thuế và phí vận chuyển từ database
+
                             $taxAmount = isset($order['thue']) ? floatval($order['thue']) : 0;
                             $shippingFee = isset($order['phi_van_chuyen']) ? floatval($order['phi_van_chuyen']) : 0;
                             
-                            // Lấy thông tin phương thức vận chuyển
                             $shippingMethodName = isset($order['shipping_method_name']) ? $order['shipping_method_name'] : '';
                             $estimatedDelivery = isset($order['estimated_delivery']) ? $order['estimated_delivery'] : '';
                             
-                            // Lấy thông tin coupon
                             $couponCode = isset($order['coupon_code']) ? $order['coupon_code'] : null;
                             $couponDiscount = isset($order['coupon_discount']) ? floatval($order['coupon_discount']) : 0;
                             
-                            // Kiểm tra xem có dữ liệu thuế/phí vận chuyển không
                             $hasDetailedBreakdown = ($taxAmount > 0 || $shippingFee > 0);
                             ?>
                             
@@ -377,8 +370,6 @@ $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <?php endif; ?>
                 
-
-
                 <!-- Thông tin đổi trả -->
                 <?php 
                 $returnStatus = isset($order['trang_thai_doi_tra']) ? $order['trang_thai_doi_tra'] : 'none';
@@ -440,7 +431,7 @@ $items = $itemsStmt->fetchAll(PDO::FETCH_ASSOC);
                         <hr>
                         <h4 class="mb-4"><i class="fas fa-star text-warning"></i> Đánh giá sản phẩm</h4>
                         <?php 
-                        $orderId = $order['id']; // Pass to widget
+                        $orderId = $order['id'];
                         include __DIR__ . '/../../../components/product_review_widget.php'; 
                         ?>
                     </div>

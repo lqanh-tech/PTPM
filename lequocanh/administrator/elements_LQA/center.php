@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/mod/phanquyenCls.php';
 
-// Khởi tạo đối tượng PhanQuyen
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
 $isAdmin = isset($_SESSION['ADMIN']);
@@ -10,20 +9,18 @@ $isNhanVien = $phanQuyen->isNhanVien($username);
 if (isset($_GET['req'])) {
     $request = $_GET['req'];
 
-    // Log để debug
     error_log("Center.php - Yêu cầu truy cập module: $request, Username: $username, isAdmin: " . ($isAdmin ? 'true' : 'false') . ", isNhanVien: " . ($isNhanVien ? 'true' : 'false'));
 
-    // Kiểm tra quyền truy cập
     $hasAccess = false;
     
     if ($isAdmin) {
-        // Admin có quyền truy cập tất cả
+
         $hasAccess = true;
     } else if ($isNhanVien) {
-        // Nhân viên: kiểm tra quyền từ database
+
         $hasAccess = $phanQuyen->checkAccessForEmployee($request, $username);
     } else {
-        // User thông thường: kiểm tra quyền cơ bản
+
         $hasAccess = $phanQuyen->checkAccess($request, $username);
     }
     
@@ -59,7 +56,7 @@ if (isset($_GET['req'])) {
         case 'hanghoaview':
             require __DIR__ . '/mhanghoa/hanghoaView.php';
             break;
-        case 'dongiaview': // Đảm bảo rằng trường hợp này được xử lý
+        case 'dongiaview':
             require __DIR__ . '/mdongia/dongiaView.php';
             break;
         case 'thuonghieuview':
@@ -172,8 +169,6 @@ if (isset($_GET['req'])) {
             require __DIR__ . '/mphanquyen/danhSachVaiTroView.php';
             break;
 
-
-
         case 'nhatKyHoatDongTichHop':
             require __DIR__ . '/mnhatkyhoatdong/nhatKyHoatDongTichHop.php';
             break;
@@ -182,16 +177,14 @@ if (isset($_GET['req'])) {
             require __DIR__ . '/mnhatkyhoatdong/thongKeNhanVienCaiThien.php';
             break;
 
-        // MENU MỚI GỘP - Quản Lý & Khuyến Mãi Sản Phẩm
         case 'quanLySanPhamDacBiet':
             require __DIR__ . '/../quan_ly_san_pham_dac_biet.php';
             break;
             
-        // GIỮ LẠI CÁC MENU CŨ ĐỂ TƯƠNG THÍCH NGƯỢC (nếu có link cũ)
         case 'sanphamnoibat':
         case 'autoFeaturedDashboard':
         case 'manageFeatured':
-            // Redirect đến menu mới - tab featured
+
             header('Location: index.php?req=quanLySanPhamDacBiet&tab=featured');
             exit;
             break;
@@ -204,7 +197,6 @@ if (isset($_GET['req'])) {
             require __DIR__ . '/msanphamnoibat/removePromotionAct.php';
             break;
             
-        // Review Management System
         case 'review_management':
             require __DIR__ . '/mreview_management/reviewManagementView.php';
             break;

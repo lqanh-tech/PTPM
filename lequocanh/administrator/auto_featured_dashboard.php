@@ -1,7 +1,4 @@
 <?php
-/**
- * Dashboard Tự Động Đánh Dấu Sản Phẩm Nổi Bật
- */
 
 require_once __DIR__ . '/elements_LQA/mod/database.php';
 require_once __DIR__ . '/elements_LQA/mod/AutoFeaturedCls.php';
@@ -17,7 +14,6 @@ if (!isset($_SESSION['USER'])) {
 $autoFeatured = new AutoFeatured();
 $message = '';
 
-// Xử lý action
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $limit = intval($_POST['limit'] ?? 20);
@@ -51,7 +47,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy top products theo các tiêu chí
 $topSales = $autoFeatured->getTopProducts('sales', 10);
 $topViews = $autoFeatured->getTopProducts('views', 10);
 $topRevenue = $autoFeatured->getTopProducts('revenue', 10);

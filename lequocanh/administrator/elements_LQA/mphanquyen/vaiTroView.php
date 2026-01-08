@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,13 +9,11 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->isNhanVien($username)) {
     exit;
 }
 
-// Lấy danh sách vai trò
 require_once './elements_LQA/mod/roleCls.php';
 $roleObj = new Role();
 $list_roles = $roleObj->getAllRoles();
 $l = count($list_roles);
 
-// Xử lý thông báo
 $result = isset($_GET['result']) ? $_GET['result'] : '';
 $message = '';
 $messageClass = '';
@@ -159,7 +157,7 @@ if ($result == 'ok') {
 
 <script>
     $(document).ready(function() {
-        // Xử lý sự kiện click nút chỉnh sửa
+
         $('.edit-role').on('click', function() {
             const id = $(this).data('id');
             const name = $(this).data('name');

@@ -1,8 +1,4 @@
 <?php
-/**
- * Auto Featured Products
- * Tự động đánh dấu sản phẩm nổi bật dựa trên các tiêu chí
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -13,27 +9,10 @@ class AutoFeatured {
         $this->db = Database::getInstance()->getConnection();
     }
     
-    /**
-     * Tiêu chí đánh giá sản phẩm nổi bật:
-     * 
-     * 1. Doanh số cao (bán chạy)
-     * 2. Lượt xem nhiều
-     * 3. Đánh giá tốt (nếu có hệ thống review)
-     * 4. Tỷ lệ chuyển đổi cao (view -> mua)
-     * 5. Margin lợi nhuận cao
-     * 6. Sản phẩm mới + bán tốt
-     * 7. Trending (tăng trưởng nhanh)
-     */
-    
-    /**
-     * Tự động đánh dấu sản phẩm nổi bật dựa trên doanh số
-     * Top sản phẩm bán chạy nhất
-     */
     public function autoMarkBestSellers($limit = 20) {
-        // Reset tất cả sản phẩm nổi bật cũ
+
         $this->db->exec("UPDATE hanghoa SET is_featured = 0");
         
-        // Đánh dấu top bán chạy (dựa trên chi_tiet_don_hang)
         $sql = "UPDATE hanghoa h
                 INNER JOIN (
                     SELECT ct.ma_san_pham, SUM(ct.so_luong) as total_sold
@@ -49,13 +28,9 @@ class AutoFeatured {
         return $this->db->exec($sql);
     }
     
-    /**
-     * Đánh dấu dựa trên lượt xem
-     */
     public function autoMarkMostViewed($limit = 20) {
         $this->db->exec("UPDATE hanghoa SET is_featured = 0");
         
-        // Sử dụng subquery vì MySQL không cho phép LIMIT với placeholder trong UPDATE
         $sql = "UPDATE hanghoa h
                 INNER JOIN (
                     SELECT idhanghoa
@@ -69,10 +44,6 @@ class AutoFeatured {
         return $this->db->exec($sql);
     }
     
-    /**
-     * Đánh dấu dựa trên điểm tổng hợp (scoring system)
-     * Kết hợp nhiều yếu tố
-     */
     public function autoMarkByScore($limit = 20) {
         $this->db->exec("UPDATE hanghoa SET is_featured = 0");
         
@@ -117,10 +88,6 @@ class AutoFeatured {
         return $this->db->exec($sql);
     }
     
-    /**
-     * Đánh dấu sản phẩm trending (tăng trưởng nhanh)
-     * So sánh doanh số 7 ngày gần đây vs 7 ngày trước
-     */
     public function autoMarkTrending($limit = 20) {
         $this->db->exec("UPDATE hanghoa SET is_featured = 0");
         
@@ -170,10 +137,6 @@ class AutoFeatured {
         return $this->db->exec($sql);
     }
     
-    /**
-     * Đánh dấu sản phẩm có margin cao
-     * Sản phẩm lợi nhuận tốt
-     */
     public function autoMarkHighMargin($limit = 20, $min_margin_percent = 30) {
         $this->db->exec("UPDATE hanghoa SET is_featured = 0");
         
@@ -200,9 +163,6 @@ class AutoFeatured {
         return $this->db->exec($sql);
     }
     
-    /**
-     * Lấy báo cáo phân tích sản phẩm
-     */
     public function getProductAnalytics($idhanghoa) {
         $sql = "SELECT 
                 h.*,
@@ -250,11 +210,8 @@ class AutoFeatured {
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
     
-    /**
-     * Lấy top sản phẩm theo tiêu chí
-     */
     public function getTopProducts($criteria = 'sales', $limit = 20) {
-        // Validate criteria to prevent SQL injection
+
         $allowedCriteria = ['sales', 'revenue', 'views', 'conversion', 'margin'];
         if (!in_array($criteria, $allowedCriteria)) {
             $criteria = 'sales';
@@ -281,7 +238,6 @@ class AutoFeatured {
                 break;
         }
         
-        // Build SQL with correct table and column names
         $sql = "SELECT 
                 h.*,
                 t.tenTH as ten_thuonghieu,
@@ -312,9 +268,3 @@ class AutoFeatured {
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 }
-
-
-
-
-
-

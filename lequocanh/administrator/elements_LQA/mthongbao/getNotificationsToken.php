@@ -1,42 +1,32 @@
 <?php
-/**
- * Get Customer Notifications API with Token Authentication
- * Alternative to session-based API for ngrok compatibility
- */
 
-// Set JSON response header
 header('Content-Type: application/json; charset=utf-8');
 
-// Enable CORS for development
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Auth-Token');
 header('Access-Control-Allow-Credentials: true');
 
-// Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
 try {
-    // Include required files
+
     require_once '../mod/database.php';
     require_once '../mod/CustomerNotificationManager.php';
     require_once '../mod/TokenAuth.php';
 
-    // Get action parameter
     $action = $_GET['action'] ?? 'list';
 
-    // Get user from token
     $userId = TokenAuth::getUserFromRequest();
 
-    // Debug log
     error_log("getNotificationsToken: User from token = " . ($userId ?: 'null'));
     error_log("getNotificationsToken: Action = " . $action);
 
     if (!$userId) {
-        // Try to get user from session as fallback
+
         require_once '../mod/sessionManager.php';
         SessionManager::start();
         $userId = $_SESSION['USER'] ?? '';
@@ -60,11 +50,10 @@ try {
 
     switch ($action) {
         case 'list':
-            // Lấy danh sách thông báo
+
             $notifications = $notificationManager->getUserNotifications($userId, 20);
             $unreadCount = $notificationManager->getUnreadCount($userId);
 
-            // Format notifications for frontend
             $formattedNotifications = [];
             foreach ($notifications as $notification) {
                 $formattedNotifications[] = [
@@ -91,7 +80,7 @@ try {
             break;
 
         case 'mark_read':
-            // Đánh dấu thông báo đã đọc
+
             $notificationId = $_POST['notification_id'] ?? $_GET['notification_id'] ?? '';
             
             if (empty($notificationId)) {
@@ -120,7 +109,7 @@ try {
             break;
 
         case 'mark_all_read':
-            // Đánh dấu tất cả thông báo đã đọc
+
             $result = $notificationManager->markAllAsRead($userId);
             
             if ($result) {

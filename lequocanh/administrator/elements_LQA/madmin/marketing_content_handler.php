@@ -1,12 +1,5 @@
 <?php
 
-/**
- * Marketing Content Handler
- * Xử lý tất cả các request POST từ marketing_content.php
- * File này được include TRƯỚC khi output HTML bắt đầu
- */
-
-// Start output buffering để ngăn header warning
 if (ob_get_level() == 0) {
     ob_start();
 }
@@ -14,12 +7,10 @@ if (ob_get_level() == 0) {
 require_once __DIR__ . '/../mod/sessionManager.php';
 SessionManager::start();
 
-// Check access rights using PhanQuyen system
 require_once __DIR__ . '/../mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
 
-// Nếu không có quyền truy cập module marketing_content, không xử lý
 if (!$phanQuyen->checkAccess('marketing_content', $username)) {
     return;
 }
@@ -34,9 +25,8 @@ $newsManager = new NewsManager();
 $promotionManager = new PromotionManager();
 $pageManager = new PageManager();
 
-// Kiểm tra xem có request marketing_content POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])) {
-    // Clear output buffer trước khi redirect
+
     while (ob_get_level() > 0) {
         ob_end_clean();
     }
@@ -45,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
     $redirect_tab = $_POST['tab'] ?? 'banners';
 
     switch ($action) {
-        // Banner operations
+
         case 'add_banner':
             $title = trim($_POST['banner_title'] ?? '');
             $description = trim($_POST['banner_description'] ?? '');
@@ -92,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
                 if ($bannerManager->updateBanner($id, $title, $description, $image_url, $link_url, $position, $is_active)) {
                     $_SESSION['marketing_message'] = 'Cập nhật banner thành công';
                     $_SESSION['marketing_success'] = true;
-                    $_SESSION['highlight_banner_id'] = $id; // Highlight row đã sửa
+                    $_SESSION['highlight_banner_id'] = $id;
                 } else {
                     $_SESSION['marketing_message'] = 'Lỗi khi cập nhật banner';
                     $_SESSION['marketing_success'] = false;
@@ -170,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
                 if ($newsManager->updateNews($id, $title, $content, $image_url, $author, $is_published)) {
                     $_SESSION['marketing_message'] = 'Cập nhật tin tức thành công';
                     $_SESSION['marketing_success'] = true;
-                    $_SESSION['highlight_news_id'] = $id; // Highlight row đã sửa
+                    $_SESSION['highlight_news_id'] = $id;
                 } else {
                     $_SESSION['marketing_message'] = 'Lỗi khi cập nhật tin tức';
                     $_SESSION['marketing_success'] = false;
@@ -191,7 +181,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
             header('Location: ?page=marketing_content&tab=' . $redirect_tab);
             exit();
 
-            // Promotion operations
         case 'add_promotion':
             $title = trim($_POST['promotion_title'] ?? '');
             $description = trim($_POST['promotion_description'] ?? '');
@@ -222,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
             if ($promotionManager->updatePromotion($id, $title, $description, $discount_percent, $start_date, $end_date, $is_active)) {
                 $_SESSION['marketing_message'] = 'Cập nhật chương trình ưu đãi thành công';
                 $_SESSION['marketing_success'] = true;
-                $_SESSION['highlight_promotion_id'] = $id; // Highlight row đã sửa
+                $_SESSION['highlight_promotion_id'] = $id;
             } else {
                 $_SESSION['marketing_message'] = 'Lỗi khi cập nhật chương trình ưu đãi';
                 $_SESSION['marketing_success'] = false;
@@ -242,7 +231,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
             header('Location: ?page=marketing_content&tab=' . $redirect_tab);
             exit();
 
-        // Blog operations
         case 'add_blog':
             $title = trim($_POST['blog_title'] ?? '');
             $excerpt = trim($_POST['blog_excerpt'] ?? '');
@@ -315,7 +303,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['_marketing_handler'])
             header('Location: ?page=marketing_content&tab=' . $redirect_tab);
             exit();
 
-        // Static Page operations
         case 'add_page':
             $type = $_POST['page_type'] ?? 'about';
             $title = trim($_POST['page_title'] ?? '');

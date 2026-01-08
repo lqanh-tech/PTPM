@@ -1,7 +1,5 @@
 <?php
-/**
- * Test BASE_URL Injection
- */
+
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
 SessionManager::start();
 ?>
@@ -68,10 +66,9 @@ SessionManager::start();
     </div>
     
     <script>
-        // Inject BASE_URL from PHP to JavaScript
-        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http://localhost:20080', '/'); ?>';
+
+        window.BASE_URL = '<?php echo rtrim(defined('BASE_URL') ? BASE_URL : 'http:
         
-        // Test 2: Check window.BASE_URL
         const jsBaseUrlEl = document.getElementById('jsBaseUrl');
         if (window.BASE_URL) {
             jsBaseUrlEl.innerHTML = `<span class="success">✓ window.BASE_URL = <code>${window.BASE_URL}</code></span>`;
@@ -79,7 +76,6 @@ SessionManager::start();
             jsBaseUrlEl.innerHTML = '<span class="error">✗ window.BASE_URL is undefined</span>';
         }
         
-        // Test 3: getApiUrl function
         const getApiUrl = (path) => {
             const url = window.BASE_URL 
                 ? `${window.BASE_URL}/lequocanh/api/${path}`
@@ -92,7 +88,6 @@ SessionManager::start();
         const generatedUrl = getApiUrl(testPath);
         apiUrlTestEl.textContent = `Input: ${testPath}\nOutput: ${generatedUrl}`;
         
-        // Test 4: API call
         async function testApiCall() {
             const resultEl = document.getElementById('apiCallResult');
             resultEl.textContent = 'Testing...';
@@ -120,10 +115,8 @@ SessionManager::start();
             }
         }
         
-        // Test 5: Current URL
         document.getElementById('currentUrl').textContent = window.location.href;
         
-        // Log everything to console
         console.log('=== BASE_URL TEST ===');
         console.log('window.BASE_URL:', window.BASE_URL);
         console.log('Current URL:', window.location.href);

@@ -1,16 +1,4 @@
 <?php
-/**
- * QUẢN LÝ SẢN PHẨM ĐẶC BIỆT - GỘP TẤT CẢ CHỨC NĂNG
- * Tên mới: "Quản Lý & Khuyến Mãi Sản Phẩm"
- * 
- * Chức năng:
- * 1. Đánh dấu nổi bật (thủ công)
- * 2. Quản lý sản phẩm mới (tự động 30 ngày)
- * 3. Quản lý khuyến mãi (thêm/sửa/xóa giá khuyến mãi)
- * 4. Xử lý đúng logic giá để hiển thị ở trang mua hàng
- * 
- * Lưu ý: Đã xóa chức năng tự động đánh dấu sản phẩm nổi bật (Dashboard & Tự Động)
- */
 
 require_once __DIR__ . '/elements_LQA/mod/database.php';
 require_once __DIR__ . '/elements_LQA/mod/FeaturedProductsCls.php';
@@ -30,13 +18,12 @@ $message = '';
 $messageType = 'success';
 $tab = $_GET['tab'] ?? 'featured';
 
-// Xử lý actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $action = $_POST['action'] ?? '';
         
         switch ($action) {
-            // TOGGLE NỔI BẬT THỦ CÔNG
+
             case 'toggle_featured':
                 $idhanghoa = intval($_POST['idhanghoa']);
                 $currentStatus = intval($_POST['current_status']);
@@ -48,12 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = $newStatus == 1 ? "✅ Đã đánh dấu nổi bật" : "✅ Đã bỏ đánh dấu nổi bật";
                 break;
                 
-            // THÊM KHUYẾN MÃI
             case 'add_promotion':
                 $idhanghoa = intval($_POST['idhanghoa']);
                 $giakhuyenmai = floatval($_POST['giakhuyenmai']);
                 
-                // Lấy giá gốc hiện tại
                 $stmt = $db->prepare("SELECT giathamkhao FROM hanghoa WHERE idhanghoa = ?");
                 $stmt->execute([$idhanghoa]);
                 $product = $stmt->fetch(PDO::FETCH_OBJ);
@@ -62,12 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("Không tìm thấy sản phẩm");
                 }
                 
-                // Validate giá khuyến mãi phải nhỏ hơn giá gốc
                 if ($giakhuyenmai >= $product->giathamkhao) {
                     throw new Exception("Giá khuyến mãi phải nhỏ hơn giá gốc!");
                 }
                 
-                // Cập nhật giá khuyến mãi - KHÔNG THAY ĐỔI giagoc
                 $stmt = $db->prepare("UPDATE hanghoa SET giakhuyenmai = ? WHERE idhanghoa = ?");
                 $stmt->execute([$giakhuyenmai, $idhanghoa]);
                 
@@ -75,11 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "✅ Đã thêm khuyến mãi -{$discountPercent}%. Giá gốc được giữ nguyên.";
                 break;
                 
-            // XÓA KHUYẾN MÃI
             case 'remove_promotion':
                 $idhanghoa = intval($_POST['idhanghoa']);
                 
-                // Set giakhuyenmai = NULL - KHÔNG THAY ĐỔI giagoc
                 $stmt = $db->prepare("UPDATE hanghoa SET giakhuyenmai = NULL WHERE idhanghoa = ?");
                 $stmt->execute([$idhanghoa]);
                 
@@ -92,9 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Lấy danh sách sản phẩm theo tab
 if ($tab == 'featured' || $tab == 'dashboard') {
-    // Sản phẩm nổi bật (dashboard cũng redirect về featured)
+
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.giakhuyenmai, h.created_at, h.is_featured,
             th.tenTH as ten_thuonghieu,
             (SELECT COUNT(*) FROM chi_tiet_don_hang WHERE ma_san_pham = h.idhanghoa) as total_sold,
@@ -105,7 +85,7 @@ if ($tab == 'featured' || $tab == 'dashboard') {
             WHERE h.is_featured = 1
             ORDER BY h.created_at DESC";
 } elseif ($tab == 'new') {
-    // Sản phẩm mới (30 ngày)
+
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.giakhuyenmai, h.created_at, h.is_featured,
             th.tenTH as ten_thuonghieu,
             h.view_count,
@@ -115,7 +95,7 @@ if ($tab == 'featured' || $tab == 'dashboard') {
             WHERE h.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             ORDER BY h.created_at DESC";
 } elseif ($tab == 'promotion') {
-    // Sản phẩm khuyến mãi
+
     $sql = "SELECT h.idhanghoa, h.tenhanghoa, h.giathamkhao, h.giakhuyenmai, h.created_at, h.is_featured,
             th.tenTH as ten_thuonghieu,
             ROUND(((h.giathamkhao - h.giakhuyenmai) / h.giathamkhao) * 100) as discount_percent,

@@ -1,10 +1,5 @@
 <?php
-/**
- * Auto-prepend file - Loaded before every PHP script
- * Sets security headers early
- */
 
-// Set secure HTTP headers
 header('X-Frame-Options: SAMEORIGIN');
 header('X-Content-Type-Options: nosniff');
 header('X-XSS-Protection: 1; mode=block');

@@ -1,13 +1,10 @@
 <?php
-/**
- * API xử lý mã Coupon
- * 
- * Endpoints:
- * - POST: Kiểm tra và áp dụng mã coupon
- * - GET: Lấy thông tin coupon
- */
 
 header('Content-Type: application/json; charset=utf-8');
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header_remove('X-Powered-By');
 
 require_once __DIR__ . '/../mod/sessionManager.php';
 require_once __DIR__ . '/../mod/database.php';
@@ -15,9 +12,24 @@ require_once __DIR__ . '/../mod/CouponCls.php';
 
 SessionManager::start();
 
+$rateLimitKey = 'coupon_rate_' . md5($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+if (!isset($_SESSION[$rateLimitKey])) {
+    $_SESSION[$rateLimitKey] = ['count' => 0, 'start' => time()];
+}
+$rateData = $_SESSION[$rateLimitKey];
+if (time() - $rateData['start'] > 60) {
+    $_SESSION[$rateLimitKey] = ['count' => 1, 'start' => time()];
+} else {
+    $_SESSION[$rateLimitKey]['count']++;
+    if ($_SESSION[$rateLimitKey]['count'] > 30) {
+        http_response_code(429);
+        echo json_encode(['success' => false, 'message' => 'Too many requests']);
+        exit;
+    }
+}
+
 $couponManager = new Coupon();
 
-// Lấy method và action
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? 'validate';
 
@@ -39,11 +51,8 @@ try {
     jsonResponse(false, 'Có lỗi xảy ra: ' . $e->getMessage(), null, 500);
 }
 
-/**
- * Xử lý POST request
- */
 function handlePostRequest($couponManager, $action) {
-    // Lấy dữ liệu từ request
+
     $input = json_decode(file_get_contents('php://input'), true);
     if (!$input) {
         $input = $_POST;
@@ -51,7 +60,7 @@ function handlePostRequest($couponManager, $action) {
     
     switch ($action) {
         case 'validate':
-            // Kiểm tra mã coupon
+
             $code = $input['code'] ?? '';
             $orderTotal = floatval($input['order_total'] ?? 0);
             $userId = $_SESSION['USER'] ?? null;
@@ -78,14 +87,14 @@ function handlePostRequest($couponManager, $action) {
             break;
             
         case 'remove':
-            // Xóa coupon khỏi session
+
             unset($_SESSION['applied_coupon']);
             unset($_SESSION['coupon_discount']);
             jsonResponse(true, 'Đã xóa mã giảm giá');
             break;
             
         case 'apply':
-            // Lưu coupon vào session để sử dụng khi thanh toán
+
             $code = $input['code'] ?? '';
             $orderTotal = floatval($input['order_total'] ?? 0);
             $userId = $_SESSION['USER'] ?? null;
@@ -117,13 +126,10 @@ function handlePostRequest($couponManager, $action) {
     }
 }
 
-/**
- * Xử lý GET request
- */
 function handleGetRequest($couponManager, $action) {
     switch ($action) {
         case 'info':
-            // Lấy thông tin coupon đã áp dụng
+
             if (isset($_SESSION['applied_coupon'])) {
                 jsonResponse(true, 'Coupon applied', [
                     'code' => $_SESSION['applied_coupon'],
@@ -136,12 +142,12 @@ function handleGetRequest($couponManager, $action) {
             break;
             
         case 'available':
-            // Lấy danh sách coupon có thể sử dụng (public)
+
             $coupons = $couponManager->getAllCoupons(false);
             $now = date('Y-m-d H:i:s');
             
             $availableCoupons = array_filter($coupons, function($c) use ($now) {
-                // Chỉ hiển thị coupon còn hiệu lực và còn lượt
+
                 if ($c->start_date && $now < $c->start_date) return false;
                 if ($c->end_date && $now > $c->end_date) return false;
                 if ($c->usage_limit !== null && $c->usage_count >= $c->usage_limit) return false;
@@ -169,9 +175,6 @@ function handleGetRequest($couponManager, $action) {
     }
 }
 
-/**
- * Trả về JSON response
- */
 function jsonResponse($success, $message, $data = null, $statusCode = 200) {
     http_response_code($statusCode);
     echo json_encode([

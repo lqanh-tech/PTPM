@@ -1,13 +1,8 @@
 <?php
-/**
- * Xử lý yêu cầu đổi/trả hàng
- */
 
-// Use SessionManager for safe session handling
 require_once __DIR__ . '/../mod/sessionManager.php';
 SessionManager::start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER'])) {
     $_SESSION['error_message'] = 'Vui lòng đăng nhập để thực hiện thao tác này!';
     header('Location: ../../userLogin.php');
@@ -16,7 +11,6 @@ if (!isset($_SESSION['USER'])) {
 
 require_once '../mod/database.php';
 
-// Kiểm tra request method
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $_SESSION['error_message'] = 'Phương thức không hợp lệ!';
     header('Location: giohangView.php');
@@ -27,7 +21,6 @@ $orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
 $reason = isset($_POST['reason']) ? trim($_POST['reason']) : '';
 $username = $_SESSION['USER'];
 
-// Validation
 if ($orderId <= 0) {
     $_SESSION['error_message'] = 'ID đơn hàng không hợp lệ!';
     header('Location: giohangView.php');
@@ -52,14 +45,13 @@ if (strlen($reason) > 1000) {
     exit();
 }
 
-// Sanitize input
 $reason = htmlspecialchars($reason, ENT_QUOTES, 'UTF-8');
 
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
 try {
-    // 1. Lấy thông tin đơn hàng
+
     $sql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$orderId, $username]);
@@ -71,14 +63,12 @@ try {
         exit();
     }
     
-    // 2. Kiểm tra trạng thái đơn hàng
     if ($order['trang_thai'] != 'approved') {
         $_SESSION['error_message'] = 'Chỉ có thể yêu cầu đổi/trả đơn hàng đã được duyệt!';
         header('Location: orderDetailView_v2.php?id=' . $orderId);
         exit();
     }
     
-    // 3. Kiểm tra xem đã có yêu cầu đổi/trả chưa
     $returnStatus = isset($order['trang_thai_doi_tra']) ? $order['trang_thai_doi_tra'] : 'none';
     if ($returnStatus != 'none') {
         $_SESSION['error_message'] = 'Đơn hàng này đã có yêu cầu đổi/trả trước đó!';
@@ -86,7 +76,6 @@ try {
         exit();
     }
     
-    // 4. Cập nhật yêu cầu đổi/trả
     $updateSql = "UPDATE don_hang 
                   SET trang_thai_doi_tra = 'requested', 
                       ly_do_doi_tra = ?, 
@@ -96,11 +85,7 @@ try {
     $updateStmt = $conn->prepare($updateSql);
     $updateStmt->execute([$reason, $orderId]);
     
-    // 5. Ghi log
     error_log("Yêu cầu đổi/trả đơn hàng #{$orderId} bởi user {$username}. Lý do: " . substr($reason, 0, 100));
-    
-    // 6. Gửi thông báo cho admin (nếu có hệ thống thông báo)
-    // TODO: Implement notification system
     
     $_SESSION['success_message'] = 'Yêu cầu đổi/trả hàng đã được gửi thành công! Chúng tôi sẽ xem xét và liên hệ với bạn trong vòng 24-48 giờ.';
     header('Location: orderDetailView_v2.php?id=' . $orderId);

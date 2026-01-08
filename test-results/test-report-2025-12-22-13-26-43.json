@@ -1,0 +1,351 @@
+{
+    "timestamp": "2025-12-22 13:26:43",
+    "duration": 0.4,
+    "summary": {
+        "total": 57,
+        "passed": 56,
+        "failed": 0,
+        "percentage": 98.25
+    },
+    "results": {
+        "0": {
+            "status": "pass",
+            "message": "Table 'hanghoa' exists"
+        },
+        "tables": {
+            "hanghoa": [
+                "idhanghoa",
+                "mahanghoa",
+                "tenhanghoa",
+                "mota",
+                "giathamkhao",
+                "giakhuyenmai",
+                "hinhanh",
+                "ghichu",
+                "idloaihang",
+                "idNhanVien",
+                "idThuongHieu",
+                "idDonViTinh",
+                "temp_hinhanh",
+                "is_featured",
+                "is_new",
+                "is_sale",
+                "sale_price",
+                "sale_percent",
+                "sale_start_date",
+                "sale_end_date",
+                "view_count",
+                "created_at",
+                "updated_at",
+                "noibat"
+            ],
+            "don_hang": [
+                "id",
+                "ma_don_hang_text",
+                "ma_nguoi_dung",
+                "dia_chi_giao_hang",
+                "tong_tien",
+                "trang_thai",
+                "phuong_thuc_thanh_toan",
+                "trang_thai_thanh_toan",
+                "ngay_tao",
+                "ngay_cap_nhat",
+                "pending_read",
+                "approved_read",
+                "cancelled_read",
+                "payment_config_id",
+                "auto_approved",
+                "cancel_deadline",
+                "thue",
+                "phi_van_chuyen"
+            ],
+            "chi_tiet_don_hang": [
+                "id",
+                "ma_don_hang",
+                "ma_san_pham",
+                "so_luong",
+                "gia",
+                "ngay_tao"
+            ],
+            "user": [
+                "iduser",
+                "username",
+                "email",
+                "password",
+                "hoten",
+                "gioitinh",
+                "ngaysinh",
+                "diachi",
+                "dienthoai",
+                "ngaydangki",
+                "setlock"
+            ],
+            "product_reviews": [
+                "id",
+                "product_id",
+                "user_id",
+                "rating",
+                "comment",
+                "images",
+                "is_verified_purchase",
+                "helpful_count",
+                "status",
+                "created_at",
+                "updated_at",
+                "is_approved"
+            ],
+            "shipping_methods": [
+                "id",
+                "code",
+                "name",
+                "description",
+                "delivery_time",
+                "price_multiplier",
+                "icon",
+                "is_active",
+                "sort_order",
+                "created_at",
+                "updated_at"
+            ],
+            "nhanvien": [
+                "idNhanVien",
+                "tenNV",
+                "SDT",
+                "email",
+                "luongCB",
+                "phuCap",
+                "chucVu",
+                "iduser"
+            ],
+            "loaihang": [
+                "idloaihang",
+                "tenloaihang",
+                "hinhanh",
+                "mota",
+                "ghichu"
+            ]
+        },
+        "1": {
+            "status": "pass",
+            "message": "Table 'don_hang' exists"
+        },
+        "2": {
+            "status": "pass",
+            "message": "Table 'chi_tiet_don_hang' exists"
+        },
+        "3": {
+            "status": "pass",
+            "message": "Table 'user' exists"
+        },
+        "4": {
+            "status": "pass",
+            "message": "Table 'product_reviews' exists"
+        },
+        "5": {
+            "status": "pass",
+            "message": "Table 'shipping_methods' exists"
+        },
+        "6": {
+            "status": "pass",
+            "message": "Table 'nhanvien' exists"
+        },
+        "7": {
+            "status": "pass",
+            "message": "Table 'loaihang' exists"
+        },
+        "8": {
+            "status": "pass",
+            "message": "Index 'idx_hanghoa_idloaihang' exists on 'hanghoa'"
+        },
+        "9": {
+            "status": "pass",
+            "message": "Index 'idx_hanghoa_price' exists on 'hanghoa'"
+        },
+        "10": {
+            "status": "pass",
+            "message": "Index 'idx_featured' exists on 'hanghoa'"
+        },
+        "11": {
+            "status": "pass",
+            "message": "Index 'idx_new' exists on 'hanghoa'"
+        },
+        "12": {
+            "status": "pass",
+            "message": "Index 'idx_sale' exists on 'hanghoa'"
+        },
+        "13": {
+            "status": "pass",
+            "message": "Index 'idx_donhang_manguoidung' exists on 'don_hang'"
+        },
+        "14": {
+            "status": "pass",
+            "message": "Index 'idx_donhang_trangthai' exists on 'don_hang'"
+        },
+        "15": {
+            "status": "pass",
+            "message": "Index 'idx_reviews_productid' exists on 'product_reviews'"
+        },
+        "16": {
+            "status": "pass",
+            "message": "Index 'idx_reviews_status' exists on 'product_reviews'"
+        },
+        "17": {
+            "status": "pass",
+            "message": "Index 'idx_reviews_rating' exists on 'product_reviews'"
+        },
+        "18": {
+            "status": "pass",
+            "message": "Index 'idx_user_username' exists on 'user'"
+        },
+        "19": {
+            "status": "pass",
+            "message": "Index 'idx_user_email' exists on 'user'"
+        },
+        "20": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/includes\/performance_bootstrap.php"
+        },
+        "21": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/includes\/performance_bootstrap.php"
+        },
+        "22": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/includes\/advanced_cache.php"
+        },
+        "23": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/includes\/advanced_cache.php"
+        },
+        "24": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/includes\/query_builder.php"
+        },
+        "25": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/includes\/query_builder.php"
+        },
+        "26": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/includes\/page_cache.php"
+        },
+        "27": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/includes\/page_cache.php"
+        },
+        "28": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/includes\/image_optimizer.php"
+        },
+        "29": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/includes\/image_optimizer.php"
+        },
+        "30": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/includes\/html_optimizer.php"
+        },
+        "31": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/includes\/html_optimizer.php"
+        },
+        "32": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/app\/Services\/ProductService.php"
+        },
+        "33": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/app\/Services\/ProductService.php"
+        },
+        "34": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/app\/Services\/CategoryService.php"
+        },
+        "35": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/app\/Services\/CategoryService.php"
+        },
+        "36": {
+            "status": "pass",
+            "message": "File exists: lequocanh\/app\/Services\/UserService.php"
+        },
+        "37": {
+            "status": "pass",
+            "message": "File has valid PHP code: lequocanh\/app\/Services\/UserService.php"
+        },
+        "38": {
+            "status": "pass",
+            "message": "Service class 'ProductService' loaded"
+        },
+        "39": {
+            "status": "pass",
+            "message": "Service 'ProductService' instantiated successfully"
+        },
+        "40": {
+            "status": "pass",
+            "message": "Service class 'CategoryService' loaded"
+        },
+        "41": {
+            "status": "pass",
+            "message": "Service 'CategoryService' instantiated successfully"
+        },
+        "42": {
+            "status": "pass",
+            "message": "Service class 'UserService' loaded"
+        },
+        "43": {
+            "status": "pass",
+            "message": "Service 'UserService' instantiated successfully"
+        },
+        "44": {
+            "status": "pass",
+            "message": "Service class 'OrderService' loaded"
+        },
+        "45": {
+            "status": "pass",
+            "message": "Service 'OrderService' instantiated successfully"
+        },
+        "46": {
+            "status": "pass",
+            "message": "Cache set\/get working"
+        },
+        "47": {
+            "status": "pass",
+            "message": "Cache delete working"
+        },
+        "48": {
+            "status": "pass",
+            "message": "Cache working (stats not available)"
+        },
+        "49": {
+            "status": "pass",
+            "message": "Query Builder select: 5 products"
+        },
+        "50": {
+            "status": "pass",
+            "message": "Direct query count: 79 products"
+        },
+        "51": {
+            "status": "pass",
+            "message": "Query performance: Avg=0.27322053909302ms, Min=0.18620491027832ms, Max=1.0781288146973ms"
+        },
+        "52": {
+            "status": "pass",
+            "message": "Performance is excellent (<5ms)"
+        },
+        "53": {
+            "status": "pass",
+            "message": "CSRF helper exists"
+        },
+        "54": {
+            "status": "pass",
+            "message": "Session manager exists"
+        },
+        "55": {
+            "status": "pass",
+            "message": "Password hashing detected (5 users with bcrypt)"
+        }
+    },
+    "errors": [],
+    "fixes_needed": []
+}

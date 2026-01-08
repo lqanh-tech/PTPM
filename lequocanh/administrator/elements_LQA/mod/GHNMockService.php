@@ -1,10 +1,4 @@
 <?php
-/**
- * GHN Mock Service - For Testing Without Real API
- * 
- * This service simulates GHN API responses for development and testing
- * No real API token needed
- */
 
 class GHNMockService {
     
@@ -16,11 +10,8 @@ class GHNMockService {
         $this->initMockData();
     }
     
-    /**
-     * Initialize mock data
-     */
     private function initMockData() {
-        // Mock provinces (major cities)
+
         $this->mockProvinces = [
             ['ProvinceID' => 201, 'ProvinceName' => 'Hà Nội', 'Code' => 'HN'],
             ['ProvinceID' => 202, 'ProvinceName' => 'Hồ Chí Minh', 'Code' => 'HCM'],
@@ -29,20 +20,18 @@ class GHNMockService {
             ['ProvinceID' => 205, 'ProvinceName' => 'Cần Thơ', 'Code' => 'CT'],
         ];
         
-        // Mock districts for Hanoi
         $this->mockDistricts = [
             ['DistrictID' => 1001, 'DistrictName' => 'Ba Đình', 'ProvinceID' => 201],
             ['DistrictID' => 1002, 'DistrictName' => 'Hoàn Kiếm', 'ProvinceID' => 201],
             ['DistrictID' => 1003, 'DistrictName' => 'Cầu Giấy', 'ProvinceID' => 201],
             ['DistrictID' => 1004, 'DistrictName' => 'Đống Đa', 'ProvinceID' => 201],
-            // HCM
+
             ['DistrictID' => 2001, 'DistrictName' => 'Quận 1', 'ProvinceID' => 202],
             ['DistrictID' => 2002, 'DistrictName' => 'Quận 3', 'ProvinceID' => 202],
             ['DistrictID' => 2003, 'DistrictName' => 'Quận 5', 'ProvinceID' => 202],
             ['DistrictID' => 2004, 'DistrictName' => 'Quận 10', 'ProvinceID' => 202],
         ];
         
-        // Mock wards
         $this->mockWards = [
             ['WardCode' => '10001', 'WardName' => 'Phường Phúc Xá', 'DistrictID' => 1001],
             ['WardCode' => '10002', 'WardName' => 'Phường Trúc Bạch', 'DistrictID' => 1001],
@@ -51,9 +40,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Get list of provinces
-     */
     public function getProvinces() {
         return [
             'code' => 200,
@@ -62,9 +48,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Get districts by province
-     */
     public function getDistricts($provinceId) {
         $districts = array_filter($this->mockDistricts, function($d) use ($provinceId) {
             return $d['ProvinceID'] == $provinceId;
@@ -77,9 +60,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Get wards by district
-     */
     public function getWards($districtId) {
         $wards = array_filter($this->mockWards, function($w) use ($districtId) {
             return $w['DistrictID'] == $districtId;
@@ -92,36 +72,29 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Calculate shipping fee (Mock)
-     */
     public function calculateFee($params) {
         $toDistrictId = $params['to_district_id'] ?? 0;
-        $weight = $params['weight'] ?? 1000; // grams
+        $weight = $params['weight'] ?? 1000;
         $insuranceValue = $params['insurance_value'] ?? 0;
         
-        // Mock calculation based on district
         $baseFee = 30000;
         
-        // Different fees for different districts
         if (in_array($toDistrictId, [1001, 1002, 2001, 2002])) {
-            // Inner city - cheaper
+
             $baseFee = 25000;
         } elseif (in_array($toDistrictId, [1003, 1004, 2003, 2004])) {
-            // Outer city
+
             $baseFee = 35000;
         } else {
-            // Other areas
+
             $baseFee = 45000;
         }
         
-        // Add weight fee (10,000 VND per kg over 1kg)
         $weightKg = $weight / 1000;
         if ($weightKg > 1) {
             $baseFee += ($weightKg - 1) * 10000;
         }
         
-        // Add insurance fee (0.5% of value)
         $insuranceFee = 0;
         if ($insuranceValue > 0) {
             $insuranceFee = $insuranceValue * 0.005;
@@ -129,8 +102,7 @@ class GHNMockService {
         
         $totalFee = $baseFee + $insuranceFee;
         
-        // Mock service type
-        $serviceTypeId = 2; // Standard
+        $serviceTypeId = 2;
         
         return [
             'code' => 200,
@@ -145,9 +117,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Get available services (Mock)
-     */
     public function getAvailableServices($params) {
         return [
             'code' => 200,
@@ -169,11 +138,8 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Create shipping order (Mock)
-     */
     public function createOrder($orderData) {
-        // Generate mock order code
+
         $orderCode = 'MOCK' . strtoupper(substr(md5(time()), 0, 8));
         
         return [
@@ -202,9 +168,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Get order info (Mock)
-     */
     public function getOrderInfo($orderCode) {
         return [
             'code' => 200,
@@ -227,9 +190,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Cancel order (Mock)
-     */
     public function cancelOrder($orderCodes) {
         return [
             'code' => 200,
@@ -242,9 +202,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Print order (Mock)
-     */
     public function printOrder($orderCodes) {
         return [
             'code' => 200,
@@ -256,9 +213,6 @@ class GHNMockService {
         ];
     }
     
-    /**
-     * Get shipping fee with all details (Mock)
-     */
     public function getShippingFeeDetail($params) {
         $feeResult = $this->calculateFee($params);
         

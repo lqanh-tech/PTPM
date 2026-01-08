@@ -1,14 +1,15 @@
 <?php
-/**
- * API Quản Lý Bình Luận và Khiếu Nại
- * Dành cho Admin
- */
 
 header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 
 SessionManager::start();
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle('review_management');
 
 class ReviewManagementAPI {
     private $db;
@@ -19,9 +20,6 @@ class ReviewManagementAPI {
         $this->conn = $this->db->getConnection();
     }
     
-    /**
-     * Kiểm tra quyền admin
-     */
     private function checkAdmin() {
         if (!isset($_SESSION['ADMIN'])) {
             $this->error('Không có quyền truy cập', 403);
@@ -29,9 +27,6 @@ class ReviewManagementAPI {
         return $_SESSION['ADMIN'];
     }
     
-    /**
-     * Lấy danh sách tất cả bình luận
-     */
     public function getAllReviews() {
         $this->checkAdmin();
         
@@ -42,11 +37,9 @@ class ReviewManagementAPI {
             $status = $_GET['status'] ?? 'all';
             $search = $_GET['search'] ?? '';
             
-            // Build query
             $where = [];
             $params = [];
             
-            // Check if status column exists
             $hasStatusColumn = false;
             try {
                 $checkCol = $this->conn->query("SHOW COLUMNS FROM product_reviews LIKE 'status'");
@@ -70,8 +63,6 @@ class ReviewManagementAPI {
             
             $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
             
-            // Get reviews (use intval for LIMIT/OFFSET to avoid SQL syntax error)
-            // Check if review_reports table exists
             $reportCountSql = "(SELECT COUNT(*) FROM review_reports WHERE review_id = pr.id AND status = 'pending')";
             try {
                 $this->conn->query("SELECT 1 FROM review_reports LIMIT 1");
@@ -95,7 +86,6 @@ class ReviewManagementAPI {
             $stmt->execute($params);
             $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Get total count
             $countSql = "SELECT COUNT(*) as total FROM product_reviews pr
                         LEFT JOIN hanghoa h ON pr.ma_san_pham = h.idhanghoa
                         {$whereClause}";
@@ -103,7 +93,6 @@ class ReviewManagementAPI {
             $stmt->execute($params);
             $total = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
             
-            // Get stats - use direct query instead of view to avoid missing column errors
             if ($hasStatusColumn) {
                 $statsSql = "SELECT 
                     COUNT(*) as total_reviews,
@@ -141,15 +130,12 @@ class ReviewManagementAPI {
         }
     }
     
-    /**
-     * Ẩn/hiện bình luận
-     */
     public function toggleReviewVisibility() {
         $admin = $this->checkAdmin();
         
         try {
             $reviewId = $_POST['review_id'] ?? null;
-            $action = $_POST['action_type'] ?? null; // 'hide' or 'show'
+            $action = $_POST['action_type'] ?? null;
             $note = $_POST['note'] ?? '';
             
             if (!$reviewId || !$action) {
@@ -184,9 +170,6 @@ class ReviewManagementAPI {
         }
     }
     
-    /**
-     * Xóa bình luận
-     */
     public function deleteReview() {
         $admin = $this->checkAdmin();
         
@@ -198,7 +181,6 @@ class ReviewManagementAPI {
                 return $this->error('Thiếu review_id');
             }
             
-            // Soft delete
             $sql = "UPDATE product_reviews 
                     SET status = 'deleted',
                         admin_note = ?,
@@ -217,9 +199,6 @@ class ReviewManagementAPI {
         }
     }
     
-    /**
-     * Lấy danh sách khiếu nại
-     */
     public function getReports() {
         $this->checkAdmin();
         
@@ -240,7 +219,6 @@ class ReviewManagementAPI {
             $stmt->execute($params);
             $reports = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Count total
             $countSql = "SELECT COUNT(*) as total FROM review_reports rr {$where}";
             $stmt = $this->conn->prepare($countSql);
             $stmt->execute($params);
@@ -262,15 +240,12 @@ class ReviewManagementAPI {
         }
     }
     
-    /**
-     * Xử lý khiếu nại
-     */
     public function resolveReport() {
         $admin = $this->checkAdmin();
         
         try {
             $reportId = $_POST['report_id'] ?? null;
-            $action = $_POST['action'] ?? null; // 'approve' or 'reject'
+            $action = $_POST['action'] ?? null;
             $response = $_POST['response'] ?? '';
             
             if (!$reportId || !$action) {
@@ -279,7 +254,6 @@ class ReviewManagementAPI {
             
             $newStatus = ($action === 'approve') ? 'resolved' : 'rejected';
             
-            // Update report
             $sql = "UPDATE review_reports 
                     SET status = ?,
                         admin_response = ?,
@@ -290,7 +264,6 @@ class ReviewManagementAPI {
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([$newStatus, $response, $admin, $reportId]);
             
-            // If approved, hide the review
             if ($action === 'approve') {
                 $reportSql = "SELECT review_id FROM review_reports WHERE id = ?";
                 $stmt = $this->conn->prepare($reportSql);
@@ -337,7 +310,6 @@ class ReviewManagementAPI {
     }
 }
 
-// Router
 $api = new ReviewManagementAPI();
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 

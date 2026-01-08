@@ -1,25 +1,16 @@
 <?php
-/**
- * GHN Webhook Handler
- * 
- * Nhận webhook từ GHN khi có cập nhật trạng thái vận chuyển
- * Tự động cập nhật database và gửi thông báo cho khách hàng
- */
 
 require_once '../mod/database.php';
 require_once '../mod/EmailService.php';
 
-// Log webhook request
 $logFile = __DIR__ . '/../../../../logs/ghn_webhook.log';
 $requestBody = file_get_contents('php://input');
 $requestHeaders = getallheaders();
 
-// Log for debugging
 file_put_contents($logFile, date('Y-m-d H:i:s') . " - Webhook received\n", FILE_APPEND);
 file_put_contents($logFile, "Headers: " . json_encode($requestHeaders) . "\n", FILE_APPEND);
 file_put_contents($logFile, "Body: " . $requestBody . "\n\n", FILE_APPEND);
 
-// Parse webhook data
 $webhookData = json_decode($requestBody, true);
 
 if (!$webhookData) {
@@ -31,7 +22,6 @@ if (!$webhookData) {
 try {
     $db = Database::getInstance()->getConnection();
     
-    // Extract data from webhook
     $orderCode = $webhookData['OrderCode'] ?? '';
     $status = $webhookData['Status'] ?? '';
     $statusDescription = $webhookData['Description'] ?? '';
@@ -42,7 +32,6 @@ try {
         throw new Exception('Order code is required');
     }
     
-    // Map GHN status to our status
     $statusMap = [
         'ready_to_pick' => 'pending',
         'picking' => 'picking',
@@ -59,7 +48,6 @@ try {
     
     $ourStatus = $statusMap[$status] ?? 'pending';
     
-    // Find order by tracking code
     $stmt = $db->prepare("
         SELECT id, ma_don_hang, ten_khach_hang, email 
         FROM don_hang 
@@ -72,7 +60,6 @@ try {
         throw new Exception('Order not found with tracking code: ' . $orderCode);
     }
     
-    // Update order status
     $stmt = $db->prepare("
         UPDATE don_hang 
         SET shipping_status = ?,
@@ -81,7 +68,6 @@ try {
     ");
     $stmt->execute([$ourStatus, $order['id']]);
     
-    // Insert tracking history
     $stmt = $db->prepare("
         INSERT INTO shipment_tracking 
         (order_id, tracking_code, carrier, status, status_description, location, created_at)
@@ -96,7 +82,6 @@ try {
         $updatedDate
     ]);
     
-    // Send email notification if customer has email
     if (!empty($order['email'])) {
         try {
             $emailService = new EmailService();
@@ -109,12 +94,11 @@ try {
                 $orderCode
             );
         } catch (Exception $e) {
-            // Log email error but don't fail webhook
+
             file_put_contents($logFile, "Email error: " . $e->getMessage() . "\n", FILE_APPEND);
         }
     }
     
-    // Success response
     http_response_code(200);
     echo json_encode([
         'success' => true,

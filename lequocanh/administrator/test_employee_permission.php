@@ -1,12 +1,7 @@
 <?php
-/**
- * Script kiểm tra quyền truy cập của nhân viên
- * Dùng để test xem nhân viên có thể truy cập các module không được phân quyền hay không
- */
 
 session_start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     die('Bạn cần đăng nhập để chạy script này.');
 }
@@ -36,7 +31,7 @@ if ($isAdmin) {
 echo "</p>";
 
 if ($isNhanVien && !$isAdmin) {
-    // Lấy danh sách module được phân quyền
+
     $userObj = new user();
     $userData = $userObj->UserGetbyUsername($username);
     
@@ -67,7 +62,6 @@ if ($isNhanVien && !$isAdmin) {
                 echo "<p style='color: red;'>Chưa được phân quyền module nào!</p>";
             }
             
-            // Test truy cập các module
             echo "<h3>Kiểm tra quyền truy cập:</h3>";
             echo "<table border='1' cellpadding='10' cellspacing='0'>";
             echo "<tr><th>Module</th><th>Tên</th><th>Quyền truy cập</th></tr>";

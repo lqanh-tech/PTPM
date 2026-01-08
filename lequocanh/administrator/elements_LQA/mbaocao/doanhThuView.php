@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,21 +9,17 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('doanhThuView', $user
     exit;
 }
 
-// Khởi tạo đối tượng báo cáo
 require_once './elements_LQA/mbaocao/baocaoCls.php';
 $baoCao = new BaoCao();
 
-// Xác định khoảng thời gian mặc định (30 ngày gần nhất)
 $endDate = date('Y-m-d');
 $startDate = date('Y-m-d', strtotime('-30 days'));
 
-// Lấy khoảng thời gian từ form nếu có
 if (isset($_POST['startDate']) && isset($_POST['endDate'])) {
-    // Lấy giá trị từ form
+
     $startDate = $_POST['startDate'];
     $endDate = $_POST['endDate'];
 
-    // Ghi log để debug - sử dụng Logger
     if (class_exists('Logger')) {
         Logger::debug("Revenue report form values", [
             'start_date' => $startDate,
@@ -31,7 +27,6 @@ if (isset($_POST['startDate']) && isset($_POST['endDate'])) {
         ]);
     }
 
-    // Đảm bảo ngày bắt đầu không lớn hơn ngày kết thúc
     if (strtotime($startDate) > strtotime($endDate)) {
         $temp = $startDate;
         $startDate = $endDate;
@@ -40,22 +35,17 @@ if (isset($_POST['startDate']) && isset($_POST['endDate'])) {
     }
 }
 
-// Lấy loại báo cáo
 $reportType = isset($_POST['reportType']) ? $_POST['reportType'] : 'daily';
 
-// Lấy dữ liệu báo cáo theo loại
 $reportData = [];
 $chartLabels = [];
 $chartData = [];
 
-
-
 switch ($reportType) {
     case 'daily':
-        // Lấy dữ liệu theo ngày
+
         $reportData = $baoCao->getDoanhThuTheoNgayTrongKhoang($startDate, $endDate);
 
-        // Nếu không có dữ liệu, tạo dữ liệu trống cho mỗi ngày trong khoảng
         if (empty($reportData)) {
             $period = new DatePeriod(
                 new DateTime($startDate),
@@ -82,10 +72,8 @@ switch ($reportType) {
     case 'monthly':
         $year = isset($_POST['year']) ? intval($_POST['year']) : date('Y');
 
-        // Lấy dữ liệu theo tháng
         $reportData = $baoCao->getDoanhThuTheoThangTrongNam($year);
 
-        // Nếu không có dữ liệu, tạo dữ liệu trống cho mỗi tháng
         if (empty($reportData)) {
             for ($month = 1; $month <= 12; $month++) {
                 $reportData[] = [
@@ -111,7 +99,6 @@ switch ($reportType) {
             12 => 'Tháng 12'
         ];
 
-        // Đảm bảo có đủ 12 tháng
         $monthData = [];
         foreach ($reportData as $item) {
             $monthData[$item['thang']] = $item;
@@ -137,7 +124,7 @@ switch ($reportType) {
         break;
 
     case 'yearly':
-        // Lấy doanh thu 5 năm gần nhất
+
         $currentYear = date('Y');
         $years = [];
 
@@ -151,10 +138,8 @@ switch ($reportType) {
             ];
         }
 
-        // Đảo ngược mảng để hiển thị từ năm cũ đến năm mới
         $reportData = array_reverse($reportData);
 
-        // Tạo dữ liệu biểu đồ
         foreach ($reportData as $item) {
             $chartLabels[] = $item['nam'];
             $chartData[] = floatval($item['doanh_thu']);
@@ -162,7 +147,6 @@ switch ($reportType) {
         break;
 }
 
-// Tính tổng doanh thu
 $totalRevenue = 0;
 foreach ($reportData as $item) {
     $totalRevenue += isset($item['doanh_thu']) ? $item['doanh_thu'] : 0;
@@ -211,7 +195,6 @@ foreach ($reportData as $item) {
                     $currentYear = date('Y');
                     $selectedYear = isset($_POST['year']) ? intval($_POST['year']) : $currentYear;
 
-                    // Hiển thị 10 năm gần nhất
                     for ($i = 0; $i < 10; $i++) {
                         $year = $currentYear - $i;
                         $selected = ($selectedYear == $year) ? 'selected' : '';
@@ -561,17 +544,15 @@ foreach ($reportData as $item) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Debug logging
+
     console.log('Chart labels:', <?php echo json_encode($chartLabels); ?>);
     console.log('Chart data raw:', <?php echo json_encode($chartData); ?>);
     
-    // Chuyển đổi dữ liệu từ chuỗi sang số với kiểm tra an toàn
     const rawChartData = <?php echo json_encode($chartData); ?>;
     const chartData = Array.isArray(rawChartData) ? rawChartData.map(value => parseFloat(value) || 0) : [];
     
     console.log('Chart data processed:', chartData);
     
-    // Kiểm tra canvas element
     const canvasElement = document.getElementById('revenueChart');
     if (!canvasElement) {
         console.error('Canvas element not found!');
@@ -582,7 +563,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Khởi tạo biểu đồ với try-catch
     try {
         const ctx = canvasElement.getContext('2d');
         const revenueChart = new Chart(ctx, {
@@ -628,7 +608,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('Chart created successfully:', revenueChart);
         
-        // Kiểm tra và hiển thị thông báo nếu không có dữ liệu
         if (chartData.length === 0 || chartData.every(value => value === 0)) {
             const chartContainer = document.querySelector('.report-chart');
             const noDataMessage = document.createElement('div');
@@ -646,7 +625,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Hàm thay đổi loại báo cáo
 function changeReportType() {
     const reportType = document.getElementById('reportType').value;
     const dateRangeFilter = document.getElementById('dateRangeFilter');
@@ -664,12 +642,10 @@ function changeReportType() {
     }
 }
 
-// Hàm in báo cáo
 function printReport() {
     window.print();
 }
 
-// Hàm xuất Excel
 function exportToExcel() {
     const table = document.querySelector('.table');
     const wb = XLSX.utils.table_to_book(table, {
@@ -678,13 +654,11 @@ function exportToExcel() {
     XLSX.writeFile(wb, 'bao-cao-doanh-thu.xlsx');
 }
 
-// Kiểm tra định dạng ngày hợp lệ (YYYY-MM-DD)
 function isValidDate(dateString) {
-    // Kiểm tra định dạng YYYY-MM-DD
+
     const regex = /^\d{4}-\d{2}-\d{2}$/;
     if (!regex.test(dateString)) return false;
 
-    // Kiểm tra ngày hợp lệ
     const date = new Date(dateString);
     const timestamp = date.getTime();
     if (isNaN(timestamp)) return false;

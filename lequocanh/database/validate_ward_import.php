@@ -1,14 +1,9 @@
 <?php
-/**
- * Ward Import Validation Script
- * Validates the imported data and generates report
- */
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
-// Database configuration
 if (file_exists(__DIR__ . '/db_config.php')) {
     $dbConfig = require __DIR__ . '/db_config.php';
     $dbConfig['username'] = $dbConfig['user'] ?? $dbConfig['username'];
@@ -32,14 +27,12 @@ function logMessage($message) {
 try {
     logMessage("=== Ward Import Validation ===\n");
     
-    // Connect to database
     $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
     $pdo = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
     
-    // Count total records
     $stats = [];
     $stats['provinces'] = $pdo->query("SELECT COUNT(*) FROM provinces")->fetchColumn();
     $stats['districts'] = $pdo->query("SELECT COUNT(*) FROM districts")->fetchColumn();
@@ -50,7 +43,6 @@ try {
     logMessage("  Districts: " . $stats['districts']);
     logMessage("  Wards: " . $stats['wards']);
     
-    // Check for orphaned wards
     $orphanedWards = $pdo->query("
         SELECT COUNT(*) 
         FROM wards w 
@@ -61,7 +53,6 @@ try {
     logMessage("\nData Integrity:");
     logMessage("  Orphaned wards (no district): " . $orphanedWards);
     
-    // Check for duplicate codes
     $duplicateWards = $pdo->query("
         SELECT code, COUNT(*) as count 
         FROM wards 
@@ -76,7 +67,6 @@ try {
         }
     }
     
-    // Top provinces by ward count
     logMessage("\nTop 10 Provinces by Ward Count:");
     $topProvinces = $pdo->query("
         SELECT p.name, COUNT(w.id) as ward_count
@@ -92,7 +82,6 @@ try {
         logMessage(sprintf("  %-35s: %d wards", $province['name'], $province['ward_count']));
     }
     
-    // Sample wards from specific provinces
     logMessage("\nSample Wards (First 5 from Hanoi):");
     $sampleWards = $pdo->query("
         SELECT w.code, w.name, d.name as district_name, p.name as province_name
@@ -112,7 +101,6 @@ try {
         ));
     }
     
-    // Generate HTML report
     generateHTMLReport($pdo, $stats, $orphanedWards, $duplicateWards, $topProvinces, $sampleWards);
     
     logMessage("\n=== Validation Completed ===");
@@ -126,7 +114,6 @@ try {
 function generateHTMLReport($pdo, $stats, $orphanedWards, $duplicateWards, $topProvinces, $sampleWards) {
     $reportFile = __DIR__ . '/ward_import_report.html';
     
-    // Get more sample data
     $allSamples = $pdo->query("
         SELECT w.code, w.name, d.name as district_name, p.name as province_name
         FROM wards w

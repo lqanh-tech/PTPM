@@ -1,20 +1,4 @@
 <?php
-/**
- * GHN API Integration Class
- * 
- * Official Documentation: https://api.ghn.vn/home/docs/detail
- * 
- * Features:
- * - Calculate shipping fee
- * - Get delivery time estimation
- * - Create shipping orders
- * - Track shipments
- * - Get Vietnam address data (Province/District/Ward)
- * 
- * @author LQA E-commerce System
- * @version 1.0
- * @license MIT
- */
 
 class GHNApi
 {
@@ -24,24 +8,16 @@ class GHNApi
     private $fromDistrictId;
     private $db;
     private $enableCache = true;
-    private $cacheExpiry = 86400; // 24 hours
+    private $cacheExpiry = 86400;
 
-    /**
-     * Constructor
-     * Initialize GHN API with credentials from database config
-     */
     public function __construct()
     {
         require_once __DIR__ . '/database.php';
         $this->db = Database::getInstance()->getConnection();
 
-        // Load configuration from database
         $this->loadConfig();
     }
 
-    /**
-     * Load configuration from shipping_config table
-     */
     private function loadConfig()
     {
         try {
@@ -56,7 +32,6 @@ class GHNApi
             $this->fromDistrictId = intval($configs['ghn_from_district_id'] ?? 1542);
             $this->enabled = (bool)($configs['enable_ghn_api'] ?? false);
 
-            // Log if not configured
             if (empty($this->token) || empty($this->shopId)) {
                 error_log('GHN API: Token or Shop ID not configured. Using fallback pricing.');
             }
@@ -66,27 +41,11 @@ class GHNApi
         }
     }
 
-    /**
-     * Check if GHN API is enabled and configured
-     */
     public function isEnabled()
     {
         return $this->enabled && !empty($this->token) && !empty($this->shopId);
     }
 
-    /**
-     * Calculate shipping fee
-     * 
-     * @param array $params
-     *   - to_district_id (required): Destination district ID
-     *   - to_ward_code (required): Destination ward code
-     *   - weight (optional): Package weight in grams (default: 1000)
-     *   - insurance_value (optional): Insurance value in VND
-     *   - coupon (optional): Coupon code
-     *   - service_type_id (optional): Service type (default: 2 = E-commerce)
-     * 
-     * @return array Result with success, data, message
-     */
     public function calculateShippingFee($params)
     {
         if (!$this->isEnabled()) {
@@ -101,15 +60,14 @@ class GHNApi
 
         $data = [
             'shop_id' => intval($this->shopId),
-            'service_type_id' => $params['service_type_id'] ?? 2, // 2: E-commerce Delivery
+            'service_type_id' => $params['service_type_id'] ?? 2,
             'from_district_id' => $this->fromDistrictId,
             'to_district_id' => intval($params['to_district_id']),
             'to_ward_code' => strval($params['to_ward_code']),
-            'weight' => intval($params['weight'] ?? 1000), // grams
+            'weight' => intval($params['weight'] ?? 1000),
             'insurance_value' => intval($params['insurance_value'] ?? 0),
         ];
 
-        // Add optional coupon
         if (!empty($params['coupon'])) {
             $data['coupon'] = $params['coupon'];
         }
@@ -117,16 +75,6 @@ class GHNApi
         return $this->callApi($endpoint, $data);
     }
 
-    /**
-     * Get estimated delivery time
-     * 
-     * @param array $params
-     *   - to_district_id (required)
-     *   - to_ward_code (required)
-     *   - service_id (optional): Service ID (default: 53320)
-     * 
-     * @return array Result with leadtime in seconds
-     */
     public function getDeliveryTime($params)
     {
         if (!$this->isEnabled()) {
@@ -144,28 +92,12 @@ class GHNApi
             'from_district_id' => $this->fromDistrictId,
             'to_district_id' => intval($params['to_district_id']),
             'to_ward_code' => strval($params['to_ward_code']),
-            'service_id' => intval($params['service_id'] ?? 53320), // Standard service
+            'service_id' => intval($params['service_id'] ?? 53320),
         ];
 
         return $this->callApi($endpoint, $data);
     }
 
-    /**
-     * Create shipping order with GHN
-     * 
-     * @param array $orderData
-     *   - receiver_name (required)
-     *   - receiver_phone (required)
-     *   - receiver_address (required)
-     *   - to_ward_code (required)
-     *   - to_district_id (required)
-     *   - weight (required): in grams
-     *   - cod_amount (optional): COD amount
-     *   - content (optional): Package content description
-     *   - items (optional): Array of items
-     * 
-     * @return array Result with order_code from GHN
-     */
     public function createShippingOrder($orderData)
     {
         if (!$this->isEnabled()) {
@@ -180,8 +112,8 @@ class GHNApi
 
         $data = [
             'shop_id' => intval($this->shopId),
-            'payment_type_id' => intval($orderData['payment_type_id'] ?? 1), // 1: Người gửi trả, 2: Người nhận trả
-            'required_note' => $orderData['required_note'] ?? 'CHOTHUHANG', // CHOTHUHANG, CHOXEMHANGKHONGTHU, KHONGCHOXEMHANG
+            'payment_type_id' => intval($orderData['payment_type_id'] ?? 1),
+            'required_note' => $orderData['required_note'] ?? 'CHOTHUHANG',
             'to_name' => $orderData['receiver_name'],
             'to_phone' => $orderData['receiver_phone'],
             'to_address' => $orderData['receiver_address'],
@@ -194,15 +126,13 @@ class GHNApi
             'width' => intval($orderData['width'] ?? 0),
             'height' => intval($orderData['height'] ?? 0),
             'insurance_value' => intval($orderData['insurance_value'] ?? 0),
-            'service_type_id' => 2, // E-commerce
+            'service_type_id' => 2,
         ];
 
-        // Add items if provided
         if (!empty($orderData['items']) && is_array($orderData['items'])) {
             $data['items'] = $orderData['items'];
         }
 
-        // Add note if provided
         if (!empty($orderData['note'])) {
             $data['note'] = $orderData['note'];
         }
@@ -210,12 +140,6 @@ class GHNApi
         return $this->callApi($endpoint, $data);
     }
 
-    /**
-     * Track order by GHN order code
-     * 
-     * @param string $orderCode GHN order code
-     * @return array Tracking information
-     */
     public function trackOrder($orderCode)
     {
         if (!$this->isEnabled()) {
@@ -233,12 +157,6 @@ class GHNApi
         return $this->callApi($endpoint, $data);
     }
 
-    /**
-     * Cancel shipping order
-     * 
-     * @param array $orderCodes Array of order codes to cancel
-     * @return array Result
-     */
     public function cancelOrder($orderCodes)
     {
         if (!$this->isEnabled()) {
@@ -256,17 +174,9 @@ class GHNApi
         return $this->callApi($endpoint, $data);
     }
 
-    // ========================================
-    // MASTER DATA APIs (Vietnam Address Data)
-    // ========================================
-
-    /**
-     * Get list of provinces
-     * Results are cached in database
-     */
     public function getProvinces($forceRefresh = false)
     {
-        // Try cache first
+
         if (!$forceRefresh && $this->enableCache) {
             $cached = $this->getCachedProvinces();
             if (!empty($cached)) {
@@ -281,7 +191,6 @@ class GHNApi
         $endpoint = $this->apiUrl . '/master-data/province';
         $result = $this->callApi($endpoint, [], 'GET');
 
-        // Cache to database
         if ($result['success'] && !empty($result['data'])) {
             $this->cacheProvinces($result['data']);
         }
@@ -289,12 +198,9 @@ class GHNApi
         return $result;
     }
 
-    /**
-     * Get list of districts by province ID
-     */
     public function getDistricts($provinceId, $forceRefresh = false)
     {
-        // Try cache first
+
         if (!$forceRefresh && $this->enableCache) {
             $cached = $this->getCachedDistricts($provinceId);
             if (!empty($cached)) {
@@ -309,7 +215,6 @@ class GHNApi
         $endpoint = $this->apiUrl . '/master-data/district';
         $result = $this->callApi($endpoint, ['province_id' => intval($provinceId)]);
 
-        // Cache to database
         if ($result['success'] && !empty($result['data'])) {
             $this->cacheDistricts($result['data'], $provinceId);
         }
@@ -317,12 +222,9 @@ class GHNApi
         return $result;
     }
 
-    /**
-     * Get list of wards by district ID
-     */
     public function getWards($districtId, $forceRefresh = false)
     {
-        // Try cache first
+
         if (!$forceRefresh && $this->enableCache) {
             $cached = $this->getCachedWards($districtId);
             if (!empty($cached)) {
@@ -337,7 +239,6 @@ class GHNApi
         $endpoint = $this->apiUrl . '/master-data/ward';
         $result = $this->callApi($endpoint, ['district_id' => intval($districtId)]);
 
-        // Cache to database
         if ($result['success'] && !empty($result['data'])) {
             $this->cacheWards($result['data'], $districtId);
         }
@@ -345,9 +246,6 @@ class GHNApi
         return $result;
     }
 
-    /**
-     * Get available services
-     */
     public function getAvailableServices($toDistrictId)
     {
         if (!$this->isEnabled()) {
@@ -364,10 +262,6 @@ class GHNApi
 
         return $this->callApi($endpoint, $data);
     }
-
-    // ========================================
-    // CACHE METHODS
-    // ========================================
 
     private function getCachedProvinces()
     {
@@ -494,18 +388,6 @@ class GHNApi
         }
     }
 
-    // ========================================
-    // CORE API CALL METHOD
-    // ========================================
-
-    /**
-     * Make API call to GHN
-     * 
-     * @param string $endpoint API endpoint URL
-     * @param array $data Request data
-     * @param string $method HTTP method (POST or GET)
-     * @return array Response with success, data, message
-     */
     private function callApi($endpoint, $data = [], $method = 'POST')
     {
         $curl = curl_init();
@@ -515,7 +397,6 @@ class GHNApi
             'Token: ' . $this->token,
         ];
 
-        // Add ShopId header for some endpoints
         if ($this->shopId) {
             $headers[] = 'ShopId: ' . $this->shopId;
         }
@@ -525,7 +406,7 @@ class GHNApi
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_TIMEOUT => 30,
-            CURLOPT_SSL_VERIFYPEER => false, // For development
+            CURLOPT_SSL_VERIFYPEER => false,
         ];
 
         if ($method === 'POST') {
@@ -543,7 +424,6 @@ class GHNApi
 
         curl_close($curl);
 
-        // Handle curl error
         if ($error) {
             error_log("GHN API Error: $error");
             return [
@@ -553,10 +433,8 @@ class GHNApi
             ];
         }
 
-        // Parse response
         $result = json_decode($response, true);
 
-        // GHN API returns code 200 for success
         $isSuccess = $httpCode === 200 && isset($result['code']) && $result['code'] === 200;
 
         return [
@@ -569,9 +447,6 @@ class GHNApi
         ];
     }
 
-    /**
-     * Get config value from database
-     */
     public function getConfigValue($key, $default = null)
     {
         try {
@@ -586,9 +461,6 @@ class GHNApi
         }
     }
 
-    /**
-     * Update config value in database
-     */
     public function updateConfig($key, $value)
     {
         try {

@@ -2,7 +2,6 @@
 require_once './elements_LQA/mod/dongiaCls.php';
 require_once './elements_LQA/mod/hanghoaCls.php';
 
-// Hiển thị thông báo nếu có
 if (isset($_SESSION['dongia_message'])) {
     $message = $_SESSION['dongia_message'];
     $success = isset($_SESSION['dongia_success']) ? $_SESSION['dongia_success'] : false;
@@ -240,7 +239,7 @@ function applyPrice(idDonGia, tenSanPham, giaBan) {
 ❓ Bạn có chắc chắn muốn áp dụng đơn giá này không?`;
     
     if (confirm(confirmMessage)) {
-        // Hiển thị loading
+
         const btn = event.target;
         const originalText = btn.innerHTML;
         btn.innerHTML = '⏳ ĐANG XỬ LÝ...';
@@ -329,9 +328,8 @@ function deletePrice(idDonGia) {
     }
 }
 
-// Thêm hiệu ứng hover cho các nút
 document.addEventListener('DOMContentLoaded', function() {
-    // Hiệu ứng hover cho nút áp dụng
+
     const applyButtons = document.querySelectorAll('.btn-apply');
     applyButtons.forEach(btn => {
         btn.addEventListener('mouseenter', function() {
@@ -344,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Hiệu ứng hover cho nút xóa
     const deleteButtons = document.querySelectorAll('.btn-delete');
     deleteButtons.forEach(btn => {
         btn.addEventListener('mouseenter', function() {

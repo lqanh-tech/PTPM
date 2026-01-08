@@ -1,12 +1,12 @@
 <?php
-/**
- * API để xóa cache
- * Sử dụng khi cần refresh dữ liệu
- */
 
 header('Content-Type: application/json');
 
-// Kiểm tra quyền admin
+require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
+
+$security = ApiSecurityMiddleware::getInstance();
+$security->handle();
+
 session_start();
 if (!isset($_SESSION['ADMIN']) && !isset($_SESSION['USER'])) {
     http_response_code(403);
@@ -27,7 +27,7 @@ try {
             break;
             
         case 'products':
-            // Xóa cache sản phẩm
+
             $cacheDir = __DIR__ . '/../cache';
             $files = glob($cacheDir . '/products_*.cache');
             $files = array_merge($files, glob($cacheDir . '/rating_*.cache'));
@@ -38,7 +38,7 @@ try {
             break;
             
         case 'pages':
-            // Xóa cache trang
+
             $cacheDir = __DIR__ . '/../cache';
             $files = glob($cacheDir . '/page_*.cache');
             foreach ($files as $file) {
@@ -48,7 +48,7 @@ try {
             break;
             
         default:
-            // Xóa cache theo key cụ thể
+
             $cache->delete($action);
             $message = "Đã xóa cache: {$action}";
     }

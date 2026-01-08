@@ -1,21 +1,19 @@
 <?php
-/**
- * API endpoint để xử lý filter sản phẩm
- * Được gọi bởi AJAX từ viewListLoaihang.php
- */
+
+header('Content-Type: application/json');
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header_remove('X-Powered-By');
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
 
-// Prevent any unwanted output
 @ini_set('display_errors', '0');
 @error_reporting(0);
 if (ob_get_level()) ob_clean();
 
-header('Content-Type: application/json');
-
 $hanghoa = new hanghoa();
 
-// Lấy filter parameters
 $min_price = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
 $max_price = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 100000000;
 $colors = isset($_GET['colors']) ? explode(',', $_GET['colors']) : [];
@@ -33,7 +31,7 @@ $filters = [
 ];
 
 try {
-    // Nếu có filter, dùng filterProducts, nếu không có category dùng getAll
+
     if (!empty($colors) || !empty($sizes) || $min_price > 0 || $max_price < 100000000 || $min_rating > 0) {
         $list_hanghoa = $hanghoa->filterProducts($filters);
     } elseif ($category) {
@@ -42,7 +40,6 @@ try {
         $list_hanghoa = $hanghoa->HanghoaGetAll();
     }
 
-    // Return JSON response
     echo json_encode([
         'success' => true,
         'count' => count($list_hanghoa),

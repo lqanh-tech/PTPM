@@ -1,20 +1,14 @@
 <?php
-/**
- * FIX shipping_method_selector_v2.php
- * Query trực tiếp từ shipping_methods thay vì dùng VIEW
- */
 
 require_once __DIR__ . '/../mod/database.php';
 
 $db = Database::getInstance()->getConnection();
 
-// Lấy thông tin đơn hàng từ session
 $cartWeight = $_SESSION['cart_weight'] ?? 1.0;
 $cartValue = $_SESSION['cart_total'] ?? 0;
 $provinceId = $_SESSION['province_id'] ?? 1;
 $districtId = $_SESSION['district_id'] ?? 1;
 
-// QUERY TRỰC TIẾP thay vì dùng VIEW
 $stmt = $db->query("
     SELECT 
         sm.*,
@@ -28,21 +22,18 @@ $stmt = $db->query("
 ");
 $shippingMethods = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// DEBUG
 error_log("DIRECT QUERY: Total methods: " . count($shippingMethods));
 foreach ($shippingMethods as $idx => $m) {
     error_log("  [$idx] ID:" . $m['id'] . " Code:" . $m['code'] . " Name:" . $m['name'] . " Sort:" . $m['sort_order']);
 }
 
-// Tính phí cho từng phương thức
 foreach ($shippingMethods as &$method) {
-    // Gọi function tính phí
+
     $stmt = $db->prepare("SELECT calculate_shipping_fee(?, ?, ?, ?, ?) as fee");
     $stmt->execute([$method['id'], $provinceId, $districtId, $cartWeight, $cartValue]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $method['calculated_fee'] = $result['fee'] ?? 0;
     
-    // Lấy thông tin chi tiết phí
     $stmt = $db->prepare("
         SELECT base_fee, fee_per_kg, min_order_free_ship
         FROM shipping_fees
@@ -174,9 +165,9 @@ foreach ($shippingMethods as &$method) {
 
 <!-- Keep all the existing CSS and JS from original file -->
 <?php
-// Include the rest of the original file's CSS and JS
+
 $originalFile = file_get_contents(__FILE__);
-// This is a simplified version - the actual CSS and JS from the original file should be copied here
+
 ?>
 
 <style>
@@ -359,27 +350,22 @@ function toggleFeeDetails(btn) {
     }
 }
 
-// Handle shipping method selection
 document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('.shipping-method-card');
     
     cards.forEach(card => {
         card.addEventListener('click', function() {
-            // Remove selected class from all cards
+
             cards.forEach(c => c.classList.remove('selected'));
             
-            // Add selected class to clicked card
             this.classList.add('selected');
             
-            // Check the radio button
             const radio = this.querySelector('input[type="radio"]');
             radio.checked = true;
             
-            // Update hidden inputs
             document.getElementById('selected_shipping_method').value = this.dataset.method;
             document.getElementById('selected_shipping_fee').value = this.dataset.fee;
             
-            // Dispatch event for checkout page to update total
             const event = new CustomEvent('shippingMethodChanged', {
                 detail: {
                     method: this.dataset.method,

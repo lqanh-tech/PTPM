@@ -10,7 +10,6 @@ class ThuocTinh
         $this->db = Database::getInstance()->getConnection();
     }
 
-    // Lấy tất cả các thuộc tính
     public function thuoctinhGetAll()
     {
         $sql = 'SELECT * FROM thuoctinh';
@@ -25,7 +24,6 @@ class ThuocTinh
         return $getAll->fetchAll();
     }
 
-    // Thêm thuộc tính mới
     public function thuoctinhAdd($tenThuocTinh, $ghiChu, $hinhanh)
     {
         $sql = "INSERT INTO thuoctinh (tenThuocTinh, ghiChu, hinhanh) VALUES (?, ?, ?)";
@@ -41,11 +39,10 @@ class ThuocTinh
         return $add->rowCount();
     }
 
-    // Xóa thuộc tính theo ID
     public function thuoctinhDelete($idThuocTinh)
     {
         try {
-            // Kiểm tra dữ liệu liên quan trước khi xóa
+
             $relatedData = $this->checkRelatedData($idThuocTinh);
 
             if (!empty($relatedData)) {
@@ -57,7 +54,6 @@ class ThuocTinh
                 ];
             }
 
-            // Nếu không có ràng buộc, thực hiện xóa
             $sql = "DELETE FROM thuoctinh WHERE idThuocTinh = ?";
             $data = array($idThuocTinh);
 
@@ -72,14 +68,14 @@ class ThuocTinh
                 'message' => $rowCount > 0 ? 'Xóa thuộc tính thành công' : 'Không tìm thấy thuộc tính để xóa'
             ];
         } catch (PDOException $e) {
-            // Xử lý lỗi foreign key constraint
+
             if ($e->getCode() == '23000' && strpos($e->getMessage(), 'foreign key constraint') !== false) {
-                // Phân tích thông báo lỗi để lấy tên bảng
+
                 $errorMessage = $e->getMessage();
                 $tableName = 'không xác định';
 
                 if (preg_match('/`([^`]+)`\.`([^`]+)`/', $errorMessage, $matches)) {
-                    $tableName = $matches[2]; // Tên bảng
+                    $tableName = $matches[2];
                 }
 
                 return [
@@ -91,7 +87,6 @@ class ThuocTinh
                 ];
             }
 
-            // Lỗi khác
             return [
                 'success' => false,
                 'error_type' => 'database_error',
@@ -100,7 +95,6 @@ class ThuocTinh
         }
     }
 
-    // Cập nhật thông tin thuộc tính
     public function thuoctinhUpdate($tenThuocTinh, $ghiChu, $hinhanh, $idThuocTinh)
     {
         try {
@@ -130,7 +124,6 @@ class ThuocTinh
         }
     }
 
-    // Lấy thông tin thuộc tính theo ID
     public function thuoctinhGetById($idThuocTinh)
     {
         $sql = 'SELECT * FROM thuoctinh WHERE idThuocTinh = ?';
@@ -147,15 +140,12 @@ class ThuocTinh
         return $getOne->fetch();
     }
 
-    /**
-     * Kiểm tra dữ liệu liên quan trước khi xóa thuộc tính
-     */
     public function checkRelatedData($idThuocTinh)
     {
         $relatedData = [];
 
         try {
-            // Kiểm tra bảng thuoctinhhh (thuộc tính hàng hóa)
+
             $sql = "SELECT COUNT(*) as count FROM thuoctinhhh WHERE idThuocTinh = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$idThuocTinh]);
@@ -169,8 +159,6 @@ class ThuocTinh
                 ];
             }
 
-            // Có thể thêm kiểm tra các bảng khác nếu cần
-
         } catch (PDOException $e) {
             error_log("Error checking related data: " . $e->getMessage());
         }
@@ -178,9 +166,6 @@ class ThuocTinh
         return $relatedData;
     }
 
-    /**
-     * Đưa ra gợi ý hành động dựa trên bảng có liên quan
-     */
     private function getSuggestedAction($tableName)
     {
         $suggestions = [

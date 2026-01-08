@@ -1,7 +1,5 @@
 <?php
-/**
- * Debug Support Page
- */
+
 require_once '../administrator/elements_LQA/mod/sessionManager.php';
 SessionManager::start();
 
@@ -17,7 +15,6 @@ $debug = [
     'http_host' => $_SERVER['HTTP_HOST'] ?? null,
 ];
 
-// Test API call
 try {
     require_once '../administrator/elements_LQA/mod/database.php';
     $db = Database::getInstance();

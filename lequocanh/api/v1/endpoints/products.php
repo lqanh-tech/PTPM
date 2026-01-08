@@ -1,8 +1,4 @@
 <?php
-/**
- * Products API Endpoint
- * Phase 3 - API Standardization
- */
 
 require_once '../../../administrator/elements_LQA/mod/databaseOptimizer.php';
 require_once '../../Response.php';
@@ -19,7 +15,6 @@ class ProductsAPI {
         $method = $_SERVER['REQUEST_METHOD'];
         $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
         
-        // Extract product ID from path if present
         $pathParts = explode('/', trim($path, '/'));
         $productId = end($pathParts);
         
@@ -57,13 +52,12 @@ class ProductsAPI {
     
     public function getAll() {
         try {
-            // Get query parameters
+
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 50;
             $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
             $search = isset($_GET['search']) ? $_GET['search'] : '';
             $category = isset($_GET['category']) ? $_GET['category'] : '';
             
-            // Build query
             $sql = "SELECT h.*, l.tenloaihang, 
                            COALESCE(d.giaBan, h.giathamkhao) as current_price
                     FROM hanghoa h 
@@ -73,27 +67,23 @@ class ProductsAPI {
             
             $params = [];
             
-            // Add search condition
             if (!empty($search)) {
                 $sql .= " AND (h.tenhanghoa LIKE ? OR h.mota LIKE ?)";
                 $params[] = "%$search%";
                 $params[] = "%$search%";
             }
             
-            // Add category filter
             if (!empty($category)) {
                 $sql .= " AND h.idloaihang = ?";
                 $params[] = $category;
             }
             
-            // Add pagination
             $sql .= " ORDER BY h.tenhanghoa LIMIT ? OFFSET ?";
             $params[] = $limit;
             $params[] = $offset;
             
             $products = $this->optimizer->executeQuery($sql, $params, true);
             
-            // Get total count for pagination
             $countSql = "SELECT COUNT(*) as total FROM hanghoa h WHERE h.setlock = 1";
             $countParams = [];
             
@@ -142,7 +132,6 @@ class ProductsAPI {
                 return Response::error('Product not found', 404);
             }
             
-            // Get product images
             $imagesSql = "SELECT * FROM hinhanh WHERE idhanghoa = ?";
             $images = $this->optimizer->executeQuery($imagesSql, [$id], true);
             
@@ -157,13 +146,12 @@ class ProductsAPI {
     
     public function create() {
         try {
-            // Validate JWT token
+
             $auth = new JwtAuthMiddleware();
             $auth->handle();
             
             $input = json_decode(file_get_contents('php://input'), true);
             
-            // Validate required fields
             $required = ['tenhanghoa', 'idloaihang', 'giathamkhao'];
             foreach ($required as $field) {
                 if (empty($input[$field])) {
@@ -192,13 +180,12 @@ class ProductsAPI {
     
     public function update($id) {
         try {
-            // Validate JWT token
+
             $auth = new JwtAuthMiddleware();
             $auth->handle();
             
             $input = json_decode(file_get_contents('php://input'), true);
             
-            // Check if product exists
             $existing = $this->optimizer->executeQuery(
                 "SELECT idhanghoa FROM hanghoa WHERE idhanghoa = ? AND setlock = 1", 
                 [$id], 
@@ -209,7 +196,6 @@ class ProductsAPI {
                 return Response::error('Product not found', 404);
             }
             
-            // Build update query dynamically
             $updateFields = [];
             $params = [];
             
@@ -239,11 +225,10 @@ class ProductsAPI {
     
     public function delete($id) {
         try {
-            // Validate JWT token
+
             $auth = new JwtAuthMiddleware();
             $auth->handle();
             
-            // Soft delete - set setlock to 0
             $sql = "UPDATE hanghoa SET setlock = 0 WHERE idhanghoa = ?";
             $result = $this->optimizer->executeQuery($sql, [$id], false);
             
@@ -255,6 +240,5 @@ class ProductsAPI {
     }
 }
 
-// Handle the request
 $api = new ProductsAPI();
 $api->handleRequest();

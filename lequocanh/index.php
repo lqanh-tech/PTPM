@@ -1,30 +1,36 @@
 <?php
-// Load local development configuration for faster loading
+
+require_once __DIR__ . '/includes/performance_bootstrap.php';
+
+perf_init([
+    'page_cache' => !isset($_SESSION['USER']) && !isset($_SESSION['ADMIN']),
+    'page_cache_ttl' => 300,
+    'html_minify' => true,
+    'lazy_images' => true,
+    'critical_css' => true,
+    'debug_bar' => ($_ENV['APP_DEBUG'] ?? false)
+])->start();
+
 require_once __DIR__ . '/config/local_config.php';
-
-// Bootstrap is already loaded by the parent index.php - skip loading it again
-// require_once __DIR__ . '/../bootstrap.php'; // REMOVED - prevents double loading
-
-// Load essential classes that were provided by bootstrap
 require_once __DIR__ . '/administrator/elements_LQA/mod/sessionManager.php';
 require_once __DIR__ . '/administrator/elements_LQA/config/logger_config.php';
+require_once __DIR__ . '/includes/csrf_helper.php';
+require_once __DIR__ . '/includes/query_builder.php';
+require_once __DIR__ . '/includes/advanced_cache.php';
 
-// Start session safely
 SessionManager::start();
 
-// Xóa session pending_order nếu user quay lại từ trang thanh toán thành công
 if (isset($_GET['clear_session']) && $_GET['clear_session'] == '1') {
     unset($_SESSION['pending_order']);
-    // Redirect để xóa parameter khỏi URL
+
     header('Location: index.php');
     exit();
 }
 
-// Kiểm tra nếu người dùng vừa quay về từ trang thanh toán
 $showPaymentSuccess = false;
 if (isset($_GET['payment_success']) && $_GET['payment_success'] == '1') {
     $showPaymentSuccess = true;
-    // Log để debug
+
     error_log('User returned from successful payment - Session USER: ' . (isset($_SESSION['USER']) ? $_SESSION['USER'] : 'Not set'));
 }
 
@@ -34,72 +40,56 @@ require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
 $giohang = new GioHang();
 $cartItemCount = $giohang->getCartItemCount();
 
-// Kiểm tra xem người dùng có phải là nhân viên không
 $isNhanVien = false;
 if (isset($_SESSION['USER'])) {
     $username = $_SESSION['USER'];
-    $db = Database::getInstance()->getConnection();
-
-    // Kiểm tra user id
-    $stmt = $db->prepare("SELECT iduser FROM user WHERE username = ?");
-    $stmt->execute([$username]);
-    $user = $stmt->fetch(PDO::FETCH_OBJ);
-
-    if ($user) {
-        // Kiểm tra xem có trong bảng nhân viên không
-        $stmt = $db->prepare("SELECT COUNT(*) FROM nhanvien WHERE iduser = ?");
-        $stmt->execute([$user->iduser]);
-        $isNhanVien = $stmt->fetchColumn() > 0;
-    }
+    
+    $isNhanVien = cache_remember('is_employee_' . $username, 300, function() use ($username) {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT iduser FROM user WHERE username = ?");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch(PDO::FETCH_OBJ);
+        
+        if ($user) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM nhanvien WHERE iduser = ?");
+            $stmt->execute([$user->iduser]);
+            return $stmt->fetchColumn() > 0;
+        }
+        return false;
+    });
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <?= csrf_meta() ?>
     <base href="/lequocanh/">
+    
+    <title>Cửa Hàng Điện Thoại - Giá tốt nhất thị trường</title>
+    <meta name="description" content="Cửa hàng điện thoại uy tín, chất lượng cao với giá tốt nhất. Giao hàng nhanh, bảo hành chính hãng.">
+    
+    <?php echo perf_head(); ?>
 
-    <!-- Preconnect to external domains for faster loading -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-    <link rel="preconnect" href="https://code.jquery.com">
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style">
+    <link rel="preload" href="public_files/mycss.css" as="style">
 
-    <!-- Optimize CSS loading -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    </noscript>
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="public_files/mycss.css">
+    <link rel="stylesheet" href="public_files/notification.css">
+    <link rel="stylesheet" href="public_files/product_filter.css">
+    <link rel="stylesheet" href="public_files/product_reviews.css">
+    <link rel="stylesheet" href="public_files/wishlist.css">
 
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    </noscript>
-
-    <!-- Local CSS files - Critical first -->
-    <link rel="stylesheet" href="public_files/critical.css">
-    <link rel="stylesheet" href="public_files/mycss.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="public_files/notification.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="public_files/product_filter.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="public_files/product_reviews.css" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="public_files/wishlist.css" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="public_files/mycss.css">
-        <link rel="stylesheet" href="public_files/notification.css">
-        <link rel="stylesheet" href="public_files/product_filter.css">
-        <link rel="stylesheet" href="public_files/product_reviews.css">
-        <link rel="stylesheet" href="public_files/wishlist.css">
-    </noscript>
-
-    <title>Cửa Hàng Điện Thoại</title>
-
-    <!-- Minimal inline critical CSS -->
     <style>
-        /* Critical above-the-fold styles */
+
         .navbar {
             z-index: 1030 !important;
         }
@@ -131,7 +121,6 @@ if (isset($_SESSION['USER'])) {
             z-index: 1090 !important;
         }
 
-        /* Loading indicator */
         .loading {
             opacity: 0.7;
             pointer-events: none;
@@ -163,7 +152,6 @@ if (isset($_SESSION['USER'])) {
             }
         }
 
-        /* Carousel custom styles */
         .news-carousel-caption {
             background: rgba(0, 0, 0, 0.7);
             border-radius: 8px;
@@ -186,7 +174,6 @@ if (isset($_SESSION['USER'])) {
             opacity: 0.9;
         }
         
-        /* Support Button Animation */
         .pulse-animation {
             animation: pulse 2s infinite;
             box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
@@ -211,13 +198,11 @@ if (isset($_SESSION['USER'])) {
             transition: transform 0.2s;
         }
         
-        /* Footer link hover */
         .hover-white:hover {
             color: #fff !important;
             transition: color 0.2s;
         }
         
-        /* Blog Section on Homepage */
         .blog-section {
             background: #f8f9fa;
             padding: 40px 0;
@@ -310,7 +295,7 @@ if (isset($_SESSION['USER'])) {
                                 data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-user me-2"></i>
                                 <?php
-                                // Lấy tên người dùng từ database
+
                                 $username = $_SESSION['USER'];
                                 $db = Database::getInstance()->getConnection();
                                 $stmt = $db->prepare("SELECT hoten FROM user WHERE username = ?");
@@ -541,7 +526,7 @@ if (isset($_SESSION['USER'])) {
                     <h3 class="mb-3">Sản phẩm giảm giá</h3>
                     <div class="row">
                         <?php foreach ($discountedProducts as $product):
-                            // Calculate discount percentage
+
                             $discountPercent = round((($product['giathamkhao'] - $product['giakhuyenmai']) / $product['giathamkhao']) * 100);
                         ?>
                             <div class="col-md-3 col-sm-6 mb-4">
@@ -626,7 +611,7 @@ if (isset($_SESSION['USER'])) {
         require_once __DIR__ . '/administrator/elements_LQA/mod/PageManager.php';
         $pageManagerHome = new PageManager();
         $latestBlogs = $pageManagerHome->getAllBlogs(true);
-        $latestBlogs = array_slice($latestBlogs, 0, 4); // Lấy 4 bài mới nhất
+        $latestBlogs = array_slice($latestBlogs, 0, 4);
         
         if (!empty($latestBlogs)):
         ?>
@@ -770,12 +755,11 @@ if (isset($_SESSION['USER'])) {
 
         <!-- Scripts - Optimized loading -->
         <script>
-            // Remove loading indicator when page is loaded
+
             window.addEventListener('load', function() {
                 document.getElementById('pageLoader').style.display = 'none';
             });
 
-            // Fast CSS loading fallback
             ! function(e) {
                 "use strict";
                 var t = function(t, n, r) {
@@ -833,14 +817,13 @@ if (isset($_SESSION['USER'])) {
 
         <!-- Performance optimization script -->
         <script>
-            // Performance variables
+
             let notificationsLoaded = false;
             let orderModalLoaded = false;
 
-            // Lazy load notifications
             function loadNotifications() {
                 if (!notificationsLoaded) {
-                    // Create and load the full notification modal dynamically
+
                     const modalHTML = `
                     <div class="order-detail-modal" id="orderDetailModal">
                         <div class="order-detail-content">
@@ -893,7 +876,6 @@ if (isset($_SESSION['USER'])) {
                     </div>
                 `;
 
-                    // Add to the notification container
                     const notificationContainer = document.querySelector('.position-relative.me-2');
                     if (notificationContainer) {
                         notificationContainer.insertAdjacentHTML('beforeend', modalHTML);
@@ -902,7 +884,6 @@ if (isset($_SESSION['USER'])) {
                     notificationsLoaded = true;
                 }
 
-                // Toggle notification dropdown
                 const dropdown = document.getElementById('notificationDropdown');
                 if (dropdown) {
                     dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
@@ -916,9 +897,8 @@ if (isset($_SESSION['USER'])) {
                 }
             }
 
-            // Preload critical resources
             if ('serviceWorker' in navigator) {
-                // Simple resource caching
+
                 const resources = [
                     'public_files/mycss.css',
                     'public_files/notification.css',
@@ -934,7 +914,6 @@ if (isset($_SESSION['USER'])) {
                 });
             }
 
-            // Image lazy loading for better performance
             if ('IntersectionObserver' in window) {
                 const imageObserver = new IntersectionObserver((entries, observer) => {
                     entries.forEach(entry => {
@@ -954,6 +933,12 @@ if (isset($_SESSION['USER'])) {
                 });
             }
         </script>
+        
+        <!-- CSRF Protection Helper -->
+        <script src="public_files/js/csrf-helper.js" defer></script>
+        
+        <?php echo perf_footer(); ?>
 </body>
 
 </html>
+<?php perf()->end(); ?>

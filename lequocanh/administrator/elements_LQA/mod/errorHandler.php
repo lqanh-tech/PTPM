@@ -1,8 +1,4 @@
 <?php
-/**
- * Centralized Error Handler
- * Improvement: Unified error handling across all modules
- */
 
 class ErrorHandler {
     private static $logger;
@@ -10,7 +6,6 @@ class ErrorHandler {
     public static function init() {
         self::$logger = Logger::getInstance();
         
-        // Set custom error handler
         set_error_handler([self::class, 'handleError']);
         set_exception_handler([self::class, 'handleException']);
         register_shutdown_function([self::class, 'handleFatalError']);
@@ -32,7 +27,6 @@ class ErrorHandler {
         
         self::logError($errorData);
         
-        // Don't execute PHP internal error handler
         return true;
     }
     
@@ -48,7 +42,6 @@ class ErrorHandler {
         
         self::logError($errorData);
         
-        // Show user-friendly error page
         self::showErrorPage($errorData);
     }
     
@@ -70,7 +63,6 @@ class ErrorHandler {
     private static function logError($errorData) {
         self::$logger->error('System Error', $errorData);
         
-        // Also log to monitoring system
         if (class_exists('ModernMonitoringSystem')) {
             $monitor = ModernMonitoringSystem::getInstance();
             $monitor->incrementCounter('system_errors_total', [
@@ -86,7 +78,6 @@ class ErrorHandler {
             header('Content-Type: text/html; charset=UTF-8');
         }
         
-        // Show different pages for development vs production
         if (defined('ENVIRONMENT') && ENVIRONMENT === 'development') {
             self::showDetailedError($errorData);
         } else {

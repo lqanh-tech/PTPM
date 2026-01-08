@@ -2,7 +2,6 @@
 require_once '../mod/sessionManager.php';
 SessionManager::start();
 
-// Check access rights using PhanQuyen system
 require_once '../mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -26,7 +25,6 @@ switch ($action) {
             $author = trim($_POST['author'] ?? 'Admin');
             $is_published = isset($_POST['is_published']) ? 1 : 0;
 
-            // Kiểm tra dữ liệu đầu vào
             if (empty($title)) {
                 $message = 'Lỗi: Tiêu đề không được để trống';
                 break;
@@ -36,7 +34,6 @@ switch ($action) {
                 break;
             }
 
-            // Upload ảnh (không bắt buộc cho tin tức)
             $image_url = '';
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $image_url = $newsManager->uploadNewsImage($_FILES['image']);
@@ -71,12 +68,11 @@ switch ($action) {
             $author = trim($_POST['author'] ?? 'Admin');
             $is_published = isset($_POST['is_published']) ? 1 : 0;
 
-            // Upload ảnh mới nếu có
             $image_url = $news['featured_image'];
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $new_image_url = $newsManager->uploadNewsImage($_FILES['image']);
                 if ($new_image_url) {
-                    // Xóa ảnh cũ nếu khác ảnh mới
+
                     if ($news['featured_image'] !== $new_image_url && $news['featured_image']) {
                         $oldImagePath = __DIR__ . '/../../..' . $news['featured_image'];
                         if (file_exists($oldImagePath)) {
@@ -103,7 +99,7 @@ switch ($action) {
         $news = $newsManager->getNewsById($id);
         
         if ($news && $newsManager->deleteNews($id)) {
-            // Xóa ảnh nếu tồn tại
+
             if ($news['featured_image']) {
                 $imagePath = __DIR__ . '/../../..' . $news['featured_image'];
                 if (file_exists($imagePath)) {
@@ -205,32 +201,3 @@ if ($msg === 'notfound') $message = 'Tin tức không tồn tại';
                                     <img src="<?php echo htmlspecialchars($news['featured_image']); ?>" alt="Current News Image" width="200">
                                 </div>
                             <?php endif; ?>
-                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                            <div class="form-text">Chấp nhận định dạng: JPG, PNG, GIF</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="author" class="form-label">Tác giả</label>
-                            <input type="text" class="form-control" id="author" name="author" value="<?php echo htmlspecialchars($action === 'edit' ? $news['author'] : ($_POST['author'] ?? 'Admin')); ?>">
-                        </div>
-                        
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="is_published" name="is_published" <?php echo ($action === 'edit' && $news['is_published']) || (isset($_POST['is_published']) && $_POST['is_published']) ? 'checked' : ''; ?>>
-                            <label class="form-check-label" for="is_published">Xuất bản</label>
-                        </div>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn btn-primary"><?php echo $action === 'edit' ? 'Cập nhật' : 'Thêm'; ?> Tin tức</button>
-                <a href="?" class="btn btn-secondary">Hủy</a>
-            </form>
-        <?php endif; ?>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.ckeditor.com/4.16.2/standard/ckeditor.js"></script>
-    <script>
-        CKEDITOR.replace('content');
-    </script>
-</body>
-</html>

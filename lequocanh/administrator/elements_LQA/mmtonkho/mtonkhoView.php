@@ -4,17 +4,13 @@
 require_once './elements_LQA/mod/mtonkhoCls.php';
 require_once './elements_LQA/mod/hanghoaCls.php';
 
-// Khởi tạo các đối tượng
 $tonkhoObj = new MTonKho();
 $hanghoaObj = new hanghoa();
 
-// Lấy danh sách tồn kho
 $list_tonkho = $tonkhoObj->getAllTonKho();
 
-// Lấy danh sách hàng hóa sắp hết
 $list_saphet = $tonkhoObj->getHangHoaSapHet();
 
-// Lấy danh sách hàng hóa hết hàng
 $list_hethang = $tonkhoObj->getHangHoaHetHang();
 ?>
 
@@ -38,7 +34,7 @@ $list_hethang = $tonkhoObj->getHangHoaHetHang();
             <?php
             if (!empty($list_tonkho)) {
                 foreach ($list_tonkho as $item) {
-                    // Xác định trạng thái
+
                     $trangThai = "";
                     $trangThaiClass = "";
                     if ($item->soLuong == 0) {

@@ -1,11 +1,4 @@
 <?php
-/**
- * Shipping Method Management Class
- * Quản lý các phương thức vận chuyển: tiêu chuẩn, nhanh, lấy tại cửa hàng
- * 
- * @author LQA E-commerce System
- * @version 1.0
- */
 
 require_once __DIR__ . '/database.php';
 
@@ -13,13 +6,11 @@ class ShippingMethod
 {
     private $db;
     
-    // Các phương thức vận chuyển mặc định
     const METHOD_STANDARD = 'standard';
     const METHOD_EXPRESS = 'express';
     const METHOD_PICKUP = 'pickup';
     const METHOD_GHN = 'ghn';
     
-    // Cấu hình mặc định cho từng phương thức
     private $defaultMethods = [
         'standard' => [
             'code' => 'standard',
@@ -58,7 +49,7 @@ class ShippingMethod
             'code' => 'ghn',
             'name' => 'Giao Hàng Nhanh (GHN)',
             'description' => 'Vận chuyển qua đối tác GHN',
-            'base_fee' => 0, // Tính theo API
+            'base_fee' => 0,
             'estimated_days_min' => 1,
             'estimated_days_max' => 3,
             'icon' => 'fa-box',
@@ -73,9 +64,6 @@ class ShippingMethod
         $this->ensureTableExists();
     }
 
-    /**
-     * Đảm bảo bảng shipping_methods tồn tại
-     */
     private function ensureTableExists()
     {
         try {
@@ -99,7 +87,6 @@ class ShippingMethod
             
             $this->db->exec($sql);
             
-            // Thêm các phương thức mặc định nếu chưa có
             $this->seedDefaultMethods();
             
         } catch (PDOException $e) {
@@ -107,9 +94,6 @@ class ShippingMethod
         }
     }
 
-    /**
-     * Thêm các phương thức vận chuyển mặc định
-     */
     private function seedDefaultMethods()
     {
         try {
@@ -142,9 +126,6 @@ class ShippingMethod
         }
     }
 
-    /**
-     * Lấy tất cả phương thức vận chuyển đang hoạt động
-     */
     public function getActiveMethods()
     {
         try {
@@ -158,9 +139,6 @@ class ShippingMethod
         }
     }
 
-    /**
-     * Lấy phương thức vận chuyển theo code
-     */
     public function getMethodByCode($code)
     {
         try {
@@ -176,9 +154,6 @@ class ShippingMethod
         }
     }
 
-    /**
-     * Tính phí vận chuyển theo phương thức
-     */
     public function calculateFee($methodCode, $params = [])
     {
         $method = $this->getMethodByCode($methodCode);
@@ -195,20 +170,17 @@ class ShippingMethod
         $freeShippingThreshold = floatval($method['free_shipping_threshold'] ?? 0);
         $orderTotal = floatval($params['order_total'] ?? 0);
 
-        // Kiểm tra miễn phí vận chuyển
         $isFreeShipping = false;
         if ($freeShippingThreshold > 0 && $orderTotal >= $freeShippingThreshold) {
             $isFreeShipping = true;
             $totalFee = 0;
         }
 
-        // Nếu là lấy tại cửa hàng, luôn miễn phí
         if ($methodCode === self::METHOD_PICKUP) {
             $totalFee = 0;
             $isFreeShipping = true;
         }
 
-        // Tính phí theo khoảng cách nếu có
         if (!$isFreeShipping && isset($params['distance_km']) && floatval($method['per_km_fee']) > 0) {
             $totalFee += floatval($params['distance_km']) * floatval($method['per_km_fee']);
         }
@@ -228,9 +200,6 @@ class ShippingMethod
         ];
     }
 
-    /**
-     * Tính ngày giao hàng dự kiến
-     */
     private function getEstimatedDeliveryDate($method)
     {
         $minDays = intval($method['estimated_days_min']);
@@ -246,9 +215,6 @@ class ShippingMethod
         return "{$minDate} - {$maxDate}";
     }
 
-    /**
-     * Lấy thông tin cửa hàng cho pickup
-     */
     public function getPickupStoreInfo()
     {
         return [
@@ -260,9 +226,6 @@ class ShippingMethod
         ];
     }
 
-    /**
-     * Cập nhật phương thức vận chuyển
-     */
     public function updateMethod($code, $data)
     {
         try {
@@ -292,9 +255,6 @@ class ShippingMethod
         }
     }
 
-    /**
-     * Bật/tắt phương thức vận chuyển
-     */
     public function toggleMethod($code, $isActive)
     {
         try {

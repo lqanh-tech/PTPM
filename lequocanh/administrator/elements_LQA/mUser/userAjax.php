@@ -1,14 +1,12 @@
 <?php
 session_start();
 
-// Kiểm tra đăng nhập
 if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Unauthorized']);
     exit();
 }
 
-// Tìm đường dẫn đúng đến các file cần thiết
 $paths = [
     __DIR__ . '/../../elements_LQA/mod/database.php',
     __DIR__ . '/../mod/database.php',
@@ -31,7 +29,6 @@ if (!$found) {
     exit();
 }
 
-// Tìm đường dẫn đúng đến userCls.php
 $userClsPaths = [
     __DIR__ . '/../../elements_LQA/mod/userCls.php',
     __DIR__ . '/../mod/userCls.php',
@@ -54,7 +51,6 @@ if (!$foundUserCls) {
     exit();
 }
 
-// Kết nối database
 try {
     $db = Database::getInstance()->getConnection();
 } catch (Exception $e) {
@@ -63,16 +59,14 @@ try {
     exit();
 }
 
-// Xử lý các yêu cầu AJAX
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 switch ($action) {
     case 'getUsers':
-        // Lấy danh sách người dùng
+
         $userObj = new user();
         $list_user = $userObj->UserGetAll();
         
-        // Tạo HTML cho bảng người dùng
         $html = '';
         if (count($list_user) > 0) {
             foreach ($list_user as $u) {
@@ -89,7 +83,6 @@ switch ($action) {
                 $html .= '<td>' . ($u->trangthai == 1 ? 'Hoạt động' : 'Bị khóa') . '</td>';
                 $html .= '<td>';
                 
-                // Nút chức năng
                 if (!$isAdmin || isset($_SESSION['ADMIN'])) {
                     $html .= '<a href="index.php?req=userupdate&iduser=' . $u->iduser . '" class="btn-action btn-edit" title="Sửa"><i class="fas fa-edit"></i></a>';
                     
@@ -113,7 +106,7 @@ switch ($action) {
         break;
         
     case 'getUserCount':
-        // Lấy số lượng người dùng
+
         $userObj = new user();
         $list_user = $userObj->UserGetAll();
         echo count($list_user);

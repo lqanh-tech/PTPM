@@ -1,7 +1,4 @@
 <?php
-/**
- * Script tạo bảng marketing tự động
- */
 
 require_once 'administrator/elements_LQA/mod/database.php';
 
@@ -9,7 +6,6 @@ try {
     $db = Database::getInstance()->getConnection();
     echo "✓ Kết nối database thành công\n\n";
     
-    // Tạo bảng banners
     echo "Đang tạo bảng 'banners'...\n";
     $sql = "CREATE TABLE IF NOT EXISTS banners (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -25,7 +21,6 @@ try {
     $db->exec($sql);
     echo "✓ Bảng 'banners' đã được tạo\n\n";
     
-    // Tạo bảng news
     echo "Đang tạo bảng 'news'...\n";
     $sql = "CREATE TABLE IF NOT EXISTS news (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,7 +36,6 @@ try {
     $db->exec($sql);
     echo "✓ Bảng 'news' đã được tạo\n\n";
     
-    // Tạo bảng promotions
     echo "Đang tạo bảng 'promotions'...\n";
     $sql = "CREATE TABLE IF NOT EXISTS promotions (
         id INT AUTO_INCREMENT PRIMARY KEY,

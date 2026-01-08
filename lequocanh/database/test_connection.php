@@ -1,11 +1,10 @@
 <?php
-// Test MySQL connection with better error handling
+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 echo "=== Testing MySQL Connection ===\n\n";
 
-// Check if PDO MySQL is available
 if (!extension_loaded('pdo_mysql')) {
     echo "ERROR: PDO MySQL extension not loaded!\n";
     echo "Please enable it in php.ini\n";
@@ -14,7 +13,6 @@ if (!extension_loaded('pdo_mysql')) {
 
 echo "✓ PDO MySQL extension is loaded\n";
 
-// Try to connect
 try {
     echo "Connecting to MySQL...\n";
     $pdo = new PDO('mysql:host=mysql;charset=utf8mb4', 'app_user', 'app_password', [
@@ -22,18 +20,15 @@ try {
     ]);
     echo "✓ MySQL connection successful!\n\n";
     
-    // Check if database exists
     echo "Checking database 'sales_management'...\n";
     $stmt = $pdo->query("SHOW DATABASES LIKE 'sales_management'");
     if ($stmt->rowCount() > 0) {
         echo "✓ Database 'sales_management' exists\n\n";
         
-        // Connect to sales_management
         $pdo = new PDO('mysql:host=mysql;dbname=sales_management;charset=utf8mb4', 'app_user', 'app_password', [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]);
         
-        // Check tables
         echo "Checking tables...\n";
         $tables = ['provinces', 'districts', 'wards'];
         foreach ($tables as $table) {

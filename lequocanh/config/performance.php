@@ -1,20 +1,16 @@
 <?php
-/**
- * Performance Configuration
- * Cấu hình tối ưu hiệu suất cho website
- */
 
 return [
-    // Cache settings
+
     'cache' => [
         'enabled' => true,
-        'driver' => 'file', // file, redis, memcached
+        'driver' => 'file',
         'ttl' => [
-            'page' => 180,        // 3 phút cho page cache
-            'products' => 300,    // 5 phút cho sản phẩm
-            'categories' => 600,  // 10 phút cho danh mục
-            'static' => 3600,     // 1 giờ cho nội dung tĩnh
-            'ratings' => 600,     // 10 phút cho ratings
+            'page' => 180,
+            'products' => 300,
+            'categories' => 600,
+            'static' => 3600,
+            'ratings' => 600,
         ],
         'exclude_paths' => [
             '/administrator/',
@@ -25,14 +21,12 @@ return [
         ],
     ],
     
-    // Compression settings
     'compression' => [
         'enabled' => true,
         'level' => 6,
-        'min_size' => 1024, // Chỉ compress files > 1KB
+        'min_size' => 1024,
     ],
     
-    // Image optimization
     'images' => [
         'lazy_load' => true,
         'webp_enabled' => true,
@@ -45,15 +39,13 @@ return [
         ],
     ],
     
-    // Database optimization
     'database' => [
         'query_cache' => true,
         'persistent_connections' => false,
         'slow_query_log' => true,
-        'slow_query_threshold' => 1.0, // seconds
+        'slow_query_threshold' => 1.0,
     ],
     
-    // Frontend optimization
     'frontend' => [
         'minify_html' => true,
         'minify_css' => true,
@@ -63,15 +55,13 @@ return [
         'prefetch_links' => true,
     ],
     
-    // Cloudflare settings
     'cloudflare' => [
         'enabled' => true,
         'cache_static_assets' => true,
-        'browser_cache_ttl' => 31536000, // 1 year
-        'edge_cache_ttl' => 86400,       // 1 day
+        'browser_cache_ttl' => 31536000,
+        'edge_cache_ttl' => 86400,
     ],
     
-    // Debug settings
     'debug' => [
         'show_metrics' => false,
         'log_slow_queries' => true,

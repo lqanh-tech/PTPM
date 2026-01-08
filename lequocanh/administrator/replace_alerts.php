@@ -1,10 +1,5 @@
 <?php
-/**
- * Script tự động thay thế alert() bằng Toast notification
- * Chạy script này để tự động cập nhật các file
- */
 
-// Danh sách các file cần cập nhật
 $files = [
     '../payment/admin_dashboard.php',
     '../customer/order_history.php',
@@ -23,19 +18,18 @@ $files = [
     './elements_LQA/mhanghoa/hanghoaUpdate.php',
 ];
 
-// Các pattern thay thế
 $replacements = [
-    // alert('message') -> Toast.error('message')
+
     [
         'pattern' => "/alert\s*\(\s*['\"]([^'\"]*)['\"]\\s*\)/",
         'replacement' => "Toast.error('$1')"
     ],
-    // alert("message") -> Toast.error("message")
+
     [
         'pattern' => '/alert\s*\(\s*"([^"]*)"\s*\)/',
         'replacement' => 'Toast.error("$1")'
     ],
-    // alert với biến hoặc concatenation
+
     [
         'pattern' => "/alert\s*\(\s*'✅([^']*)'\s*\)/",
         'replacement' => "Toast.success('$1')"
@@ -73,13 +67,11 @@ foreach ($files as $file) {
     $originalContent = $content;
     $fileReplacements = 0;
     
-    // Kiểm tra xem file đã có toast notification chưa
     $hasToastCSS = strpos($content, 'toast-notification.css') !== false;
     $hasToastJS = strpos($content, 'toast-notification.js') !== false;
     
-    // Thêm CSS và JS nếu chưa có
     if (!$hasToastCSS && !$hasToastJS) {
-        // Tìm vị trí thêm CSS (trong <head> hoặc trước </head>)
+
         if (preg_match('/<\/head>/i', $content)) {
             $content = preg_replace(
                 '/<\/head>/i',
@@ -89,7 +81,6 @@ foreach ($files as $file) {
             );
         }
         
-        // Tìm vị trí thêm JS (trước </body> hoặc trước script đầu tiên)
         if (preg_match('/<script/i', $content)) {
             $content = preg_replace(
                 '/<script/i',
@@ -107,7 +98,6 @@ foreach ($files as $file) {
         }
     }
     
-    // Thực hiện các thay thế
     foreach ($replacements as $replacement) {
         $count = 0;
         $content = preg_replace(
@@ -120,13 +110,11 @@ foreach ($files as $file) {
         $fileReplacements += $count;
     }
     
-    // Lưu file nếu có thay đổi
     if ($content !== $originalContent) {
-        // Backup file gốc
+
         $backupPath = $fullPath . '.backup';
         copy($fullPath, $backupPath);
         
-        // Lưu file mới
         file_put_contents($fullPath, $content);
         
         $stats['updated_files']++;

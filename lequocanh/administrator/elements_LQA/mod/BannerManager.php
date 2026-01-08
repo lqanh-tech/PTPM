@@ -1,8 +1,4 @@
 <?php
-/**
- * Banner Manager
- * Quản lý banner quảng cáo
- */
 
 require_once 'database.php';
 
@@ -15,9 +11,6 @@ class BannerManager
         $this->db = Database::getInstance()->getConnection();
     }
 
-    /**
-     * Lấy tất cả banner đang hoạt động
-     */
     public function getActiveBanners()
     {
         try {
@@ -31,9 +24,6 @@ class BannerManager
         }
     }
 
-    /**
-     * Lấy tất cả banner (cho admin)
-     */
     public function getAllBanners()
     {
         try {
@@ -47,9 +37,6 @@ class BannerManager
         }
     }
 
-    /**
-     * Lấy banner theo ID
-     */
     public function getBannerById($id)
     {
         try {
@@ -63,9 +50,6 @@ class BannerManager
         }
     }
 
-    /**
-     * Thêm banner mới
-     */
     public function addBanner($title, $description, $image_url, $link_url, $position, $is_active)
     {
         try {
@@ -79,9 +63,6 @@ class BannerManager
         }
     }
 
-    /**
-     * Cập nhật banner
-     */
     public function updateBanner($id, $title, $description, $image_url, $link_url, $position, $is_active)
     {
         try {
@@ -96,9 +77,6 @@ class BannerManager
         }
     }
 
-    /**
-     * Xóa banner
-     */
     public function deleteBanner($id)
     {
         try {
@@ -111,9 +89,6 @@ class BannerManager
         }
     }
 
-    /**
-     * Upload hình ảnh banner
-     */
     public function uploadBannerImage($file)
     {
         if ($file['error'] !== UPLOAD_ERR_OK) {
@@ -139,7 +114,6 @@ class BannerManager
         $uploadDir = __DIR__ . '/../../../administrator/uploads/';
         $uploadPath = $uploadDir . $newFileName;
 
-        // Kiểm tra và tạo thư mục nếu chưa tồn tại
         if (!file_exists($uploadDir)) {
             if (!mkdir($uploadDir, 0755, true)) {
                 error_log("Banner upload error: Cannot create upload directory - " . $uploadDir);
@@ -147,7 +121,6 @@ class BannerManager
             }
         }
 
-        // Kiểm tra quyền ghi
         if (!is_writable($uploadDir)) {
             error_log("Banner upload error: Upload directory is not writable - " . $uploadDir);
             return false;

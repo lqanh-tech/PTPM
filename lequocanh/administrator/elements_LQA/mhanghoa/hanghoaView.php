@@ -13,10 +13,8 @@ $list_donvitinh = $hanghoaObj->GetAllDonViTinh();
 $list_nhanvien = $hanghoaObj->GetAllNhanVien();
 $list_hinhanh = $hanghoaObj->GetAllHinhAnh();
 
-// Tạo bảng hanghoa_hinhanh nếu chưa tồn tại
 $hanghoaObj->CreateHanghoaHinhanhTable();
 
-// Hiển thị thông báo nếu có
 if (isset($_GET['result'])) {
     if ($_GET['result'] == 'ok') {
         echo '<div class="alert alert-success">';
@@ -39,7 +37,6 @@ if (isset($_GET['result'])) {
     } else if ($_GET['result'] == 'notok') {
         echo '<div class="alert alert-danger">';
 
-        // Xử lý lỗi foreign key constraint
         if (isset($_GET['error_type']) && $_GET['error_type'] == 'foreign_key_constraint') {
             echo '<div class="foreign-key-error">';
             echo '<h4><i class="fas fa-exclamation-triangle"></i> Không thể xóa hàng hóa</h4>';
@@ -82,7 +79,7 @@ if (isset($_GET['result'])) {
             echo '</div>';
             echo '</div>';
         } else if (isset($_GET['msg'])) {
-            // Xử lý các lỗi khác
+
             if ($_GET['msg'] == 'remove_failed') {
                 echo '<strong>Lỗi!</strong> Không thể gỡ bỏ hình ảnh. Vui lòng thử lại.';
             } else if ($_GET['msg'] == 'no_images_removed') {
@@ -103,7 +100,6 @@ if (isset($_GET['result'])) {
     }
 }
 
-// Hiển thị thông báo nếu có hình ảnh mới khớp với sản phẩm
 if (isset($_SESSION['matched_images']) && !empty($_SESSION['matched_images'])) {
     echo '<div class="alert-success">';
     echo '<strong>Phát hiện hình ảnh phù hợp với sản phẩm:</strong><br>';
@@ -113,11 +109,9 @@ if (isset($_SESSION['matched_images']) && !empty($_SESSION['matched_images'])) {
     echo 'Bạn có thể nhấn nút "Áp dụng" ở cột hình ảnh tương ứng để áp dụng hình ảnh cho sản phẩm.';
     echo '</div>';
 
-    // Xóa session sau khi đã hiển thị
     unset($_SESSION['matched_images']);
 }
 
-// Kiểm tra hình ảnh không khớp tên sản phẩm
 $mismatched_images = $hanghoaObj->GetMismatchedProductImages();
 $missing_images = $hanghoaObj->FindMissingImages();
 ?>
@@ -168,7 +162,7 @@ $missing_images = $hanghoaObj->FindMissingImages();
                         ?>
                             <div class="preview-item" onclick="selectImage(<?php echo $img->id; ?>)">
                                 <?php
-                                // Sử dụng displayImage.php để hiển thị ảnh theo ID
+
                                 $imageSrc = "./elements_LQA/mhanghoa/displayImage.php?id=" . $img->id;
                                 ?>
                                 <img src="<?php echo $imageSrc; ?>&t=<?php echo time(); ?>" class="preview-img" data-id="<?php echo $img->id; ?>"
@@ -264,11 +258,10 @@ $l = count($list_hanghoa);
         Tổng số hàng hóa: <b><?php echo $l; ?></b>
 
         <?php
-        // Lấy danh sách tất cả hình ảnh - số lượng thực tế trong DB
+
         $allImages = $hanghoaObj->GetAllHinhAnh();
         $totalImages = count($allImages);
 
-        // Đếm số sản phẩm có hình ảnh (có giá trị hinhanh > 0)
         $productsWithImages = 0;
         foreach ($list_hanghoa as $product) {
             if (isset($product->hinhanh) && $product->hinhanh > 0) {
@@ -282,7 +275,7 @@ $l = count($list_hanghoa);
     </div>
 
     <?php
-    // Include search box
+
     $searchFormId = 'product-search';
     $tableBodyId = 'product-list';
     $placeholderText = 'Tìm kiếm hàng hóa...';
@@ -290,7 +283,7 @@ $l = count($list_hanghoa);
     ?>
 
     <?php
-    // Hiển thị thông báo về hình ảnh không khớp tên
+
     if (!empty($mismatched_images)) {
         echo '<div class="alert alert-warning">';
         echo '<div class="alert-header">';
@@ -308,7 +301,6 @@ $l = count($list_hanghoa);
         echo '</div>';
     }
 
-    // Hiển thị thông báo về hình ảnh bị mất
     if (!empty($missing_images)) {
         echo '<div class="alert alert-danger">';
         echo '<h4><i class="fas fa-exclamation-circle"></i> Cảnh báo: Có ' . count($missing_images) . ' sản phẩm đang tham chiếu đến hình ảnh không tồn tại</h4>';
@@ -355,7 +347,7 @@ $l = count($list_hanghoa);
                         <td align="center">
                             <?php
                             if (is_numeric($u->hinhanh) && $u->hinhanh > 0) {
-                                // Sử dụng script displayImage khi hinhanh là ID
+
                                 $imageSrc = "./elements_LQA/mhanghoa/displayImage.php?id=" . $u->hinhanh;
                             ?>
                                 <div class="product-image-container">
@@ -431,7 +423,7 @@ $l = count($list_hanghoa);
 </div>
 
 <style>
-    /* Scrollable Table Container */
+
     .table-scroll-container {
         max-height: 60vh;
         min-height: 300px;
@@ -519,7 +511,6 @@ $l = count($list_hanghoa);
         z-index: 10000;
     }
 
-    /* Styles for product image container */
     .product-image-container {
         position: relative;
         display: inline-block;
@@ -552,7 +543,6 @@ $l = count($list_hanghoa);
         background-color: #dc3545;
     }
 
-    /* Styles for foreign key error display */
     .foreign-key-error {
         background: #fff3cd;
         border: 1px solid #ffeaa7;
@@ -618,7 +608,6 @@ $l = count($list_hanghoa);
         line-height: 1.4;
     }
 
-    /* Status Badge Styling */
     .status-badge {
         font-size: 13px;
         font-weight: bold;
@@ -654,38 +643,32 @@ $l = count($list_hanghoa);
 </style>
 
 <script>
-    // Javascript xử lý chọn hình ảnh
+
     function selectImage(imageId) {
-        // Lấy đối tượng select
+
         const imageSelector = document.getElementById('imageSelector');
 
-        // Đặt giá trị select thành imageId
         imageSelector.value = imageId;
 
-        // Đánh dấu tất cả các item là không được chọn
         const allPreviewItems = document.querySelectorAll('.preview-item');
         allPreviewItems.forEach(item => {
             item.classList.remove('selected');
         });
 
-        // Thêm class selected cho item được chọn
         const selectedItem = document.querySelector(`.preview-item img[data-id="${imageId}"]`).parentNode;
         selectedItem.classList.add('selected');
     }
 
-    // Khi trang đã load xong
     document.addEventListener('DOMContentLoaded', function() {
-        // Xử lý khi người dùng thay đổi select box
+
         document.getElementById('imageSelector').addEventListener('change', function() {
             const selectedValue = this.value;
 
-            // Xóa highlight tất cả các item
             const allPreviewItems = document.querySelectorAll('.preview-item');
             allPreviewItems.forEach(item => {
                 item.classList.remove('selected');
             });
 
-            // Nếu đã chọn một giá trị, highlight item tương ứng
             if (selectedValue) {
                 const selectedItem = document.querySelector(`.preview-item img[data-id="${selectedValue}"]`)
                     .parentNode;
@@ -693,35 +676,30 @@ $l = count($list_hanghoa);
             }
         });
 
-        // Xử lý nút xóa hình ảnh trong danh sách sản phẩm
         document.querySelectorAll('.remove-image-btn').forEach(function(button) {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Hiển thị hộp thoại xác nhận
                 if (confirm('Bạn có chắc chắn muốn xóa hình ảnh này khỏi sản phẩm không?')) {
-                    // Lấy ID sản phẩm
+
                     const idhanghoa = this.getAttribute('data-id');
 
-                    // Hiển thị trạng thái đang xử lý
                     this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     this.disabled = true;
 
-                    // Lưu tham chiếu đến button
                     const button = this;
 
-                    // Gửi yêu cầu xóa hình ảnh
                     fetch('./elements_LQA/mhanghoa/hanghoaAct.php?reqact=remove_image&idhanghoa=' + idhanghoa, {
                             method: 'GET'
                         })
                         .then(response => {
                             if (response.ok) {
-                                // Cập nhật giao diện
+
                                 const imageContainer = button.closest('.product-image-container');
                                 imageContainer.innerHTML = '<img class="iconbutton" src="./elements_LQA/img_LQA/no-image.png" alt="No image">';
                             } else {
-                                // Hiển thị lỗi
+
                                 alert('Có lỗi xảy ra khi xóa hình ảnh. Vui lòng thử lại.');
                                 button.innerHTML = '<i class="fas fa-trash"></i>';
                                 button.disabled = false;
@@ -781,7 +759,6 @@ $l = count($list_hanghoa);
         visibility: visible;
     }
 
-    /* Tooltip */
     .back-to-top-button .tooltip {
         position: absolute;
         top: -40px;
@@ -819,28 +796,24 @@ $l = count($list_hanghoa);
     document.addEventListener('DOMContentLoaded', function() {
         const backToTopButton = document.getElementById('back-to-top');
 
-        // Kiểm tra vị trí cuộn khi trang tải
         checkScrollPosition();
 
-        // Hiển thị nút khi người dùng cuộn xuống 300px
         window.addEventListener('scroll', checkScrollPosition);
 
-        // Xử lý sự kiện khi nhấp vào nút
         backToTopButton.addEventListener('click', function() {
-            // Kiểm tra hỗ trợ cuộn mượt
+
             if ('scrollBehavior' in document.documentElement.style) {
-                // Trình duyệt hỗ trợ cuộn mượt
+
                 window.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
             } else {
-                // Trình duyệt không hỗ trợ cuộn mượt, sử dụng JavaScript
+
                 smoothScrollToTop();
             }
         });
 
-        // Hàm kiểm tra vị trí cuộn
         function checkScrollPosition() {
             if (window.pageYOffset > 300) {
                 backToTopButton.classList.add('visible');
@@ -849,7 +822,6 @@ $l = count($list_hanghoa);
             }
         }
 
-        // Hàm cuộn mượt cho các trình duyệt không hỗ trợ scrollBehavior
         function smoothScrollToTop() {
             const currentScroll = document.documentElement.scrollTop || document.body.scrollTop;
             if (currentScroll > 0) {

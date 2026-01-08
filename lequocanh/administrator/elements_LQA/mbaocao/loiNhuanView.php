@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,17 +9,14 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('loiNhuanView', $user
     exit;
 }
 
-// Khởi tạo đối tượng báo cáo
 require_once './elements_LQA/mbaocao/baocaoCls.php';
 $baoCao = new BaoCao();
 
-// Xác định khoảng thời gian mặc định (30 ngày gần nhất)
 $endDate = date('Y-m-d');
 $startDate = date('Y-m-d', strtotime('-30 days'));
 
-// Lấy khoảng thời gian từ form nếu có
 if (isset($_POST['startDate']) && isset($_POST['endDate'])) {
-    // Đảm bảo định dạng ngày hợp lệ
+
     if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['startDate']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $_POST['endDate'])) {
         $startDate = $_POST['startDate'];
         $endDate = $_POST['endDate'];
@@ -27,7 +24,6 @@ if (isset($_POST['startDate']) && isset($_POST['endDate'])) {
         echo "<div class='alert alert-warning'>Định dạng ngày không hợp lệ. Sử dụng định dạng YYYY-MM-DD.</div>";
     }
 
-    // Đảm bảo ngày bắt đầu không lớn hơn ngày kết thúc
     if (strtotime($startDate) > strtotime($endDate)) {
         $temp = $startDate;
         $startDate = $endDate;
@@ -36,21 +32,16 @@ if (isset($_POST['startDate']) && isset($_POST['endDate'])) {
     }
 }
 
-// Lấy số lượng sản phẩm hiển thị
 $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 10;
 
-// Lấy thông tin lợi nhuận
 $profitInfo = $baoCao->getLoiNhuan($startDate, $endDate);
 
-// Lấy danh sách lợi nhuận theo sản phẩm
 $productProfits = $baoCao->getLoiNhuanTheoSanPham($startDate, $endDate, $limit);
 
-// Chuẩn bị dữ liệu cho biểu đồ
 $chartLabels = [];
 $chartData = [];
 $chartColors = [];
 
-// Mảng màu cho biểu đồ
 $colors = [
     'rgba(255, 99, 132, 0.7)',
     'rgba(54, 162, 235, 0.7)',
@@ -449,10 +440,9 @@ foreach ($productProfits as $index => $product) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Biểu đồ phân tích doanh thu và lợi nhuận
+
         const revenueVsProfitCtx = document.getElementById('revenueVsProfitChart').getContext('2d');
 
-        // Chuyển đổi dữ liệu sang số
         const doanhThu = parseFloat(<?php echo $profitInfo['doanh_thu']; ?>) || 0;
         const giaVon = parseFloat(<?php echo $profitInfo['gia_von']; ?>) || 0;
         const loiNhuan = parseFloat(<?php echo $profitInfo['loi_nhuan']; ?>) || 0;
@@ -536,10 +526,8 @@ foreach ($productProfits as $index => $product) {
             }
         });
 
-        // Biểu đồ lợi nhuận theo sản phẩm
         const productProfitCtx = document.getElementById('productProfitChart').getContext('2d');
 
-        // Chuyển đổi dữ liệu sang số
         const chartData = <?php echo json_encode($chartData); ?>;
         const numericChartData = chartData.map(value => parseFloat(value) || 0);
 
@@ -560,7 +548,7 @@ foreach ($productProfits as $index => $product) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: 'y', // Hiển thị biểu đồ ngang để dễ đọc tên sản phẩm
+                indexAxis: 'y',
                 layout: {
                     padding: {
                         left: 10,
@@ -593,7 +581,7 @@ foreach ($productProfits as $index => $product) {
                     y: {
                         ticks: {
                             callback: function(value) {
-                                // Rút gọn tên sản phẩm nếu quá dài
+
                                 const label = this.getLabelForValue(value);
                                 if (label && label.length > 20) {
                                     return label.substr(0, 20) + '...';
@@ -615,7 +603,7 @@ foreach ($productProfits as $index => $product) {
                         titleFontSize: 14,
                         callbacks: {
                             title: function(tooltipItems) {
-                                // Hiển thị đầy đủ tên sản phẩm trong tooltip
+
                                 return tooltipItems[0].label;
                             },
                             label: function(context) {
@@ -629,12 +617,10 @@ foreach ($productProfits as $index => $product) {
         });
     });
 
-    // Hàm in báo cáo
     function printReport() {
         window.print();
     }
 
-    // Hàm xuất Excel
     function exportToExcel() {
         const table = document.querySelector('.table');
         const wb = XLSX.utils.table_to_book(table, {

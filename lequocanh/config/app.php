@@ -1,12 +1,7 @@
 <?php
 
-/**
- * Main Application Configuration
- * Centralized configuration management
- */
-
 return [
-    // Application Settings
+
     'app' => [
         'name' => 'PHP Sales Management System',
         'version' => '2.0.0',
@@ -15,24 +10,20 @@ return [
         'timezone' => 'Asia/Ho_Chi_Minh'
     ],
 
-    // URL Configuration
-    // 💡 Tip: Chỉ cần thay đổi BASE_URL trong .env, tất cả URL khác sẽ được tính tự động
     'url' => [
         'base' => $_ENV['BASE_URL'] ?? 'http://localhost:18080',
         'local' => 'http://localhost:18080/lequocanh',
-        'tunnel' => $_ENV['BASE_URL'] ?? '', // Cloudflare tunnel URL (nếu có)
+        'tunnel' => $_ENV['BASE_URL'] ?? '',
         'assets' => '/lequocanh/public_files'
     ],
 
-    // Security Settings
     'security' => [
-        'session_lifetime' => 7200, // 2 hours
+        'session_lifetime' => 7200,
         'csrf_protection' => true,
         'rate_limiting' => true,
         'jwt_secret' => $_ENV['JWT_SECRET'] ?? 'your-jwt-secret-key'
     ],
 
-    // Performance Settings
     'performance' => [
         'enable_compression' => true,
         'enable_caching' => true,
@@ -40,7 +31,6 @@ return [
         'query_cache' => true
     ],
 
-    // File Upload Settings
     'uploads' => [
         'max_size' => '10M',
         'allowed_types' => ['jpg', 'jpeg', 'png', 'gif'],

@@ -1,5 +1,5 @@
 <?php
-// Kiểm tra quyền truy cập
+
 require_once './elements_LQA/mod/phanquyenCls.php';
 $phanQuyen = new PhanQuyen();
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
@@ -9,17 +9,14 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('sanPhamBanChayView',
     exit;
 }
 
-// Khởi tạo đối tượng báo cáo
 require_once './elements_LQA/mbaocao/baocaoCls.php';
 $baoCao = new BaoCao();
 
-// Mặc định
 $endDate = date('Y-m-d');
 $startDate = date('Y-m-d', strtotime('-30 days'));
 $limit = 10;
 $isAllTime = false;
 
-// Xử lý filter
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 10;
 
@@ -37,15 +34,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Lấy danh sách sản phẩm bán chạy
 $bestSellingProducts = $baoCao->getSanPhamBanChay($startDate, $endDate, $limit);
 
-// Chuẩn bị dữ liệu cho biểu đồ
 $chartLabels = [];
 $chartData = [];
 $chartColors = [];
 
-// Mảng màu cho biểu đồ
 $colors = [
     'rgba(255, 99, 132, 0.7)',
     'rgba(54, 162, 235, 0.7)',
@@ -438,7 +432,7 @@ foreach ($bestSellingProducts as $index => $product) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Khởi tạo biểu đồ số lượng
+
         const quantityCtx = document.getElementById('quantityChart').getContext('2d');
         const quantityChart = new Chart(quantityCtx, {
             type: 'bar',
@@ -457,7 +451,7 @@ foreach ($bestSellingProducts as $index => $product) {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                indexAxis: 'y', // Hiển thị biểu đồ ngang để dễ đọc tên sản phẩm
+                indexAxis: 'y',
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -469,7 +463,7 @@ foreach ($bestSellingProducts as $index => $product) {
                     y: {
                         ticks: {
                             callback: function(value) {
-                                // Rút gọn tên sản phẩm nếu quá dài
+
                                 const label = this.getLabelForValue(value);
                                 if (label.length > 20) {
                                     return label.substr(0, 20) + '...';
@@ -483,7 +477,7 @@ foreach ($bestSellingProducts as $index => $product) {
                     tooltip: {
                         callbacks: {
                             title: function(tooltipItems) {
-                                // Hiển thị đầy đủ tên sản phẩm trong tooltip
+
                                 return tooltipItems[0].label;
                             }
                         }
@@ -492,7 +486,6 @@ foreach ($bestSellingProducts as $index => $product) {
             }
         });
 
-        // Khởi tạo biểu đồ doanh thu
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         const revenueData = <?php
                             $revenueData = [];
@@ -542,12 +535,10 @@ foreach ($bestSellingProducts as $index => $product) {
         });
     });
 
-    // Hàm in báo cáo
     function printReport() {
         window.print();
     }
 
-    // Hàm xuất Excel
     function exportToExcel() {
         const table = document.querySelector('.table');
         const wb = XLSX.utils.table_to_book(table, {
