@@ -79,7 +79,7 @@ class ApiSecurityMiddleware {
             header('X-Content-Type-Options: nosniff');
             header('X-XSS-Protection: 1; mode=block');
             header('Referrer-Policy: strict-origin-when-cross-origin');
-            header("Content-Security-Policy: default-src 'self' 'unsafe-inline' 'unsafe-eval' https:; img-src 'self' data: https:; font-src 'self' data: https:;");
+            header("Content-Security-Policy: default-src 'self' https:; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data: https:;");
             header_remove('X-Powered-By');
         }
     }

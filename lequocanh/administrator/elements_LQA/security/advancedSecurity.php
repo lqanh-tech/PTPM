@@ -79,8 +79,8 @@ class AdvancedSecurity {
         header('Referrer-Policy: strict-origin-when-cross-origin');
         
         $csp = "default-src 'self'; " .
-               "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+               "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+               "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
                "img-src 'self' data: https:; " .
                "font-src 'self' https://cdnjs.cloudflare.com; " .
                "connect-src 'self'; " .
