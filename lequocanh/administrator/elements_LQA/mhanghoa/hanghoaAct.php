@@ -38,18 +38,18 @@ if (!$foundNhatKyHelper) {
 
 $username = isset($_SESSION['USER']) ? $_SESSION['USER'] : (isset($_SESSION['ADMIN']) ? $_SESSION['ADMIN'] : '');
 if (isset($_REQUEST['reqact'])) {
-    $requestAction = $_REQUEST['reqact'];
+    $requestAction = sanitizeInput($_REQUEST['reqact'] ?? '', 'text');
     switch ($requestAction) {
         case 'addnew':
-            $tenhanghoa = $_REQUEST['tenhanghoa'];
-            $mota = $_REQUEST['mota'];
-            $giathamkhao = $_REQUEST['giathamkhao'];
-            $id_hinhanh = isset($_REQUEST['id_hinhanh']) ? $_REQUEST['id_hinhanh'] : 0;
-            $idloaihang = $_REQUEST['idloaihang'];
-            $idThuongHieu = isset($_REQUEST['idThuongHieu']) ? $_REQUEST['idThuongHieu'] : '';
-            $idDonViTinh = isset($_REQUEST['idDonViTinh']) ? $_REQUEST['idDonViTinh'] : '';
-            $idNhanVien = isset($_REQUEST['idNhanVien']) ? $_REQUEST['idNhanVien'] : '';
-            $ghichu = isset($_REQUEST['ghichu']) ? $_REQUEST['ghichu'] : '';
+            $tenhanghoa = sanitizeInput($_REQUEST['tenhanghoa'] ?? '', 'text');
+            $mota = sanitizeInput($_REQUEST['mota'] ?? '', 'html');
+            $giathamkhao = sanitizeInput($_REQUEST['giathamkhao'] ?? '', 'float');
+            $id_hinhanh = sanitizeInput($_REQUEST['id_hinhanh'] ?? '0', 'int');
+            $idloaihang = sanitizeInput($_REQUEST['idloaihang'] ?? '', 'int');
+            $idThuongHieu = sanitizeInput($_REQUEST['idThuongHieu'] ?? '', 'int');
+            $idDonViTinh = sanitizeInput($_REQUEST['idDonViTinh'] ?? '', 'int');
+            $idNhanVien = sanitizeInput($_REQUEST['idNhanVien'] ?? '', 'int');
+            $ghichu = sanitizeInput($_REQUEST['ghichu'] ?? '', 'text');
 
             $log_file = __DIR__ . '/hanghoa_debug.log';
 
@@ -96,7 +96,7 @@ if (isset($_REQUEST['reqact'])) {
             break;
 
         case 'deletehanghoa':
-            $idhanghoa = $_REQUEST['idhanghoa'];
+            $idhanghoa = sanitizeInput($_REQUEST['idhanghoa'] ?? '', 'int');
 
             $hanghoaInfo = Product::getById((int)$idhanghoa);
             $tenhanghoa = $hanghoaInfo ? $hanghoaInfo->tenhanghoa : "Không xác định";
@@ -142,19 +142,18 @@ if (isset($_REQUEST['reqact'])) {
             break;
 
         case 'updatehanghoa':
-            $idhanghoa = $_REQUEST['idhanghoa'];
-            $tenhanghoa = $_REQUEST['tenhanghoa'];
-            $mota = $_REQUEST['mota'];
-            $giathamkhao = $_REQUEST['giathamkhao'];
-            $id_hinhanh = isset($_REQUEST['id_hinhanh']) ? $_REQUEST['id_hinhanh'] : 0;
-            $idloaihang = $_REQUEST['idloaihang'];
-            $idThuongHieu = isset($_REQUEST['idThuongHieu']) ? $_REQUEST['idThuongHieu'] : '';
-            $idDonViTinh = isset($_REQUEST['idDonViTinh']) ? $_REQUEST['idDonViTinh'] : '';
-            $idNhanVien = isset($_REQUEST['idNhanVien']) ? $_REQUEST['idNhanVien'] : '';
-            $ghichu = isset($_REQUEST['ghichu']) ? $_REQUEST['ghichu'] : '';
-            $trang_thai = isset($_REQUEST['trang_thai']) ? (int)$_REQUEST['trang_thai'] : 1;
-
-            $debug_log = isset($_REQUEST['debug_log']) && $_REQUEST['debug_log'] === 'true';
+            $idhanghoa = sanitizeInput($_REQUEST['idhanghoa'] ?? '', 'int');
+            $tenhanghoa = sanitizeInput($_REQUEST['tenhanghoa'] ?? '', 'text');
+            $mota = sanitizeInput($_REQUEST['mota'] ?? '', 'html');
+            $giathamkhao = sanitizeInput($_REQUEST['giathamkhao'] ?? '', 'float');
+            $id_hinhanh = sanitizeInput($_REQUEST['id_hinhanh'] ?? '0', 'int');
+            $idloaihang = sanitizeInput($_REQUEST['idloaihang'] ?? '', 'int');
+            $idThuongHieu = sanitizeInput($_REQUEST['idThuongHieu'] ?? '', 'int');
+            $idDonViTinh = sanitizeInput($_REQUEST['idDonViTinh'] ?? '', 'int');
+            $idNhanVien = sanitizeInput($_REQUEST['idNhanVien'] ?? '', 'int');
+            $ghichu = sanitizeInput($_REQUEST['ghichu'] ?? '', 'text');
+            $trang_thai = sanitizeInput($_REQUEST['trang_thai'] ?? '1', 'int');
+            $debug_log = sanitizeInput($_REQUEST['debug_log'] ?? '', 'text') === 'true';
             if ($debug_log) {
                 $log_file = __DIR__ . '/debug_log.txt';
                 $log_data = date('Y-m-d H:i:s') . " - Hanghoa Update request:\n";
