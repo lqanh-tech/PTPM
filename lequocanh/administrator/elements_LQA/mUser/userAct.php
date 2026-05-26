@@ -125,9 +125,9 @@ if ($requestAction) {
                 exit();
             }
 
-            $iduser = isset($_POST['iduser']) ? $_POST['iduser'] : '';
-            $passwordold = isset($_POST['passwordold']) ? $_POST['passwordold'] : '';
-            $passwordnew = isset($_POST['passwordnew']) ? $_POST['passwordnew'] : '';
+            $iduser = sanitizeInput($_POST['iduser'] ?? '', 'int');
+            $passwordold = $_POST['passwordold'] ?? ''; // Don't sanitize password
+            $passwordnew = $_POST['passwordnew'] ?? ''; // Don't sanitize password
 
             Logger::info("Password change request", ['user_id' => $iduser]);
 
@@ -148,7 +148,7 @@ if ($requestAction) {
             break;
 
         case 'deleteuser':
-            $iduser = $_REQUEST['iduser'];
+            $iduser = sanitizeInput($_REQUEST['iduser'] ?? '', 'int');
             $userObj = new user();
             $user = $userObj->UserGetByid($iduser);
 
@@ -158,7 +158,7 @@ if ($requestAction) {
             }
 
             if ($user && $user->username === 'admin') {
-                $admin_password = isset($_REQUEST['admin_password']) ? $_REQUEST['admin_password'] : '';
+                $admin_password = $_REQUEST['admin_password'] ?? ''; // Don't sanitize password
 
                 if (!$userObj->UserCheckLogin('admin', $admin_password)) {
                     header('location: ../../index.php?req=userview&result=invalid_admin_pass');
@@ -181,13 +181,13 @@ if ($requestAction) {
             break;
 
         case 'setlock':
-            $iduser = $_REQUEST['iduser'];
-            $setlock = $_REQUEST['setlock'];
+            $iduser = sanitizeInput($_REQUEST['iduser'] ?? '', 'int');
+            $setlock = sanitizeInput($_REQUEST['setlock'] ?? '', 'int');
             $userObj = new user();
             $user = $userObj->UserGetbyId($iduser);
 
             if ($user && $user->username === 'admin') {
-                $admin_password = isset($_REQUEST['admin_password']) ? $_REQUEST['admin_password'] : '';
+                $admin_password = $_REQUEST['admin_password'] ?? ''; // Don't sanitize password
 
                 if (!$userObj->UserCheckLogin('admin', $admin_password)) {
                     header('location: ../../index.php?req=userview&result=invalid_admin_pass');
@@ -205,16 +205,16 @@ if ($requestAction) {
             break;
 
         case 'updateuser':
-            $iduser = $_REQUEST['iduser'];
-            $username = $_REQUEST['username'];
-            $password = $_REQUEST['password'];
-            $hoten = $_REQUEST['hoten'];
-            $gioitinh = $_REQUEST['gioitinh'];
-            $ngaysinh = $_REQUEST['ngaysinh'];
-            $diachi = $_REQUEST['diachi'];
-            $dienthoai = $_REQUEST['dienthoai'];
-            $email = isset($_REQUEST['email']) ? trim($_REQUEST['email']) : null;
-            $verify_password = isset($_REQUEST['verify_password']) ? $_REQUEST['verify_password'] : '';
+            $iduser = sanitizeInput($_REQUEST['iduser'] ?? '', 'int');
+            $username = sanitizeInput($_REQUEST['username'] ?? '', 'text');
+            $password = $_REQUEST['password'] ?? ''; // Don't sanitize password
+            $hoten = sanitizeInput($_REQUEST['hoten'] ?? '', 'text');
+            $gioitinh = sanitizeInput($_REQUEST['gioitinh'] ?? '1', 'int');
+            $ngaysinh = sanitizeInput($_REQUEST['ngaysinh'] ?? '', 'text');
+            $diachi = sanitizeInput($_REQUEST['diachi'] ?? '', 'text');
+            $dienthoai = sanitizeInput($_REQUEST['dienthoai'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $verify_password = $_REQUEST['verify_password'] ?? ''; // Don't sanitize password
 
             $userObj = new user();
             $user = $userObj->UserGetbyId($iduser);
