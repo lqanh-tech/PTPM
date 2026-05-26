@@ -61,7 +61,7 @@ if (class_exists('Logger')) {
 $tonkho = new MTonKho();
 
 if (isset($_GET['action'])) {
-    $action = $_GET['action'];
+    $action = sanitizeInput($_GET['action'] ?? '', 'text');
     Logger::info("Cart action requested", ['action' => $action]);
 
     $productId = isset($_GET['productId']) ? (int)$_GET['productId'] : null;
@@ -70,8 +70,8 @@ if (isset($_GET['action'])) {
     switch ($action) {
         case 'add':
             if (isset($_GET['productId']) && isset($_GET['quantity'])) {
-                $productId = $_GET['productId'];
-                $quantity = $_GET['quantity'];
+                $productId = (int)$_GET['productId'];
+                $quantity = (int)$_GET['quantity'];
 
                 $isAjax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && 
                          strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
