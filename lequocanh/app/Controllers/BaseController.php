@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Helpers\Input;
 use ConfigManager;
+use Exception;
 
 abstract class BaseController
 {
