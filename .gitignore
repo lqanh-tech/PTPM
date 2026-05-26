@@ -100,3 +100,6 @@ _scan_models.ps1
 get_schema.php
 skills-lock.json
 *.bak
+
+# === Worktrees ===
+.worktrees/
