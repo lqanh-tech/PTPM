@@ -27,20 +27,11 @@ class Database implements DatabaseInterface
     $servername = $_ENV['DB_HOST'] ?? $config['section']['servername'] ?? 'mysql';
     $dbname = $_ENV['DB_DATABASE'] ?? $config['section']['dbname'] ?? 'sales_management';
     $username = $_ENV['DB_USERNAME'] ?? $config['section']['username'] ?? 'root';
-    $password = $_ENV['DB_PASSWORD'] ?? $config['section']['password'] ?? 'pw';
+    $password = $_ENV['DB_PASSWORD'] ?? $config['section']['password'] ?? '';
     $port = $_ENV['DB_PORT'] ?? $config['section']['port'] ?? 3306;
 
     $connectionConfigs = [
       ['host' => $servername, 'port' => $port, 'user' => $username, 'pass' => $password, 'dbname' => $dbname],
-      ['host' => 'mysql', 'port' => 3306, 'user' => 'root', 'pass' => 'root', 'dbname' => $dbname],
-      ['host' => 'mysql', 'port' => 3306, 'user' => 'root', 'pass' => 'pw', 'dbname' => $dbname],
-      ['host' => 'mysql', 'port' => 3306, 'user' => 'app_user', 'pass' => 'pw', 'dbname' => $dbname],
-      ['host' => 'localhost', 'port' => 3306, 'user' => 'root', 'pass' => 'root', 'dbname' => $dbname],
-      ['host' => 'localhost', 'port' => 3306, 'user' => 'root', 'pass' => 'pw', 'dbname' => $dbname],
-      ['host' => 'localhost', 'port' => 3306, 'user' => 'root', 'pass' => '', 'dbname' => $dbname],
-      ['host' => '127.0.0.1', 'port' => 3306, 'user' => 'root', 'pass' => 'root', 'dbname' => $dbname],
-      ['host' => '127.0.0.1', 'port' => 3306, 'user' => 'root', 'pass' => 'pw', 'dbname' => $dbname],
-      ['host' => '127.0.0.1', 'port' => 3306, 'user' => 'root', 'pass' => '', 'dbname' => $dbname]
     ];
 
     $connected = false;
@@ -104,13 +95,13 @@ class Database implements DatabaseInterface
     $defaultConfig .= "port = 3306\n";
     $defaultConfig .= "dbname = sales_management\n";
     $defaultConfig .= "username = root\n";
-    $defaultConfig .= "password = pw\n\n";
+    $defaultConfig .= "password = \n\n";
     $defaultConfig .= "[local]\n";
     $defaultConfig .= "servername = localhost\n";
     $defaultConfig .= "port = 3306\n";
     $defaultConfig .= "dbname = sales_management\n";
     $defaultConfig .= "username = root\n";
-    $defaultConfig .= "password = pw\n";
+    $defaultConfig .= "password = \n";
 
     try {
       file_put_contents($configFile, $defaultConfig);
