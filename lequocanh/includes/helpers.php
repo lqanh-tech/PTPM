@@ -176,13 +176,8 @@ if (!function_exists('safeSessionStart')) {
             error_log("Cannot start session - headers already sent in $file on line $line");
             return false;
         }
-        try {
-            session_start();
-            return true;
-        } catch (Exception $e) {
-            error_log('Failed to start session: ' . $e->getMessage());
-            return false;
-        }
+        session_start();
+        return true;
     }
 }
 

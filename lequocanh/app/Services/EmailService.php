@@ -5,8 +5,6 @@
 
 class EmailService
 {
-    private $mailer;
-    
     public function __construct()
     {
         // PHPMailer will be loaded when needed

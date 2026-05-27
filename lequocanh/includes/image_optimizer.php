@@ -4,9 +4,6 @@ class ImageOptimizer
 {
     private static $instance = null;
     private $cacheDir;
-    private $quality = 85;
-    private $maxWidth = 1200;
-    private $maxHeight = 1200;
     private $thumbnailSizes = [
         'thumb' => ['width' => 150, 'height' => 150],
         'small' => ['width' => 300, 'height' => 300],

@@ -16,7 +16,6 @@ class PerformanceBootstrap
 {
     private static $instance = null;
     private $config = [];
-    private $metrics = [];
     
     private function __construct()
     {

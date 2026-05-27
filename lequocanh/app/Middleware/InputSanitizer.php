@@ -96,7 +96,7 @@ class InputSanitizer
      */
     public function sanitizeInt($value): int
     {
-        return filter_var($value, FILTER_SANITIZE_NUMBER_INT);
+        return (int) filter_var($value, FILTER_SANITIZE_NUMBER_INT);
     }
     
     /**
@@ -104,7 +104,7 @@ class InputSanitizer
      */
     public function sanitizeFloat($value): float
     {
-        return filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+        return (float) filter_var($value, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
     }
     
     /**
