@@ -17,10 +17,10 @@ if (isset($_GET['reqact'])) {
     switch ($requestAction) {
         case 'addnew':
 
-            $idhanghoa = $_POST['idhanghoa'] ?? null;
-            $idThuocTinh = $_POST['idThuocTinh'] ?? null;
-            $tenThuocTinhHH = $_POST['tenThuocTinhHH'] ?? null;
-            $ghiChu = $_POST['ghiChu'] ?? null;
+            $idhanghoa = sanitizeInput($_POST['idhanghoa'] ?? '', 'int');
+            $idThuocTinh = sanitizeInput($_POST['idThuocTinh'] ?? '', 'int');
+            $tenThuocTinhHH = sanitizeInput($_POST['tenThuocTinhHH'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_POST['ghiChu'] ?? '', 'text');
 
             if ($idhanghoa && $idThuocTinh && $tenThuocTinhHH) {
                 $result = $thuocTinhHHObj->thuoctinhhhAdd($idhanghoa, $idThuocTinh, $tenThuocTinhHH,  $ghiChu);
@@ -33,7 +33,7 @@ if (isset($_GET['reqact'])) {
 
         case 'deletethuoctinhhh':
 
-            $idThuocTinhHH = $_GET['idThuocTinhHH'] ?? null;
+            $idThuocTinhHH = sanitizeInput($_GET['idThuocTinhHH'] ?? '', 'int');
             if ($idThuocTinhHH) {
                 $result = $thuocTinhHHObj->thuoctinhhhDelete($idThuocTinhHH);
                 header("Location: ../../index.php?req=thuoctinhhhview&result=" . ($result ? 'ok' : 'notok'));
@@ -45,11 +45,11 @@ if (isset($_GET['reqact'])) {
 
         case 'updatethuoctinhhh':
 
-            $idThuocTinhHH = $_POST['idThuocTinhHH'] ?? null;
-            $idhanghoa = $_POST['idhanghoa'] ?? null;
-            $idThuocTinh = $_POST['idThuocTinh'] ?? null;
-            $tenThuocTinhHH = $_POST['tenThuocTinhHH'] ?? null;
-            $debug_log = $_POST['debug_log'] ?? false;
+            $idThuocTinhHH = sanitizeInput($_POST['idThuocTinhHH'] ?? '', 'int');
+            $idhanghoa = sanitizeInput($_POST['idhanghoa'] ?? '', 'int');
+            $idThuocTinh = sanitizeInput($_POST['idThuocTinh'] ?? '', 'int');
+            $tenThuocTinhHH = sanitizeInput($_POST['tenThuocTinhHH'] ?? '', 'text');
+            $debug_log = sanitizeInput($_POST['debug_log'] ?? '', 'text') === 'true';
 
             if ($debug_log) {
                 $log_file = __DIR__ . '/debug_log.txt';
