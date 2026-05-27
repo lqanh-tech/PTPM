@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$identifier = isset($_POST['identifier']) ? trim($_POST['identifier']) : '';
+$identifier = sanitizeInput($_POST['identifier'] ?? '', 'text');
 
 if (empty($identifier)) {
     echo json_encode([
