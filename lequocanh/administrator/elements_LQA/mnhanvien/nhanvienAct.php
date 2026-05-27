@@ -32,14 +32,14 @@ if (isset($_GET['reqact'])) {
     $requestAction = $_GET['reqact'];
     switch ($requestAction) {
         case 'addnew':
-            $tenNV = isset($_REQUEST['tenNV']) ? $_REQUEST['tenNV'] : null;
-            $SDT = isset($_REQUEST['SDT']) ? $_REQUEST['SDT'] : null;
-            $email = isset($_REQUEST['email']) ? $_REQUEST['email'] : null;
-            $luongCB = isset($_REQUEST['luongCB']) ? $_REQUEST['luongCB'] : null;
-            $phuCap = isset($_REQUEST['phuCap']) ? $_REQUEST['phuCap'] : null;
-            $chucVu = isset($_REQUEST['chucVu']) ? $_REQUEST['chucVu'] : null;
-            $iduser = isset($_REQUEST['iduser']) ? $_REQUEST['iduser'] : null;
-            $phanHeList = isset($_REQUEST['phanHe']) ? $_REQUEST['phanHe'] : [];
+            $tenNV = sanitizeInput($_REQUEST['tenNV'] ?? '', 'text');
+            $SDT = sanitizeInput($_REQUEST['SDT'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $luongCB = sanitizeInput($_REQUEST['luongCB'] ?? '', 'float');
+            $phuCap = sanitizeInput($_REQUEST['phuCap'] ?? '', 'float');
+            $chucVu = sanitizeInput($_REQUEST['chucVu'] ?? '', 'text');
+            $iduser = sanitizeInput($_REQUEST['iduser'] ?? '', 'int');
+            $phanHeList = is_array($_REQUEST['phanHe'] ?? null) ? array_map('intval', $_REQUEST['phanHe']) : [];
 
             $nv = new NhanVien();
 
@@ -86,7 +86,7 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'deletenhanvien':
-            $idNhanVien = isset($_REQUEST['idNhanVien']) ? $_REQUEST['idNhanVien'] : null;
+            $idNhanVien = sanitizeInput($_REQUEST['idNhanVien'] ?? '', 'int');
             if ($idNhanVien) {
                 $nv = new NhanVien();
 
@@ -124,15 +124,15 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'updatenhanvien':
-            $idNhanVien = isset($_REQUEST['idNhanVien']) ? $_REQUEST['idNhanVien'] : null;
-            $tenNV = isset($_REQUEST['tenNV']) ? $_REQUEST['tenNV'] : null;
-            $SDT = isset($_REQUEST['SDT']) ? $_REQUEST['SDT'] : null;
-            $email = isset($_REQUEST['email']) ? $_REQUEST['email'] : null;
-            $luongCB = isset($_REQUEST['luongCB']) ? $_REQUEST['luongCB'] : 0;
-            $phuCap = isset($_REQUEST['phuCap']) ? $_REQUEST['phuCap'] : 0;
-            $chucVu = isset($_REQUEST['chucVu']) ? $_REQUEST['chucVu'] : null;
-            $iduser = isset($_REQUEST['iduser']) && $_REQUEST['iduser'] !== '' ? $_REQUEST['iduser'] : null;
-            $phanHeList = isset($_REQUEST['phanHe']) ? $_REQUEST['phanHe'] : [];
+            $idNhanVien = sanitizeInput($_REQUEST['idNhanVien'] ?? '', 'int');
+            $tenNV = sanitizeInput($_REQUEST['tenNV'] ?? '', 'text');
+            $SDT = sanitizeInput($_REQUEST['SDT'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $luongCB = sanitizeInput($_REQUEST['luongCB'] ?? '', 'float');
+            $phuCap = sanitizeInput($_REQUEST['phuCap'] ?? '', 'float');
+            $chucVu = sanitizeInput($_REQUEST['chucVu'] ?? '', 'text');
+            $iduser = sanitizeInput($_REQUEST['iduser'] ?? '', 'int') ?: null;
+            $phanHeList = is_array($_REQUEST['phanHe'] ?? null) ? array_map('intval', $_REQUEST['phanHe']) : [];
 
             if ($idNhanVien) {
                 $nv = new NhanVien();
