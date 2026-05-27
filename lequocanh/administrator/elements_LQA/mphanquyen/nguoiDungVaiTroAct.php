@@ -41,8 +41,8 @@ $reqact = isset($_GET['reqact']) ? $_GET['reqact'] : '';
 switch ($reqact) {
 
     case 'assign':
-        $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
-        $role_id = isset($_POST['role_id']) ? intval($_POST['role_id']) : 0;
+        $user_id = sanitizeInput($_POST['user_id'] ?? '', 'int');
+        $role_id = sanitizeInput($_POST['role_id'] ?? '', 'int');
 
         if ($user_id <= 0 || $role_id <= 0) {
             header('Location: ../../index.php?req=nguoiDungVaiTroView&result=failed');
@@ -99,8 +99,8 @@ switch ($reqact) {
         break;
 
     case 'remove':
-        $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
-        $role_id = isset($_GET['role_id']) ? intval($_GET['role_id']) : 0;
+        $user_id = sanitizeInput($_GET['user_id'] ?? '', 'int');
+        $role_id = sanitizeInput($_GET['role_id'] ?? '', 'int');
 
         if ($user_id <= 0 || $role_id <= 0) {
             header('Location: ../../index.php?req=nguoiDungVaiTroView&result=failed');
