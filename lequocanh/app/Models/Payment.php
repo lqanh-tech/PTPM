@@ -6,6 +6,15 @@ namespace App\Models;
 /**
  * Payment model for tracking payment transactions.
  * Maps to 'thanhtoan' table.
+ *
+ * @property int $id
+ * @property int $iddonhang
+ * @property string $phuongthuc
+ * @property float $sotien
+ * @property int $trangthai
+ * @property string $transaction_id
+ * @property string $ngaythanhtoan
+ * @property string $ghichu
  */
 class Payment extends BaseModel
 {

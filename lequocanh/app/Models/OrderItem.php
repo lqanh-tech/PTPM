@@ -6,6 +6,16 @@ namespace App\Models;
 /**
  * Order item model representing line items in an order.
  * Maps to 'donhang_chitiet' or 'order_items' table.
+ *
+ * @property int $id
+ * @property int $iddonhang
+ * @property int $idhanghoa
+ * @property string $tenhanghoa
+ * @property int $soluong
+ * @property float $dongia
+ * @property float $thanhtien
+ * @property string $mausac
+ * @property string $kichco
  */
 class OrderItem extends BaseModel
 {

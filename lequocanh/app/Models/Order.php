@@ -8,6 +8,21 @@ use PDO;
 /**
  * Order model for e-commerce orders.
  * Maps to 'donhang' table in legacy database.
+ *
+ * @property int $iddonhang
+ * @property int $iduser
+ * @property string $hoten
+ * @property string $sodienthoai
+ * @property string $email
+ * @property string $diachi
+ * @property string $ghichu
+ * @property float $tongtien
+ * @property int $trangthai
+ * @property string $phuongthucthanhtoan
+ * @property string $ngaydat
+ * @property string $ngaygiao
+ * @property string $magiamgia
+ * @property float $phi_ship
  */
 class Order extends BaseModel
 {

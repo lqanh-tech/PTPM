@@ -6,6 +6,18 @@ namespace App\Models;
 /**
  * Customer model representing registered users.
  * Maps to 'user' table in legacy database.
+ *
+ * @property int $iduser
+ * @property string $username
+ * @property string $hoten
+ * @property string $email
+ * @property string $sodienthoai
+ * @property string $diachi
+ * @property string $avatar_url
+ * @property string $auth_provider
+ * @property string $google_id
+ * @property string $facebook_id
+ * @property string $password
  */
 class Customer extends BaseModel
 {

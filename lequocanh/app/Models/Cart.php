@@ -6,6 +6,12 @@ namespace App\Models;
 /**
  * Cart model for shopping cart functionality.
  * Maps to 'giohang' table in legacy database.
+ *
+ * @property int $idgiohang
+ * @property int $iduser
+ * @property int $idhanghoa
+ * @property int $soluong
+ * @property string $ngaythem
  */
 class Cart extends BaseModel
 {
