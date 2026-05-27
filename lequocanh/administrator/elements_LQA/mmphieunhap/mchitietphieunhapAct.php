@@ -17,11 +17,11 @@ if (isset($_GET['reqact'])) {
         case 'addnew':
 
             if (isset($_POST['idPhieuNhap']) && isset($_POST['idhanghoa']) && isset($_POST['soLuong']) && isset($_POST['donGia']) && isset($_POST['giaNhap'])) {
-                $idPhieuNhap = $_POST['idPhieuNhap'];
-                $idhanghoa = $_POST['idhanghoa'];
-                $soLuong = $_POST['soLuong'];
-                $donGia = $_POST['donGia'];
-                $giaNhap = $_POST['giaNhap'];
+                $idPhieuNhap = sanitizeInput($_POST['idPhieuNhap'] ?? '', 'int');
+                $idhanghoa = sanitizeInput($_POST['idhanghoa'] ?? '', 'int');
+                $soLuong = sanitizeInput($_POST['soLuong'] ?? '', 'int');
+                $donGia = sanitizeInput($_POST['donGia'] ?? '', 'float');
+                $giaNhap = sanitizeInput($_POST['giaNhap'] ?? '', 'float');
                 
                 $result = $chitietphieunhap->addChiTietPhieuNhap($idPhieuNhap, $idhanghoa, $soLuong, $donGia, $giaNhap);
                 
@@ -38,11 +38,11 @@ if (isset($_GET['reqact'])) {
         case 'update':
 
             if (isset($_POST['idCTPN']) && isset($_POST['soLuong']) && isset($_POST['donGia']) && isset($_POST['giaNhap'])) {
-                $idCTPN = $_POST['idCTPN'];
-                $soLuong = $_POST['soLuong'];
-                $donGia = $_POST['donGia'];
-                $giaNhap = $_POST['giaNhap'];
-                $idPhieuNhap = $_POST['idPhieuNhap'];
+                $idCTPN = sanitizeInput($_POST['idCTPN'] ?? '', 'int');
+                $soLuong = sanitizeInput($_POST['soLuong'] ?? '', 'int');
+                $donGia = sanitizeInput($_POST['donGia'] ?? '', 'float');
+                $giaNhap = sanitizeInput($_POST['giaNhap'] ?? '', 'float');
+                $idPhieuNhap = sanitizeInput($_POST['idPhieuNhap'] ?? '', 'int');
                 
                 $result = $chitietphieunhap->updateChiTietPhieuNhap($idCTPN, $soLuong, $donGia, $giaNhap);
                 
