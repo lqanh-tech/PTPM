@@ -17,46 +17,46 @@ if (!isset($_SESSION['ADMIN']) && !$phanQuyen->checkAccess('baocaoview', $userna
 require_once '../mbaocao/baocaoCls.php';
 $baoCao = new BaoCao();
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = sanitizeInput($_GET['action'] ?? '', 'text');
 
 switch ($action) {
     case 'getDoanhThuNgay':
-        $date = isset($_POST['date']) ? $_POST['date'] : date('Y-m-d');
+        $date = sanitizeInput($_POST['date'] ?? date('Y-m-d'), 'text');
         $doanhThu = $baoCao->getDoanhThuNgay($date);
         echo json_encode(['success' => true, 'doanhThu' => $doanhThu]);
         break;
     
     case 'getDoanhThuThang':
-        $month = isset($_POST['month']) ? $_POST['month'] : date('m');
-        $year = isset($_POST['year']) ? $_POST['year'] : date('Y');
+        $month = sanitizeInput($_POST['month'] ?? date('m'), 'text');
+        $year = sanitizeInput($_POST['year'] ?? date('Y'), 'text');
         $doanhThu = $baoCao->getDoanhThuThang($month, $year);
         echo json_encode(['success' => true, 'doanhThu' => $doanhThu]);
         break;
     
     case 'getDoanhThuNam':
-        $year = isset($_POST['year']) ? $_POST['year'] : date('Y');
+        $year = sanitizeInput($_POST['year'] ?? date('Y'), 'text');
         $doanhThu = $baoCao->getDoanhThuNam($year);
         echo json_encode(['success' => true, 'doanhThu' => $doanhThu]);
         break;
     
     case 'getDoanhThuTheoKhoangThoiGian':
-        $startDate = isset($_POST['startDate']) ? $_POST['startDate'] : date('Y-m-d', strtotime('-30 days'));
-        $endDate = isset($_POST['endDate']) ? $_POST['endDate'] : date('Y-m-d');
+        $startDate = sanitizeInput($_POST['startDate'] ?? date('Y-m-d', strtotime('-30 days')), 'text');
+        $endDate = sanitizeInput($_POST['endDate'] ?? date('Y-m-d'), 'text');
         $doanhThu = $baoCao->getDoanhThuTheoKhoangThoiGian($startDate, $endDate);
         echo json_encode(['success' => true, 'doanhThu' => $doanhThu]);
         break;
     
     case 'getSanPhamBanChay':
-        $startDate = isset($_POST['startDate']) ? $_POST['startDate'] : date('Y-m-d', strtotime('-30 days'));
-        $endDate = isset($_POST['endDate']) ? $_POST['endDate'] : date('Y-m-d');
-        $limit = isset($_POST['limit']) ? intval($_POST['limit']) : 10;
+        $startDate = sanitizeInput($_POST['startDate'] ?? date('Y-m-d', strtotime('-30 days')), 'text');
+        $endDate = sanitizeInput($_POST['endDate'] ?? date('Y-m-d'), 'text');
+        $limit = sanitizeInput($_POST['limit'] ?? '10', 'int');
         $sanPhamBanChay = $baoCao->getSanPhamBanChay($startDate, $endDate, $limit);
         echo json_encode(['success' => true, 'sanPhamBanChay' => $sanPhamBanChay]);
         break;
     
     case 'getLoiNhuan':
-        $startDate = isset($_POST['startDate']) ? $_POST['startDate'] : date('Y-m-d', strtotime('-30 days'));
-        $endDate = isset($_POST['endDate']) ? $_POST['endDate'] : date('Y-m-d');
+        $startDate = sanitizeInput($_POST['startDate'] ?? date('Y-m-d', strtotime('-30 days')), 'text');
+        $endDate = sanitizeInput($_POST['endDate'] ?? date('Y-m-d'), 'text');
         $loiNhuan = $baoCao->getLoiNhuan($startDate, $endDate);
         echo json_encode(['success' => true, 'loiNhuan' => $loiNhuan]);
         break;
