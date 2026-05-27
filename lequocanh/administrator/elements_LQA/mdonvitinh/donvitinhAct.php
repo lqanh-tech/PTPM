@@ -35,9 +35,9 @@ if (isset($_GET['reqact'])) {
     switch ($requestAction) {
         case 'addnew':
 
-            $tenDonViTinh = isset($_REQUEST['tenDonViTinh']) ? $_REQUEST['tenDonViTinh'] : null;
-            $moTa = isset($_REQUEST['moTa']) ? $_REQUEST['moTa'] : null;
-            $ghiChu = isset($_REQUEST['ghiChu']) ? $_REQUEST['ghiChu'] : null;
+            $tenDonViTinh = sanitizeInput($_REQUEST['tenDonViTinh'] ?? '', 'text');
+            $moTa = sanitizeInput($_REQUEST['moTa'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_REQUEST['ghiChu'] ?? '', 'text');
 
             $lh = new DonViTinh();
             $kq = $lh->donvitinhAdd($tenDonViTinh, $moTa, $ghiChu);
@@ -51,7 +51,7 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'deletedonvitinh':
-            $iddonvitinh = $_REQUEST['iddonvitinh'];
+            $iddonvitinh = sanitizeInput($_REQUEST['iddonvitinh'] ?? '', 'int');
             $lh = new DonViTinh();
             $kq = $lh->donvitinhDelete($iddonvitinh);
 
@@ -64,10 +64,10 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'updatedonvitinh':
-            $idDonViTinh = isset($_REQUEST['idDonViTinh']) ? $_REQUEST['idDonViTinh'] : null;
-            $tenDonViTinh = isset($_REQUEST['tenDonViTinh']) ? $_REQUEST['tenDonViTinh'] : null;
-            $moTa = isset($_REQUEST['moTa']) ? $_REQUEST['moTa'] : null;
-            $ghiChu = isset($_REQUEST['ghiChu']) ? $_REQUEST['ghiChu'] : null;
+            $idDonViTinh = sanitizeInput($_REQUEST['idDonViTinh'] ?? '', 'int');
+            $tenDonViTinh = sanitizeInput($_REQUEST['tenDonViTinh'] ?? '', 'text');
+            $moTa = sanitizeInput($_REQUEST['moTa'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_REQUEST['ghiChu'] ?? '', 'text');
 
             if ($idDonViTinh) {
                 $debugInfo = [
