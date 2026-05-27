@@ -4,8 +4,8 @@ header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../mod/database.php';
 
-$type = isset($_GET['type']) ? $_GET['type'] : '';
-$value = isset($_GET['value']) ? trim($_GET['value']) : '';
+$type = sanitizeInput($_GET['type'] ?? '', 'text');
+$value = sanitizeInput($_GET['value'] ?? '', 'text');
 
 if (empty($type) || empty($value)) {
     echo json_encode(['exists' => false, 'message' => '']);

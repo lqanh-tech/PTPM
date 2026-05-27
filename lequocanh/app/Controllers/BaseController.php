@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Helpers\Input;
 use ConfigManager;
 use Exception;
 
@@ -86,10 +87,10 @@ abstract class BaseController
     protected function input($key = null, $default = null)
     {
         if ($key === null) {
-            return array_merge($_GET, $_POST);
+            return Input::allPost() + Input::allGet();
         }
 
-        return $_POST[$key] ?? $_GET[$key] ?? $default;
+        return Input::input($key, $default);
     }
 
     protected function validate($rules)

@@ -22,10 +22,10 @@ if (isset($_GET['reqact'])) {
         case 'update':
 
             if (isset($_POST['idTonKho']) && isset($_POST['soLuong']) && isset($_POST['soLuongToiThieu'])) {
-                $idTonKho = $_POST['idTonKho'];
-                $soLuong = $_POST['soLuong'];
-                $soLuongToiThieu = $_POST['soLuongToiThieu'];
-                $viTri = isset($_POST['viTri']) ? $_POST['viTri'] : '';
+                $idTonKho = sanitizeInput($_POST['idTonKho'] ?? '', 'int');
+                $soLuong = sanitizeInput($_POST['soLuong'] ?? '', 'int');
+                $soLuongToiThieu = sanitizeInput($_POST['soLuongToiThieu'] ?? '', 'int');
+                $viTri = sanitizeInput($_POST['viTri'] ?? '', 'text');
 
                 $currentTonKho = $tonkho->getTonKhoById($idTonKho);
                 if ($currentTonKho) {

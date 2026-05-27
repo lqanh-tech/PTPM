@@ -29,13 +29,13 @@ if (isset($_GET['reqact'])) {
     $requestAction = $_GET['reqact'];
     switch ($requestAction) {
         case 'addnew':
-            $tenNCC = isset($_REQUEST['tenNCC']) ? $_REQUEST['tenNCC'] : '';
-            $nguoiLienHe = isset($_REQUEST['nguoiLienHe']) ? $_REQUEST['nguoiLienHe'] : '';
-            $soDienThoai = isset($_REQUEST['soDienThoai']) ? $_REQUEST['soDienThoai'] : '';
-            $email = isset($_REQUEST['email']) ? $_REQUEST['email'] : '';
-            $diaChi = isset($_REQUEST['diaChi']) ? $_REQUEST['diaChi'] : '';
-            $maSoThue = isset($_REQUEST['maSoThue']) ? $_REQUEST['maSoThue'] : '';
-            $ghiChu = isset($_REQUEST['ghiChu']) ? $_REQUEST['ghiChu'] : '';
+            $tenNCC = sanitizeInput($_REQUEST['tenNCC'] ?? '', 'text');
+            $nguoiLienHe = sanitizeInput($_REQUEST['nguoiLienHe'] ?? '', 'text');
+            $soDienThoai = sanitizeInput($_REQUEST['soDienThoai'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $diaChi = sanitizeInput($_REQUEST['diaChi'] ?? '', 'text');
+            $maSoThue = sanitizeInput($_REQUEST['maSoThue'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_REQUEST['ghiChu'] ?? '', 'text');
 
             if (empty($tenNCC)) {
                 sendJsonResponse(false, 'Tên nhà cung cấp không được để trống');
@@ -57,7 +57,7 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'deletenhacungcap':
-            $idNCC = $_REQUEST['idNCC'];
+            $idNCC = sanitizeInput($_REQUEST['idNCC'] ?? '', 'int');
             $ncc = new nhacungcap();
             $kq = $ncc->NhacungcapDelete($idNCC);
             if ($kq) {
@@ -74,15 +74,15 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'updatenhacungcap':
-            $idNCC = isset($_REQUEST['idNCC']) ? $_REQUEST['idNCC'] : '';
-            $tenNCC = isset($_REQUEST['tenNCC']) ? $_REQUEST['tenNCC'] : '';
-            $nguoiLienHe = isset($_REQUEST['nguoiLienHe']) ? $_REQUEST['nguoiLienHe'] : '';
-            $soDienThoai = isset($_REQUEST['soDienThoai']) ? $_REQUEST['soDienThoai'] : '';
-            $email = isset($_REQUEST['email']) ? $_REQUEST['email'] : '';
-            $diaChi = isset($_REQUEST['diaChi']) ? $_REQUEST['diaChi'] : '';
-            $maSoThue = isset($_REQUEST['maSoThue']) ? $_REQUEST['maSoThue'] : '';
-            $ghiChu = isset($_REQUEST['ghiChu']) ? $_REQUEST['ghiChu'] : '';
-            $trangThai = isset($_REQUEST['trangThai']) ? $_REQUEST['trangThai'] : 1;
+            $idNCC = sanitizeInput($_REQUEST['idNCC'] ?? '', 'int');
+            $tenNCC = sanitizeInput($_REQUEST['tenNCC'] ?? '', 'text');
+            $nguoiLienHe = sanitizeInput($_REQUEST['nguoiLienHe'] ?? '', 'text');
+            $soDienThoai = sanitizeInput($_REQUEST['soDienThoai'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $diaChi = sanitizeInput($_REQUEST['diaChi'] ?? '', 'text');
+            $maSoThue = sanitizeInput($_REQUEST['maSoThue'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_REQUEST['ghiChu'] ?? '', 'text');
+            $trangThai = sanitizeInput($_REQUEST['trangThai'] ?? '1', 'int');
 
             if (empty($idNCC)) {
                 sendJsonResponse(false, 'ID nhà cung cấp không được để trống');

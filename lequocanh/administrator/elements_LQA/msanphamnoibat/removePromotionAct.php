@@ -8,7 +8,7 @@ require_once __DIR__ . '/../mod/database.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['idhanghoa'])) {
     try {
         $db = Database::getInstance()->getConnection();
-        $idhanghoa = intval($_POST['idhanghoa']);
+        $idhanghoa = sanitizeInput($_POST['idhanghoa'] ?? '', 'int');
         
         $stmt = $db->prepare("UPDATE hanghoa SET giakhuyenmai = NULL WHERE idhanghoa = ?");
         $stmt->execute([$idhanghoa]);

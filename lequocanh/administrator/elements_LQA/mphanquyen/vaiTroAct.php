@@ -35,8 +35,8 @@ $reqact = isset($_GET['reqact']) ? $_GET['reqact'] : '';
 switch ($reqact) {
 
     case 'addnew':
-        $role_name = isset($_POST['role_name']) ? trim($_POST['role_name']) : '';
-        $description = isset($_POST['description']) ? trim($_POST['description']) : '';
+        $role_name = sanitizeInput($_POST['role_name'] ?? '', 'text');
+        $description = sanitizeInput($_POST['description'] ?? '', 'text');
 
         $existingRole = $roleObj->getRoleByName($role_name);
         if ($existingRole) {
@@ -54,9 +54,9 @@ switch ($reqact) {
         break;
 
     case 'update':
-        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
-        $role_name = isset($_POST['role_name']) ? trim($_POST['role_name']) : '';
-        $description = isset($_POST['description']) ? trim($_POST['description']) : '';
+        $id = sanitizeInput($_POST['id'] ?? '', 'int');
+        $role_name = sanitizeInput($_POST['role_name'] ?? '', 'text');
+        $description = sanitizeInput($_POST['description'] ?? '', 'text');
 
         $existingRole = $roleObj->getRoleById($id);
         if (!$existingRole) {

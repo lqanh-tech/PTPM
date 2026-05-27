@@ -19,8 +19,8 @@ if (isset($_GET['reqact'])) {
 
     switch ($requestAction) {
         case 'addnew':
-            $tenThuocTinh = isset($_POST['tenThuocTinh']) ? $_POST['tenThuocTinh'] : '';
-            $ghiChu = isset($_POST['ghiChu']) ? $_POST['ghiChu'] : '';
+            $tenThuocTinh = sanitizeInput($_POST['tenThuocTinh'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_POST['ghiChu'] ?? '', 'text');
             if (empty($_FILES['fileimage']['tmp_name'])) {
                 echo "<script>alert('Vui lòng nhập ảnh trước khi thêm loại hàng.'); window.history.back();</script>";
                 exit;
@@ -33,7 +33,7 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'deletethuoctinh':
-            $idThuocTinh = isset($_GET['idThuocTinh']) ? $_GET['idThuocTinh'] : null;
+            $idThuocTinh = sanitizeInput($_GET['idThuocTinh'] ?? '', 'int');
 
             if (!$idThuocTinh) {
                 header('location: ../../index.php?req=thuoctinhview&result=error&message=' . urlencode('Thiếu ID thuộc tính'));
@@ -86,9 +86,9 @@ if (isset($_GET['reqact'])) {
                 ]);
             }
 
-            $idThuocTinh = isset($_POST['idThuocTinh']) ? $_POST['idThuocTinh'] : null;
-            $tenThuocTinh = isset($_POST['tenThuocTinh']) ? $_POST['tenThuocTinh'] : '';
-            $ghiChu = isset($_POST['ghiChu']) ? $_POST['ghiChu'] : '';
+            $idThuocTinh = sanitizeInput($_POST['idThuocTinh'] ?? '', 'int');
+            $tenThuocTinh = sanitizeInput($_POST['tenThuocTinh'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_POST['ghiChu'] ?? '', 'text');
 
             if (class_exists('Logger')) {
                 Logger::debug("Parsed attribute data", [

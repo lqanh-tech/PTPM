@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !verify_csrf_token()) {
 require_once '../mod/database.php';
 require_once '../mod/mtonkhoCls.php';
 
-$orderId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$orderId = sanitizeInput($_GET['id'] ?? '', 'int');
 $username = $_SESSION['USER'];
 
 if ($orderId <= 0) {

@@ -18,7 +18,7 @@ class DatabaseOptimized
         $servername = $_ENV['DB_HOST'] ?? 'mysql';
         $dbname = $_ENV['DB_DATABASE'] ?? 'sales_management';
         $username = $_ENV['DB_USERNAME'] ?? 'root';
-        $password = $_ENV['DB_PASSWORD'] ?? 'pw';
+        $password = $_ENV['DB_PASSWORD'] ?? '';
         $port = $_ENV['DB_PORT'] ?? 3306;
 
         try {

@@ -34,10 +34,10 @@ if (isset($_GET['reqact'])) {
     switch ($requestAction) {
         case 'addnew':
 
-            $tenTH = isset($_REQUEST['tenTH']) ? $_REQUEST['tenTH'] : null;
-            $SDT = isset($_REQUEST['SDT']) ? $_REQUEST['SDT'] : null;
-            $email = isset($_REQUEST['email']) ? $_REQUEST['email'] : null;
-            $diaChi = isset($_REQUEST['diaChi']) ? $_REQUEST['diaChi'] : null;
+            $tenTH = sanitizeInput($_REQUEST['tenTH'] ?? '', 'text');
+            $SDT = sanitizeInput($_REQUEST['SDT'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $diaChi = sanitizeInput($_REQUEST['diaChi'] ?? '', 'text');
 
             if (empty($_FILES['fileimage']['tmp_name'])) {
                 sendJsonResponse(false, 'Vui lòng nhập ảnh trước khi thêm thương hiệu.');
@@ -60,7 +60,7 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'deletethuonghieu':
-            $idThuongHieu = isset($_REQUEST['idThuongHieu']) ? $_REQUEST['idThuongHieu'] : null;
+            $idThuongHieu = sanitizeInput($_REQUEST['idThuongHieu'] ?? '', 'int');
             $lh = new ThuongHieu();
             $kq = $lh->thuonghieuDelete($idThuongHieu);
 
@@ -74,11 +74,11 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'updatethuonghieu':
-            $tenTH = isset($_REQUEST['tenTH']) ? $_REQUEST['tenTH'] : null;
-            $SDT = isset($_REQUEST['SDT']) ? $_REQUEST['SDT'] : null;
-            $email = isset($_REQUEST['email']) ? $_REQUEST['email'] : null;
-            $diaChi = isset($_REQUEST['diaChi']) ? $_REQUEST['diaChi'] : null;
-            $idThuongHieu = isset($_REQUEST['idThuongHieu']) ? $_REQUEST['idThuongHieu'] : null;
+            $tenTH = sanitizeInput($_REQUEST['tenTH'] ?? '', 'text');
+            $SDT = sanitizeInput($_REQUEST['SDT'] ?? '', 'phone');
+            $email = sanitizeInput($_REQUEST['email'] ?? '', 'email');
+            $diaChi = sanitizeInput($_REQUEST['diaChi'] ?? '', 'text');
+            $idThuongHieu = sanitizeInput($_REQUEST['idThuongHieu'] ?? '', 'int');
 
             if (isset($_FILES['fileimage']) && !empty($_FILES['fileimage']['tmp_name'])) {
                 $hinhanh_file = $_FILES['fileimage']['tmp_name'];

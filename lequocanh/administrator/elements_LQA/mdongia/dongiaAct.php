@@ -62,12 +62,12 @@ if (isset($_GET['reqact'])) {
             error_log("DongiaAct addnew: POST data: " . print_r($_POST, true));
             error_log("DongiaAct addnew: GET data: " . print_r($_GET, true));
             
-            $idHangHoa = isset($_REQUEST['idhanghoa']) ? trim($_REQUEST['idhanghoa']) : '';
-            $giaBan = isset($_REQUEST['giaban']) ? trim($_REQUEST['giaban']) : '';
-            $ngayApDung = isset($_REQUEST['ngayapdung']) ? trim($_REQUEST['ngayapdung']) : '';
-            $ngayKetThuc = isset($_REQUEST['ngayketthuc']) ? trim($_REQUEST['ngayketthuc']) : '';
-            $dieuKien = isset($_REQUEST['dieukien']) ? trim($_REQUEST['dieukien']) : '';
-            $ghiChu = isset($_REQUEST['ghichu']) ? trim($_REQUEST['ghichu']) : '';
+            $idHangHoa = sanitizeInput($_REQUEST['idhanghoa'] ?? '', 'int');
+            $giaBan = sanitizeInput($_REQUEST['giaban'] ?? '', 'float');
+            $ngayApDung = sanitizeInput($_REQUEST['ngayapdung'] ?? '', 'text');
+            $ngayKetThuc = sanitizeInput($_REQUEST['ngayketthuc'] ?? '', 'text');
+            $dieuKien = sanitizeInput($_REQUEST['dieukien'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_REQUEST['ghichu'] ?? '', 'text');
 
             error_log("DongiaAct addnew: Parsed data - idHangHoa: '$idHangHoa', giaBan: '$giaBan', ngayApDung: '$ngayApDung', ngayKetThuc: '$ngayKetThuc'");
 
@@ -144,7 +144,7 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'deletedongia':
-            $idDonGia = isset($_REQUEST['idDonGia']) ? $_REQUEST['idDonGia'] : '';
+            $idDonGia = sanitizeInput($_REQUEST['idDonGia'] ?? '', 'int');
 
             if (empty($idDonGia)) {
                 if ($isAjax) {
@@ -173,13 +173,13 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'updatedongia':
-            $idDonGia = isset($_REQUEST['idDonGia']) ? $_REQUEST['idDonGia'] : '';
-            $idHangHoa = isset($_REQUEST['idhanghoa']) ? $_REQUEST['idhanghoa'] : '';
-            $giaBan = isset($_REQUEST['giaban']) ? $_REQUEST['giaban'] : 0;
-            $ngayApDung = isset($_REQUEST['ngayapdung']) ? $_REQUEST['ngayapdung'] : '';
-            $ngayKetThuc = isset($_REQUEST['ngayketthuc']) ? $_REQUEST['ngayketthuc'] : '';
-            $dieuKien = isset($_REQUEST['dieukien']) ? $_REQUEST['dieukien'] : '';
-            $ghiChu = isset($_REQUEST['ghichu']) ? $_REQUEST['ghichu'] : '';
+            $idDonGia = sanitizeInput($_REQUEST['idDonGia'] ?? '', 'int');
+            $idHangHoa = sanitizeInput($_REQUEST['idhanghoa'] ?? '', 'int');
+            $giaBan = sanitizeInput($_REQUEST['giaban'] ?? '', 'float');
+            $ngayApDung = sanitizeInput($_REQUEST['ngayapdung'] ?? '', 'text');
+            $ngayKetThuc = sanitizeInput($_REQUEST['ngayketthuc'] ?? '', 'text');
+            $dieuKien = sanitizeInput($_REQUEST['dieukien'] ?? '', 'text');
+            $ghiChu = sanitizeInput($_REQUEST['ghichu'] ?? '', 'text');
 
             if (empty($idDonGia) || empty($idHangHoa) || empty($giaBan) || empty($ngayApDung) || empty($ngayKetThuc)) {
                 if ($isAjax) {

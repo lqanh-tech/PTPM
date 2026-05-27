@@ -30,8 +30,8 @@ if (isset($_GET['reqact'])) {
     $requestAction = $_GET['reqact'];
     switch ($requestAction) {
         case 'addnew':
-            $tenloaihang = $_REQUEST['tenloaihang'];
-            $mota = $_REQUEST['mota'];
+            $tenloaihang = sanitizeInput($_REQUEST['tenloaihang'] ?? '', 'text');
+            $mota = sanitizeInput($_REQUEST['mota'] ?? '', 'text');
 
             if (empty($_FILES['fileimage']['tmp_name'])) {
                 sendJsonResponse(false, 'Vui lòng nhập ảnh trước khi thêm loại hàng.');
@@ -57,7 +57,7 @@ if (isset($_GET['reqact'])) {
 
         case 'deleteloaihang':
             try {
-                $idloaihang = $_REQUEST['idloaihang'];
+                $idloaihang = sanitizeInput($_REQUEST['idloaihang'] ?? '', 'int');
                 $lh = new loaihang();
                 $kq = $lh->LoaihangDelete($idloaihang);
                 
@@ -85,9 +85,9 @@ if (isset($_GET['reqact'])) {
             break;
 
         case 'updateloaihang':
-            $idloaihang = $_REQUEST['idloaihang'];
-            $tenloaihang = $_REQUEST['tenloaihang'];
-            $mota = $_REQUEST['mota'];
+            $idloaihang = sanitizeInput($_REQUEST['idloaihang'] ?? '', 'int');
+            $tenloaihang = sanitizeInput($_REQUEST['tenloaihang'] ?? '', 'text');
+            $mota = sanitizeInput($_REQUEST['mota'] ?? '', 'text');
 
             if (isset($_FILES['fileimage']) && $_FILES['fileimage']['error'] == 0) {
                 $hinhanh_file = $_FILES['fileimage']['tmp_name'];
