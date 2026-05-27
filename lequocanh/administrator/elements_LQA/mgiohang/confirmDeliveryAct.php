@@ -21,8 +21,8 @@ require_once __DIR__ . '/../mod/CustomerNotificationManager.php';
 $db = Database::getInstance();
 $conn = $db->getConnection();
 
-$orderId = isset($_POST['order_id']) ? (int)$_POST['order_id'] : 0;
-$action = isset($_POST['action']) ? $_POST['action'] : '';
+$orderId = sanitizeInput($_POST['order_id'] ?? '', 'int');
+$action = sanitizeInput($_POST['action'] ?? '', 'text');
 $isAdmin = isset($_SESSION['ADMIN']);
 $username = $isAdmin ? $_SESSION['ADMIN'] : $_SESSION['USER'];
 
