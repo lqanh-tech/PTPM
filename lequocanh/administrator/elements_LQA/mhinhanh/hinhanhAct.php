@@ -93,7 +93,7 @@ function deleteImageFile($imagePath)
 
 try {
     if (isset($_REQUEST["reqact"])) {
-        $requestAction = $_REQUEST["reqact"];
+        $requestAction = sanitizeInput($_REQUEST['reqact'] ?? '', 'text');
         switch ($requestAction) {
             case "addnew":
                 if (isset($_FILES['fileHinhanh'])) {
@@ -166,7 +166,7 @@ try {
                             }
 
                             $imageNameWithoutExt = pathinfo($fileName, PATHINFO_FILENAME);
-                            $autoMatch = isset($_POST['auto_match']) && $_POST['auto_match'] === '1';
+                            $autoMatch = sanitizeInput($_POST['auto_match'] ?? '', 'text') === '1';
 
                             if (!$autoMatch) {
                                 $failedCount++;
@@ -314,7 +314,7 @@ try {
                     exit;
                 }
 
-                $id = intval($_POST["id"]);
+                $id = sanitizeInput($_POST['id'] ?? '', 'int');
 
                 $products = ProductImage::getProductsByImageId($id);
 
@@ -441,8 +441,8 @@ try {
                 }
 
                 if (isset($_POST['action'], $_POST['index'])) {
-                    $action = $_POST['action'];
-                    $index = (int) $_POST['index'];
+                    $action = sanitizeInput($_POST['action'] ?? '', 'text');
+                    $index = sanitizeInput($_POST['index'] ?? '', 'int');
 
                     error_log("resolve_duplicate - Action: " . $action . ", Index: " . $index);
                     error_log("resolve_duplicate - Session duplicate_images exists: " . (isset($_SESSION['duplicate_images']) ? 'Yes' : 'No'));
