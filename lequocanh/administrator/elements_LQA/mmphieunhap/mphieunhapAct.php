@@ -24,10 +24,10 @@ if (isset($_GET['reqact'])) {
         case 'addnew':
 
             if (isset($_POST['maPhieuNhap']) && isset($_POST['idNCC']) && isset($_POST['idNhanVien'])) {
-                $maPhieuNhap = $_POST['maPhieuNhap'];
-                $idNCC = $_POST['idNCC'];
-                $idNhanVien = $_POST['idNhanVien'];
-                $ghiChu = isset($_POST['ghiChu']) ? $_POST['ghiChu'] : '';
+                $maPhieuNhap = sanitizeInput($_POST['maPhieuNhap'] ?? '', 'text');
+                $idNCC = sanitizeInput($_POST['idNCC'] ?? '', 'int');
+                $idNhanVien = sanitizeInput($_POST['idNhanVien'] ?? '', 'int');
+                $ghiChu = sanitizeInput($_POST['ghiChu'] ?? '', 'text');
                 
                 $result = $phieunhap->addPhieuNhap($maPhieuNhap, $idNhanVien, $idNCC, $ghiChu);
                 
@@ -45,11 +45,11 @@ if (isset($_GET['reqact'])) {
         case 'update':
 
             if (isset($_POST['idPhieuNhap']) && isset($_POST['maPhieuNhap']) && isset($_POST['idNCC']) && isset($_POST['idNhanVien'])) {
-                $idPhieuNhap = $_POST['idPhieuNhap'];
-                $maPhieuNhap = $_POST['maPhieuNhap'];
-                $idNCC = $_POST['idNCC'];
-                $idNhanVien = $_POST['idNhanVien'];
-                $ghiChu = isset($_POST['ghiChu']) ? $_POST['ghiChu'] : '';
+                $idPhieuNhap = sanitizeInput($_POST['idPhieuNhap'] ?? '', 'int');
+                $maPhieuNhap = sanitizeInput($_POST['maPhieuNhap'] ?? '', 'text');
+                $idNCC = sanitizeInput($_POST['idNCC'] ?? '', 'int');
+                $idNhanVien = sanitizeInput($_POST['idNhanVien'] ?? '', 'int');
+                $ghiChu = sanitizeInput($_POST['ghiChu'] ?? '', 'text');
                 
                 $result = $phieunhap->updatePhieuNhap($idPhieuNhap, $maPhieuNhap, $idNhanVien, $idNCC, $ghiChu);
                 
