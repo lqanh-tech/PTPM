@@ -43,6 +43,6 @@ class CustomerTest extends TestCase
         $this->assertContains('username', $fillable);
         $this->assertContains('hoten', $fillable);
         $this->assertContains('email', $fillable);
-        $this->assertContains('password', $fillable);
+        $this->assertContains('avatar_url', $fillable);
     }
 }

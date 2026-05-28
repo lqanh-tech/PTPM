@@ -1,10 +1,12 @@
 <?php
 
 declare(strict_types=1);
+
+namespace App\Services;
+
 /**
  * Email Service - Gửi email thông báo đơn hàng
  */
-
 class EmailService
 {
     public function __construct()
