@@ -64,6 +64,7 @@ class Payment extends BaseModel
 
     /**
      * Get the order associated with this payment.
+     * @return Order|null
      */
     public function order(): ?Order
     {

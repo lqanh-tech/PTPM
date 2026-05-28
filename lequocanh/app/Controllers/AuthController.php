@@ -113,7 +113,7 @@ class AuthController
         
         // Check if user exists by provider ID
         $field = $userInfo['provider'] . '_id';
-        $stmt = $db->prepare("SELECT * FROM users WHERE {$field} = ?");
+        $stmt = $db->prepare("SELECT id, username, hoten, email, avatar_url, auth_provider, {$field} FROM users WHERE {$field} = ?");
         $stmt->execute([$userInfo['provider_id']]);
         $user = $stmt->fetch(\PDO::FETCH_OBJ);
         
@@ -123,7 +123,7 @@ class AuthController
         
         // Check if user exists by email
         if (!empty($userInfo['email'])) {
-            $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
+            $stmt = $db->prepare("SELECT id, username, hoten, email, avatar_url, auth_provider FROM users WHERE email = ?");
             $stmt->execute([$userInfo['email']]);
             $user = $stmt->fetch(\PDO::FETCH_OBJ);
             
@@ -150,7 +150,7 @@ class AuthController
             $userInfo['avatar'],
         ]);
         
-        $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt = $db->prepare("SELECT id, username, hoten, email, avatar_url, auth_provider FROM users WHERE id = ?");
         $stmt->execute([$db->lastInsertId()]);
         
         return $stmt->fetch(\PDO::FETCH_OBJ);

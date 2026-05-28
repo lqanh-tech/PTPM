@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use PDO;
 
 /**
  * Order model for e-commerce orders.
@@ -85,6 +84,7 @@ class Order extends BaseModel
 
     /**
      * Get customer who placed this order.
+     * @return Customer|null
      */
     public function customer(): ?Customer
     {

@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Image Optimizer - Tối ưu hình ảnh
  * - Convert to WebP

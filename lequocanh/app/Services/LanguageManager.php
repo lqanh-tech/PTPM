@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Language Manager - Hỗ trợ đa ngôn ngữ
  */

@@ -201,7 +201,7 @@ class Product extends BaseModel
         $db = self::db();
         $statusCondition = self::buildStatusCondition();
 
-        $sql = 'SELECT *,
+        $sql = 'SELECT idhanghoa, tenhanghoa, mota, giathamkhao, giakhuyenmai, hinhanh, idloaihang, trang_thai, trangthai,
                 CASE
                     WHEN hinhanh IS NOT NULL AND hinhanh != 0 AND hinhanh != ""
                     THEN 0 ELSE 1
@@ -218,6 +218,7 @@ class Product extends BaseModel
                 FROM hanghoa
                 WHERE idloaihang = ?' . ($statusCondition ? " AND {$statusCondition}" : '') . '
                 ORDER BY image_priority ASC, tenhanghoa ASC';
+
 
         $stmt = $db->prepare($sql);
         $stmt->setFetchMode(PDO::FETCH_OBJ);
@@ -298,7 +299,7 @@ class Product extends BaseModel
      */
     public static function search(string $keyword): array
     {
-        $sql = "SELECT * FROM " . static::getTable() . " WHERE tenhanghoa LIKE ? OR mota LIKE ?";
+        $sql = "SELECT idhanghoa, tenhanghoa, mota, giathamkhao, giakhuyenmai, hinhanh, idloaihang, trang_thai FROM " . static::getTable() . " WHERE tenhanghoa LIKE ? OR mota LIKE ?";
         $db = self::db();
         $stmt = $db->prepare($sql);
         $searchTerm = "%$keyword%";
@@ -863,7 +864,7 @@ class Product extends BaseModel
             }
 
             $db = self::db();
-            $stmt = $db->prepare("SELECT * FROM hanghoa WHERE trang_thai = ? ORDER BY tenhanghoa ASC");
+            $stmt = $db->prepare("SELECT idhanghoa, mahanghoa, tenhanghoa, mota, giathamkhao, giakhuyenmai, hinhanh, ghichu, idloaihang, idNhanVien, idThuongHieu, idDonViTinh, is_featured, is_new, is_sale, sale_price, sale_percent, view_count, created_at, trang_thai FROM hanghoa WHERE trang_thai = ? ORDER BY tenhanghoa ASC");
             $stmt->execute([$status]);
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
@@ -925,7 +926,7 @@ class Product extends BaseModel
     public static function getAllThuongHieu(): array
     {
         $db = self::db();
-        $stmt = $db->prepare("SELECT * FROM thuonghieu ORDER BY tenTH ASC");
+        $stmt = $db->prepare("SELECT idThuongHieu, tenTH, mota FROM thuonghieu ORDER BY tenTH ASC");
         $stmt->setFetchMode(PDO::FETCH_OBJ);
         $stmt->execute();
         return $stmt->fetchAll();
@@ -934,7 +935,7 @@ class Product extends BaseModel
     public static function getAllDonViTinh(): array
     {
         $db = self::db();
-        $stmt = $db->prepare("SELECT * FROM donvitinh ORDER BY tenDonViTinh ASC");
+        $stmt = $db->prepare("SELECT idDonViTinh, tenDonViTinh, mota FROM donvitinh ORDER BY tenDonViTinh ASC");
         $stmt->setFetchMode(PDO::FETCH_OBJ);
         $stmt->execute();
         return $stmt->fetchAll();
@@ -943,7 +944,7 @@ class Product extends BaseModel
     public static function getAllNhanVien(): array
     {
         $db = self::db();
-        $stmt = $db->prepare("SELECT * FROM nhanvien ORDER BY tenNV ASC");
+        $stmt = $db->prepare("SELECT idNhanVien, tenNV, email, dienthoai FROM nhanvien ORDER BY tenNV ASC");
         $stmt->setFetchMode(PDO::FETCH_OBJ);
         $stmt->execute();
         return $stmt->fetchAll();
@@ -952,7 +953,7 @@ class Product extends BaseModel
     public static function getThuongHieuById(int $idThuongHieu): ?object
     {
         $db = self::db();
-        $stmt = $db->prepare("SELECT * FROM thuonghieu WHERE idThuongHieu = ?");
+        $stmt = $db->prepare("SELECT idThuongHieu, tenTH, mota FROM thuonghieu WHERE idThuongHieu = ?");
         $stmt->execute([$idThuongHieu]);
         return $stmt->fetch(PDO::FETCH_OBJ) ?: null;
     }
@@ -1101,7 +1102,7 @@ class Product extends BaseModel
         }
 
         $db = self::db();
-        $stmt = $db->prepare("SELECT * FROM loaihang WHERE idloaihang = ?");
+        $stmt = $db->prepare("SELECT idloaihang, tenloaihang, mota, hinhanh FROM loaihang WHERE idloaihang = ?");
         $stmt->execute([$this->idloaihang]);
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
@@ -1118,7 +1119,7 @@ class Product extends BaseModel
     public function getStock(): ?object
     {
         $db = self::db();
-        $stmt = $db->prepare("SELECT * FROM tonkho WHERE idhanghoa = ?");
+        $stmt = $db->prepare("SELECT id, idhanghoa, soLuong, soLuongToiThieu, viTri FROM tonkho WHERE idhanghoa = ?");
         $stmt->execute([$this->idhanghoa]);
         return $stmt->fetch(PDO::FETCH_OBJ);
     }

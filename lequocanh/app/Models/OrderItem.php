@@ -45,6 +45,7 @@ class OrderItem extends BaseModel
 
     /**
      * Get the product associated with this item.
+     * @return Product|null
      */
     public function product(): ?Product
     {
@@ -53,6 +54,7 @@ class OrderItem extends BaseModel
 
     /**
      * Get the parent order.
+     * @return Order|null
      */
     public function order(): ?Order
     {

@@ -1,85 +1,130 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Models;
 
-use Database;
 use PDO;
 
-class Blog
+/**
+ * Blog model for blog posts.
+ * Maps to 'blog_posts' table.
+ *
+ * @property int $id
+ * @property string $title
+ * @property string $slug
+ * @property string $content
+ * @property string $excerpt
+ * @property string $featured_image
+ * @property string $author
+ * @property string $status
+ * @property int $view_count
+ * @property string $created_at
+ * @property string $updated_at
+ */
+class Blog extends BaseModel
 {
-    private PDO $db;
-    
-    public function __construct()
+    protected static $table = 'blog_posts';
+    protected static $primaryKey = 'id';
+    protected static $timestamps = true;
+
+    protected static $fillable = [
+        'title',
+        'slug',
+        'content',
+        'excerpt',
+        'featured_image',
+        'author',
+        'status',
+    ];
+
+    /**
+     * Get published posts with pagination.
+     *
+     * @return Blog[]
+     */
+    public static function getPublished(int $limit = 10, int $offset = 0): array
     {
-        $this->db = Database::getInstance()->getConnection();
-    }
-    
-    public function getAll(int $limit = 10, int $offset = 0, string $status = 'published'): array
-    {
-        try {
-            $sql = "SELECT id, title, slug, content, excerpt, featured_image, author, status, view_count, created_at, updated_at FROM blog_posts WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$status, $limit, $offset]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (\Exception $e) {
-            error_log("Blog::getAll error: " . $e->getMessage());
-            return [];
+        $db = \Database::getInstance()->getConnection();
+        $stmt = $db->prepare(
+            "SELECT * FROM " . static::$table . " WHERE status = 'published' ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        );
+        $stmt->execute([$limit, $offset]);
+
+        $results = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $model = new static($row);
+            $model->exists = true;
+            $results[] = $model;
         }
+
+        return $results;
     }
-    
-    public function getBySlug(string $slug): ?array
+
+    /**
+     * Find published post by slug.
+     */
+    public static function findBySlug(string $slug): ?self
     {
-        try {
-            $sql = "SELECT id, title, slug, content, excerpt, featured_image, author, status, view_count, created_at, updated_at FROM blog_posts WHERE slug = ? AND status = 'published'";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$slug]);
-            $post = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($post) {
-                // Increment view count
-                $this->db->prepare("UPDATE blog_posts SET view_count = view_count + 1 WHERE id = ?")->execute([$post['id']]);
-            }
-            
-            return $post ?: null;
-        } catch (\Exception $e) {
-            error_log("Blog::getBySlug error: " . $e->getMessage());
+        $db = \Database::getInstance()->getConnection();
+        $stmt = $db->prepare(
+            "SELECT * FROM " . static::$table . " WHERE slug = ? AND status = 'published' LIMIT 1"
+        );
+        $stmt->execute([$slug]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
             return null;
         }
+
+        // Increment view count
+        $db->prepare("UPDATE " . static::$table . " SET view_count = view_count + 1 WHERE id = ?")
+           ->execute([$row['id']]);
+
+        $model = new static($row);
+        $model->exists = true;
+        return $model;
     }
-    
-    public function create(string $title, string $content, ?string $excerpt = null, ?string $image = null, string $author = 'Admin'): bool
+
+    /**
+     * Create a new blog post with auto-generated slug.
+     */
+    public static function createPost(string $title, string $content, ?string $excerpt = null, ?string $image = null, string $author = 'Admin'): self
     {
-        try {
-            $slug = $this->createSlug($title);
-            $excerpt = $excerpt ?: mb_substr(strip_tags($content), 0, 200) . '...';
-            
-            $sql = "INSERT INTO blog_posts (title, slug, content, excerpt, featured_image, author, status) VALUES (?, ?, ?, ?, ?, ?, 'published')";
-            $stmt = $this->db->prepare($sql);
-            return $stmt->execute([$title, $slug, $content, $excerpt, $image, $author]);
-        } catch (\Exception $e) {
-            error_log("Blog::create error: " . $e->getMessage());
-            return false;
-        }
+        $slug = self::createSlug($title);
+        $excerpt = $excerpt ?: mb_substr(strip_tags($content), 0, 200) . '...';
+
+        return self::create([
+            'title' => $title,
+            'slug' => $slug,
+            'content' => $content,
+            'excerpt' => $excerpt,
+            'featured_image' => $image,
+            'author' => $author,
+            'status' => 'published',
+        ]);
     }
-    
-    public function count(): int
+
+    /**
+     * Count published posts.
+     */
+    public static function countPublished(): int
     {
-        try {
-            $stmt = $this->db->query("SELECT COUNT(*) FROM blog_posts WHERE status = 'published'");
-            return (int)$stmt->fetchColumn();
-        } catch (\Exception $e) {
-            return 0;
-        }
+        $db = \Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT COUNT(*) FROM " . static::$table . " WHERE status = 'published'");
+        $stmt->execute();
+        return (int) $stmt->fetchColumn();
     }
-    
-    private function createSlug(string $title): string
+
+    /**
+     * Generate URL-friendly slug from title.
+     */
+    private static function createSlug(string $title): string
     {
         $slug = mb_strtolower($title);
         $slug = preg_replace('/[^a-z0-9\s-]/', '', $slug);
         $slug = preg_replace('/[\s-]+/', '-', $slug);
         $slug = trim($slug, '-');
-        $slug = $slug . '-' . time();
-        return $slug;
+        return $slug . '-' . time();
     }
 }

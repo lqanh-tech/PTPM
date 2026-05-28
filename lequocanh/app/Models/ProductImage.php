@@ -48,7 +48,7 @@ class ProductImage
                 error_log("ProductImage::getById table check error: " . $e->getMessage());
             }
 
-            $stmt = $db->prepare('SELECT * FROM hinhanh WHERE id = ?');
+            $stmt = $db->prepare('SELECT id, ten_file, loai_file, duong_dan, du_lieu, trang_thai, ngay_tao, file_hash FROM hinhanh WHERE id = ?');
             $stmt->execute([$id]);
             $hinhanh = $stmt->fetch(PDO::FETCH_OBJ);
 
@@ -419,7 +419,7 @@ class ProductImage
     {
         try {
             $db = self::db();
-            $stmt = $db->prepare("SELECT * FROM hanghoa WHERE tenhanghoa = :productName");
+            $stmt = $db->prepare("SELECT idhanghoa, tenhanghoa, mota, giathamkhao, giakhuyenmai, hinhanh, idloaihang, trang_thai FROM hanghoa WHERE tenhanghoa = :productName");
             $stmt->bindValue(":productName", $productName);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -436,7 +436,7 @@ class ProductImage
     public static function findProductsByName(string $name): array
     {
         $db = self::db();
-        $stmt = $db->prepare('SELECT * FROM hanghoa WHERE tenhanghoa LIKE ?');
+        $stmt = $db->prepare('SELECT idhanghoa, tenhanghoa, mota, giathamkhao, giakhuyenmai, hinhanh, idloaihang, trang_thai FROM hanghoa WHERE tenhanghoa LIKE ?');
         $stmt->execute(["%" . $name . "%"]);
         return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
@@ -518,7 +518,7 @@ class ProductImage
                 return null;
             }
 
-            $stmt = $db->prepare("SELECT * FROM hinhanh WHERE ten_file LIKE ?");
+            $stmt = $db->prepare("SELECT id, ten_file, loai_file, duong_dan, trang_thai FROM hinhanh WHERE ten_file LIKE ?");
             $productName = '%' . $product->tenhanghoa . '%';
             $stmt->execute([$productName]);
             return $stmt->fetch(PDO::FETCH_OBJ) ?: null;

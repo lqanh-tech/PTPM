@@ -50,7 +50,119 @@ $routes = [
     'admin/logout' => '/lequocanh/administrator/userLogout.php',
     'api/momo/callback' => '/lequocanh/api/momo_callback.php',
     'api/momo/ipn' => '/lequocanh/api/momo_ipn.php',
+
+    // API v1 routes
+    'api/v1/products' => 'api/products',
+    'api/v1/categories' => 'api/categories',
+    'api/v1/orders' => 'api/orders',
+    'api/v1/search' => 'api/search',
+    'api/v1/stats' => 'api/stats',
+    'api/v1/auth/login' => 'api/auth/login',
+    'api/v1/auth/register' => 'api/auth/register',
+    'api/v1/auth/logout' => 'api/auth/logout',
+    'api/v1/auth/me' => 'api/auth/me',
+    'api/v1/cart' => 'api/cart',
 ];
+
+// API routing with controller
+if (strpos($request_uri, 'api/v1/') === 0) {
+    $apiRoute = substr($request_uri, 7); // Remove 'api/v1/'
+    $parts = explode('/', $apiRoute);
+    $resource = $parts[0] ?? '';
+    $id = $parts[1] ?? null;
+
+    // Set JSON content type
+    header('Content-Type: application/json; charset=UTF-8');
+
+    // Map routes to controller methods
+    $apiController = new App\Controllers\Api\ApiController();
+
+    switch ($resource) {
+        case 'products':
+            if ($id) {
+                $_GET['id'] = $id;
+                $apiController->product();
+            } else {
+                $apiController->products();
+            }
+            break;
+
+        case 'categories':
+            $apiController->categories();
+            break;
+
+        case 'orders':
+            if ($id) {
+                $_GET['id'] = $id;
+                $apiController->order();
+            } else {
+                $apiController->orders();
+            }
+            break;
+
+        case 'search':
+            $apiController->search();
+            break;
+
+
+        case 'docs':
+            $apiController->docs();
+            break;
+
+        case 'stats':
+            $apiController->stats();
+            break;
+
+        case 'auth':
+            $action = $id ?? '';
+            switch ($action) {
+                case 'login':
+                    $apiController->login();
+                    break;
+                case 'register':
+                    $apiController->register();
+                    break;
+                case 'logout':
+                    $apiController->logout();
+                    break;
+                case 'me':
+                    $apiController->me();
+                    break;
+                default:
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Auth endpoint not found']);
+                    break;
+            }
+            break;
+
+        case 'cart':
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+            if ($method === 'GET') {
+                $apiController->cart();
+            } elseif ($method === 'POST') {
+                $apiController->cartAdd();
+            } elseif ($method === 'PUT') {
+                if ($id) {
+                    $_GET['id'] = $id;
+                }
+                $apiController->cartUpdate();
+            } elseif ($method === 'DELETE') {
+                if ($id) {
+                    $_GET['id'] = $id;
+                    $apiController->cartRemove();
+                } else {
+                    $apiController->cartClear();
+                }
+            }
+            break;
+
+        default:
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Endpoint not found']);
+            break;
+    }
+    exit;
+}
 
 if (array_key_exists($request_uri, $routes)) {
     $file = __DIR__ . $routes[$request_uri];

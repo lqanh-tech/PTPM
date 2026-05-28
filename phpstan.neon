@@ -21,3 +21,5 @@ parameters:
         - '#Unsafe usage of new static\(\)#'
         - '#Call to static method (encode|decode)\(\) on an unknown class Firebase\\JWT\\JWT.#'
         - '#Call to an undefined static method (ImageOptimizer|AsyncLoader)::#'
+        - '#Property App\\Controllers\\BaseController::\$config has unknown class ConfigManager as its type.#'
+        - '#Call to static method (generateCSRFToken|validateCSRFToken)\(\) on an unknown class Security.#'

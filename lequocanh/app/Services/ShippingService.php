@@ -1,25 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use Database;
-use QueryCache;
 use PDO;
-use PDOException;
 
 class ShippingService
 {
-    private static $instance = null;
-    private $db;
-    private $cache;
+    private static ?self $instance = null;
+    private PDO $db;
 
     private function __construct()
     {
         $this->db = Database::getInstance()->getConnection();
-        $this->cache = QueryCache::getInstance();
     }
 
-    public static function getInstance()
+    public static function getInstance(): self
     {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -27,38 +25,58 @@ class ShippingService
         return self::$instance;
     }
 
-    public function getActiveShippingMethods()
+    private function __clone() {}
+
+    /**
+     * Get all active shipping methods.
+     */
+    public function getActiveShippingMethods(): array
     {
-        $sql = "SELECT id, code, name, description, base_fee, is_active, sort_order,
-                       min_order_free_ship, estimated_days
+        $sql = "SELECT id, code, name, description, price_multiplier, is_active, sort_order,
+                       price_multiplier
                 FROM shipping_methods 
                 WHERE is_active = 1
-                ORDER BY sort_order DESC";
+                ORDER BY sort_order ASC";
 
-        return $this->cache->query($this->db, $sql, [], 600);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function getShippingMethodByCode($code)
+    /**
+     * Get shipping method by code.
+     */
+    public function getShippingMethodByCode(string $code): ?object
     {
-        $sql = "SELECT id, code, name, description, base_fee, is_active, sort_order,
-                       min_order_free_ship, estimated_days
+        $sql = "SELECT id, code, name, description, price_multiplier, is_active, sort_order,
+                       price_multiplier
                 FROM shipping_methods 
-                WHERE code = ?";
+                WHERE code = ? AND is_active = 1";
 
-        return $this->cache->queryOne($this->db, $sql, [$code], 600);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$code]);
+        return $stmt->fetch(PDO::FETCH_OBJ) ?: null;
     }
 
-    public function getShippingMethodById($id)
+    /**
+     * Get shipping method by ID.
+     */
+    public function getShippingMethodById(int $id): ?object
     {
-        $sql = "SELECT id, code, name, description, base_fee, is_active, sort_order,
-                       min_order_free_ship, estimated_days
+        $sql = "SELECT id, code, name, description, price_multiplier, is_active, sort_order,
+                       price_multiplier
                 FROM shipping_methods 
                 WHERE id = ?";
 
-        return $this->cache->queryOne($this->db, $sql, [$id], 600);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$id]);
+        return $stmt->fetch(PDO::FETCH_OBJ) ?: null;
     }
 
-    public function getShippingFees($methodId)
+    /**
+     * Get shipping fee rules for a method.
+     */
+    public function getShippingFees(int $methodId): array
     {
         $sql = "SELECT id, shipping_method_id, min_weight, max_weight, fee, 
                        min_order_value, max_order_value, priority, is_active
@@ -66,56 +84,152 @@ class ShippingService
                 WHERE shipping_method_id = ? AND is_active = 1
                 ORDER BY priority DESC";
 
-        return $this->cache->query($this->db, $sql, [$methodId], 600);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$methodId]);
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 
-    public function calculateShippingFee($methodCode, $orderTotal, $weight = 0)
+    /**
+     * Calculate shipping fee for an order.
+     */
+    public function calculateShippingFee(string $methodCode, float $orderTotal, float $weight = 0): float
     {
         $method = $this->getShippingMethodByCode($methodCode);
         if (!$method) {
             return 0;
         }
 
-        if ($method->min_order_free_ship > 0 && $orderTotal >= $method->min_order_free_ship) {
+        // Check for free shipping threshold
+        if ($method->price_multiplier > 0 && $orderTotal >= $method->price_multiplier) {
             return 0;
         }
 
-        $fees = $this->getShippingFees($method->id);
+        // Check fee rules
+        $fees = $this->getShippingFees((int) $method->id);
         foreach ($fees as $fee) {
-            if ($weight >= $fee->min_weight && $weight <= $fee->max_weight) {
-                if ($orderTotal >= $fee->min_order_value && $orderTotal <= $fee->max_order_value) {
-                    return $fee->fee;
-                }
+            $weightMatch = ($weight >= $fee->min_weight && $weight <= $fee->max_weight);
+            $orderMatch = ($orderTotal >= $fee->min_order_value && $orderTotal <= $fee->max_order_value);
+
+            if ($weightMatch && $orderMatch) {
+                return (float) $fee->fee;
             }
         }
 
-        return $method->base_fee ?? 0;
+        // Default to base fee
+        return (float) ($method->price_multiplier ?? 0);
     }
 
-    public function getShippingMethodsWithFees()
+    /**
+     * Get all shipping methods with their fee rules.
+     */
+    public function getShippingMethodsWithFees(): array
     {
-        $sql = "SELECT id, code, name, description, base_fee, is_active, sort_order,
-                       min_order_free_ship, estimated_days
-                FROM v_shipping_methods_with_fees 
-                WHERE is_active = 1
-                ORDER BY sort_order DESC";
-
         try {
-            return $this->cache->query($this->db, $sql, [], 600);
-        } catch (PDOException $e) {
+            $sql = "SELECT id, code, name, description, price_multiplier, is_active, sort_order,
+                           price_multiplier
+                    FROM v_shipping_methods_with_fees 
+                    WHERE is_active = 1
+                    ORDER BY sort_order ASC";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_OBJ);
+        } catch (\PDOException $e) {
+            // View may not exist, fallback to regular methods
             return $this->getActiveShippingMethods();
         }
     }
 
-    public function invalidateShippingCache()
+    /**
+     * Create shipping method.
+     */
+    public function createMethod(array $data): int
     {
-        $this->cache->invalidateProducts();
+        $sql = "INSERT INTO shipping_methods (code, name, description, price_multiplier, is_active, 
+                                              sort_order, price_multiplier)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $data['code'],
+            $data['name'],
+            $data['description'] ?? '',
+            $data['price_multiplier'] ?? 0,
+            $data['is_active'] ?? 1,
+            $data['sort_order'] ?? 0,
+            $data['price_multiplier'] ?? 0,
+            
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * Update shipping method.
+     */
+    public function updateMethod(int $methodId, array $data): bool
+    {
+        $allowedFields = ['name', 'description', 'price_multiplier', 'is_active', 'sort_order', 'price_multiplier', 'estimated_days'];
+        $updateFields = [];
+        $params = [];
+
+        foreach ($data as $key => $value) {
+            if (in_array($key, $allowedFields)) {
+                $updateFields[] = "{$key} = ?";
+                $params[] = $value;
+            }
+        }
+
+        if (empty($updateFields)) {
+            return false;
+        }
+
+        $params[] = $methodId;
+        $sql = "UPDATE shipping_methods SET " . implode(', ', $updateFields) . " WHERE id = ?";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    /**
+     * Add shipping fee rule.
+     */
+    public function addFeeRule(array $data): int
+    {
+        $sql = "INSERT INTO shipping_fees (shipping_method_id, min_weight, max_weight, fee,
+                                           min_order_value, max_order_value, priority, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            $data['shipping_method_id'],
+            $data['min_weight'] ?? 0,
+            $data['max_weight'] ?? 999999,
+            $data['fee'],
+            $data['min_order_value'] ?? 0,
+            $data['max_order_value'] ?? 999999999,
+            $data['priority'] ?? 0,
+            $data['is_active'] ?? 1,
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    /**
+     * Get shipping method count.
+     */
+    public function getMethodCount(): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM shipping_methods";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_OBJ);
+        return (int) ($result->count ?? 0);
     }
 }
 
 if (!function_exists('getShippingService')) {
-    function getShippingService()
+    function getShippingService(): ShippingService
     {
-        return \App\Services\ShippingService::getInstance();
+        return ShippingService::getInstance();
     }
 }

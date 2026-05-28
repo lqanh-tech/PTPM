@@ -42,7 +42,7 @@ class Cart extends BaseModel
     {
         $db = \Database::getInstance()->getConnection();
         $stmt = $db->prepare(
-            "SELECT * FROM " . static::$table . " WHERE iduser = ? AND idhanghoa = ? LIMIT 1"
+            "SELECT idgiohang, iduser, idhanghoa, soluong, ngaythem FROM " . static::$table . " WHERE iduser = ? AND idhanghoa = ? LIMIT 1"
         );
         $stmt->execute([$userId, $productId]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
@@ -59,6 +59,7 @@ class Cart extends BaseModel
     /**
      * Get the product in this cart item.
      */
+    /** @return Product|null */
     public function product(): ?Product
     {
         return Product::find((int)$this->idhanghoa);

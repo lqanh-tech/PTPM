@@ -1,27 +1,67 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
+use App\Helpers\CsrfProtection;
 use App\Models\Product;
-use Database;
-use PDO;
+use App\Services\CategoryService;
 use Exception;
 
 class ProductController extends BaseController
 {
-    public function index()
+    use CsrfProtection;
+
+    /**
+     * Display product list with pagination.
+     */
+    public function index(): void
     {
         $this->requireAuth();
 
         try {
-            $products = Product::getAllWithRelations();
+            $page = (int) ($this->input('page') ?? 1);
+            $perPage = (int) ($this->input('per_page') ?? 20);
+            $search = $this->input('search');
+            $categoryId = $this->input('category_id');
+
+            // Build conditions
+            $conditions = [];
+            if ($categoryId) {
+                $conditions['idloaihang'] = $categoryId;
+            }
+
+            // Get paginated results
+            $result = Product::paginate($page, $perPage, $conditions);
+
+            // Apply search filter if needed
+            if ($search) {
+                $result['data'] = array_filter($result['data'], function ($product) use ($search) {
+                    return stripos($product->tenhanghoa, $search) !== false;
+                });
+            }
 
             $data = [
-                'products' => $products,
+                'products' => $result['data'],
+                'pagination' => [
+                    'current_page' => $result['current_page'],
+                    'last_page' => $result['last_page'],
+                    'per_page' => $result['per_page'],
+                    'total' => $result['total'],
+                    'from' => $result['from'],
+                    'to' => $result['to'],
+                ],
                 'title' => 'Product Management',
-                'success_message' => $this->input('success'),
-                'error_message' => $this->input('error')
+                'categories' => $this->getCategories(),
+                'filters' => [
+                    'search' => $search,
+                    'category_id' => $categoryId,
+                    'per_page' => $perPage,
+                ],
+                'success_message' => $this->getFlash('success'),
+                'error_message' => $this->getFlash('error'),
             ];
 
             $this->render('admin.products.index', $data);
@@ -29,12 +69,16 @@ class ProductController extends BaseController
             error_log("ProductController::index error: " . $e->getMessage());
             $this->render('admin.products.index', [
                 'products' => [],
+                'pagination' => [],
                 'error_message' => 'Error loading products: ' . $e->getMessage()
             ]);
         }
     }
 
-    public function create()
+    /**
+     * Show create product form.
+     */
+    public function create(): void
     {
         $this->requireAuth();
 
@@ -43,27 +87,31 @@ class ProductController extends BaseController
             'categories' => $this->getCategories(),
             'brands' => $this->getBrands(),
             'units' => $this->getUnits(),
-            'employees' => $this->getEmployees()
+            'employees' => $this->getEmployees(),
+            'csrf_token' => \App\Helpers\CsrfHelper::token(),
         ];
 
         $this->render('admin.products.create', $data);
     }
 
-    public function store()
+    /**
+     * Store new product.
+     */
+    public function store(): void
     {
         $this->requireAuth();
+        $this->validateCsrf();
 
         if (!$this->isPost()) {
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
-            return;
         }
 
         $rules = Product::getValidationRules();
         $errors = $this->validate($rules);
 
         if (!empty($errors)) {
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Validation failed'));
-            return;
+            $this->flash('error', 'Validation failed: ' . implode(', ', array_map(fn($e) => $e[0], $errors)));
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
 
         try {
@@ -79,33 +127,33 @@ class ProductController extends BaseController
                 'ghichu' => $this->input('ghichu', '')
             ];
 
-            $product = Product::create($productData);
-
-            if ($product) {
-                $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&success=' . urlencode('Product added successfully'));
-            } else {
-                $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Failed to add product'));
-            }
+            Product::create($productData);
+            $this->flash('success', 'Product added successfully');
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         } catch (Exception $e) {
             error_log("ProductController::store error: " . $e->getMessage());
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Error adding product: ' . $e->getMessage()));
+            $this->flash('error', 'Error adding product: ' . $e->getMessage());
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
     }
 
-    public function edit()
+    /**
+     * Show edit product form.
+     */
+    public function edit(): void
     {
         $this->requireAuth();
 
         $id = $this->input('id');
         if (!$id) {
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Product ID required'));
-            return;
+            $this->flash('error', 'Product ID required');
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
 
         $product = Product::find($id);
         if (!$product) {
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Product not found'));
-            return;
+            $this->flash('error', 'Product not found');
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
 
         $data = [
@@ -114,39 +162,43 @@ class ProductController extends BaseController
             'categories' => $this->getCategories(),
             'brands' => $this->getBrands(),
             'units' => $this->getUnits(),
-            'employees' => $this->getEmployees()
+            'employees' => $this->getEmployees(),
+            'csrf_token' => \App\Helpers\CsrfHelper::token(),
         ];
 
         $this->render('admin.products.edit', $data);
     }
 
-    public function update()
+    /**
+     * Update product.
+     */
+    public function update(): void
     {
         $this->requireAuth();
+        $this->validateCsrf();
 
         if (!$this->isPost()) {
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
-            return;
         }
 
         $id = $this->input('id');
         if (!$id) {
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Product ID required'));
-            return;
+            $this->flash('error', 'Product ID required');
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
 
         $product = Product::find($id);
         if (!$product) {
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Product not found'));
-            return;
+            $this->flash('error', 'Product not found');
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
 
         $rules = Product::getValidationRules();
         $errors = $this->validate($rules);
 
         if (!empty($errors)) {
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Validation failed'));
-            return;
+            $this->flash('error', 'Validation failed: ' . implode(', ', array_map(fn($e) => $e[0], $errors)));
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
 
         try {
@@ -161,30 +213,34 @@ class ProductController extends BaseController
             $product->ghichu = $this->input('ghichu', '');
 
             if ($product->save()) {
-                $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&success=' . urlencode('Product updated successfully'));
+                $this->flash('success', 'Product updated successfully');
             } else {
-                $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Failed to update product'));
+                $this->flash('error', 'Failed to update product');
             }
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         } catch (Exception $e) {
             error_log("ProductController::update error: " . $e->getMessage());
-            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview&error=' . urlencode('Error updating product: ' . $e->getMessage()));
+            $this->flash('error', 'Error updating product: ' . $e->getMessage());
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
     }
 
-    public function delete()
+    /**
+     * Delete product (AJAX).
+     */
+    public function delete(): void
     {
         $this->requireAuth();
+        $this->validateCsrf();
 
         $id = $this->input('id');
         if (!$id) {
             $this->json(['success' => false, 'message' => 'Product ID required'], 400);
-            return;
         }
 
         $product = Product::find($id);
         if (!$product) {
             $this->json(['success' => false, 'message' => 'Product not found'], 404);
-            return;
         }
 
         try {
@@ -197,18 +253,20 @@ class ProductController extends BaseController
             }
         } catch (Exception $e) {
             error_log("ProductController::delete error: " . $e->getMessage());
-            $this->json(['success' => false, 'message' => $e->getMessage()]);
+            $this->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    public function search()
+    /**
+     * Search products (AJAX).
+     */
+    public function search(): void
     {
         $this->requireAuth();
 
         $keyword = $this->input('q');
         if (empty($keyword)) {
             $this->json(['products' => []]);
-            return;
         }
 
         try {
@@ -233,20 +291,21 @@ class ProductController extends BaseController
         }
     }
 
-    public function show()
+    /**
+     * Get product details (AJAX).
+     */
+    public function show(): void
     {
         $this->requireAuth();
 
         $id = $this->input('id');
         if (!$id) {
             $this->json(['error' => 'Product ID required'], 400);
-            return;
         }
 
         $product = Product::find($id);
         if (!$product) {
             $this->json(['error' => 'Product not found'], 404);
-            return;
         }
 
         $data = [
@@ -261,31 +320,108 @@ class ProductController extends BaseController
         $this->json($data);
     }
 
-    private function getCategories()
+    /**
+     * Bulk delete products (AJAX).
+     */
+    public function bulkDelete(): void
     {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT * FROM loaihang ORDER BY tenloaihang");
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        $this->requireAuth();
+        $this->validateCsrf();
+
+        $ids = $this->input('ids');
+        if (empty($ids) || !is_array($ids)) {
+            $this->json(['success' => false, 'message' => 'Product IDs required'], 400);
+        }
+
+        try {
+            $deleted = 0;
+            $errors = [];
+
+            foreach ($ids as $id) {
+                $product = Product::find($id);
+                if ($product) {
+                    try {
+                        $product->delete();
+                        $deleted++;
+                    } catch (Exception $e) {
+                        $errors[$id] = $e->getMessage();
+                    }
+                }
+            }
+
+            $this->json([
+                'success' => true,
+                'message' => "Deleted {$deleted} products",
+                'deleted' => $deleted,
+                'errors' => $errors,
+            ]);
+        } catch (Exception $e) {
+            error_log("ProductController::bulkDelete error: " . $e->getMessage());
+            $this->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 
-    private function getBrands()
+    /**
+     * Export products (CSV).
+     */
+    public function export(): void
     {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT * FROM thuonghieu ORDER BY tenTH");
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        $this->requireAuth();
+
+        try {
+            $products = Product::getAllWithPricing();
+
+            header('Content-Type: text/csv; charset=UTF-8');
+            header('Content-Disposition: attachment; filename="products_' . date('Y-m-d') . '.csv"');
+
+            $output = fopen('php://output', 'w');
+
+            // BOM for UTF-8
+            fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header
+            fputcsv($output, ['ID', 'Tên hàng hóa', 'Giá tham khảo', 'Giá khuyến mãi', 'Danh mục', 'Trạng thái']);
+
+            // Data
+            foreach ($products as $product) {
+                fputcsv($output, [
+                    $product->idhanghoa,
+                    $product->tenhanghoa,
+                    $product->giathamkhao,
+                    $product->giakhuyenmai,
+                    $product->ten_loaihang ?? '',
+                    $product->trang_thai ?? '',
+                ]);
+            }
+
+            fclose($output);
+            exit;
+        } catch (Exception $e) {
+            error_log("ProductController::export error: " . $e->getMessage());
+            $this->flash('error', 'Export failed: ' . $e->getMessage());
+            $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
+        }
     }
 
-    private function getUnits()
+    // ── Private helpers ──
+
+    private function getCategories(): array
     {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT * FROM donvitinh ORDER BY tenDonViTinh");
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        return CategoryService::getInstance()->getAllCategories();
     }
 
-    private function getEmployees()
+    private function getBrands(): array
     {
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT * FROM nhanvien ORDER BY tenNV");
-        return $stmt->fetchAll(PDO::FETCH_OBJ);
+        return Product::getAllThuongHieu();
+    }
+
+    private function getUnits(): array
+    {
+        return Product::getAllDonViTinh();
+    }
+
+    private function getEmployees(): array
+    {
+        return Product::getAllNhanVien();
     }
 }
