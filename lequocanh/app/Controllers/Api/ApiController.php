@@ -6,6 +6,7 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Helpers\CsrfProtection;
+use App\Middleware\ApiMiddleware;
 use App\Models\Product;
 use App\Models\Order;
 use App\Models\Cart;
@@ -23,12 +24,65 @@ class ApiController extends BaseController
     use CsrfProtection;
 
     private UserRateLimiter $rateLimiter;
+    private ?array $jsonBody = null;
 
     public function __construct()
     {
         parent::__construct();
         $this->rateLimiter = new UserRateLimiter();
+        $this->jsonBody = ApiMiddleware::getJsonBody();
     }
+
+    /**
+     * Get input value from query, POST, or JSON body.
+     */
+    protected function input(?string $key = null, mixed $default = null): mixed
+    {
+        if ($key === null) {
+            $get = $_GET ?? [];
+            $post = $_POST ?? [];
+            $json = $this->jsonBody ?? [];
+            return array_merge($get, $post, $json);
+        }
+
+        // Check GET first, then POST, then JSON body
+        if (isset($_GET[$key])) {
+            return $_GET[$key];
+        }
+        if (isset($_POST[$key])) {
+            return $_POST[$key];
+        }
+        if (isset($this->jsonBody[$key])) {
+            return $this->jsonBody[$key];
+        }
+
+        return $default;
+    }
+
+    /**
+     * Send standardized error response.
+     */
+    protected function error(string $message, int $code = 400, ?array $errors = null): never
+    {
+        $response = ['success' => false, 'message' => $message];
+        if ($errors !== null) {
+            $response['errors'] = $errors;
+        }
+        $this->json($response, $code);
+    }
+
+    /**
+     * Send standardized success response.
+     */
+    protected function success(mixed $data = null, string $message = 'OK', int $code = 200): never
+    {
+        $response = ['success' => true, 'message' => $message];
+        if ($data !== null) {
+            $response['data'] = $data;
+        }
+        $this->json($response, $code);
+    }
+
     /**
      * GET /api/products
      * List products with pagination and filters.
@@ -130,6 +184,137 @@ class ApiController extends BaseController
     }
 
     /**
+     * POST /api/v1/products
+     * Create new product (admin only).
+     */
+    public function productCreate(): void
+    {
+        $this->requireAuth();
+        $this->checkRateLimit('product_create', 30, 60);
+
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'POST required'], 405);
+        }
+
+        $name = trim((string) $this->input('tenhanghoa'));
+        $price = $this->input('giathamkhao');
+
+        if (empty($name) || $price === null) {
+            $this->json(['success' => false, 'message' => 'Name and price required'], 400);
+        }
+
+        try {
+            $data = [
+                'tenhanghoa' => $name,
+                'mota' => $this->input('mota') ?? '',
+                'giathamkhao' => (float) $price,
+                'giakhuyenmai' => $this->input('giakhuyenmai') ? (float) $this->input('giakhuyenmai') : null,
+                'idloaihang' => $this->input('idloaihang') ? (int) $this->input('idloaihang') : null,
+                'idThuongHieu' => $this->input('idThuongHieu') ? (int) $this->input('idThuongHieu') : null,
+                'idDonViTinh' => $this->input('idDonViTinh') ? (int) $this->input('idDonViTinh') : null,
+                'ghichu' => $this->input('ghichu') ?? '',
+                'trang_thai' => Product::STATUS_ACTIVE,
+            ];
+
+            $product = Product::create($data);
+
+            $this->json([
+                'success' => true,
+                'data' => [
+                    'id' => $product->idhanghoa,
+                    'name' => $product->tenhanghoa,
+                    'price' => (float) $product->giathamkhao,
+                ],
+            ], 201);
+        } catch (Exception $e) {
+            error_log("ApiController::productCreate error: " . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * PUT /api/v1/products/{id}
+     * Update product (admin only).
+     */
+    public function productUpdate(): void
+    {
+        $this->requireAuth();
+        $this->checkRateLimit('product_update', 30, 60);
+
+        $id = $this->input('id');
+        if (!$id) {
+            $this->json(['success' => false, 'message' => 'Product ID required'], 400);
+        }
+
+        try {
+            $product = Product::find($id);
+            if (!$product) {
+                $this->json(['success' => false, 'message' => 'Product not found'], 404);
+            }
+
+            $allowedFields = ['tenhanghoa', 'mota', 'giathamkhao', 'giakhuyenmai', 'idloaihang', 'idThuongHieu', 'idDonViTinh', 'ghichu', 'trang_thai'];
+            $updateData = [];
+
+            foreach ($allowedFields as $field) {
+                $value = $this->input($field);
+                if ($value !== null) {
+                    $updateData[$field] = $field === 'giathamkhao' || $field === 'giakhuyenmai' ? (float) $value : $value;
+                }
+            }
+
+            if (empty($updateData)) {
+                $this->json(['success' => false, 'message' => 'No fields to update'], 400);
+            }
+
+            foreach ($updateData as $key => $value) {
+                $product->$key = $value;
+            }
+            $product->save();
+
+            $this->json([
+                'success' => true,
+                'data' => [
+                    'id' => $product->idhanghoa,
+                    'name' => $product->tenhanghoa,
+                    'price' => (float) $product->giathamkhao,
+                ],
+            ]);
+        } catch (Exception $e) {
+            error_log("ApiController::productUpdate error: " . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * DELETE /api/v1/products/{id}
+     * Delete product (admin only).
+     */
+    public function productDelete(): void
+    {
+        $this->requireAuth();
+        $this->checkRateLimit('product_delete', 10, 60);
+
+        $id = $this->input('id');
+        if (!$id) {
+            $this->json(['success' => false, 'message' => 'Product ID required'], 400);
+        }
+
+        try {
+            $product = Product::find($id);
+            if (!$product) {
+                $this->json(['success' => false, 'message' => 'Product not found'], 404);
+            }
+
+            $product->delete();
+
+            $this->json(['success' => true, 'message' => 'Product deleted']);
+        } catch (Exception $e) {
+            error_log("ApiController::productDelete error: " . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
+
+    /**
      * GET /api/categories
      * List all categories.
      */
@@ -219,6 +404,113 @@ class ApiController extends BaseController
             ]);
         } catch (Exception $e) {
             error_log("ApiController::order error: " . $e->getMessage());
+            $this->json(['success' => false, 'message' => 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * POST /api/v1/orders
+     * Create new order.
+     */
+    public function orderCreate(): void
+    {
+        $this->requireAuth();
+        $this->checkRateLimit('order_create', 10, 60);
+
+        if (!$this->isPost()) {
+            $this->json(['success' => false, 'message' => 'POST required'], 405);
+        }
+
+        $hoTen = trim((string) $this->input('ho_ten'));
+        $soDienThoai = trim((string) $this->input('so_dien_thoai'));
+        $diaChi = trim((string) $this->input('dia_chi_giao_hang'));
+        $items = $this->input('items');
+
+        // Validate required fields
+        $errors = [];
+        if (empty($hoTen)) {
+            $errors[] = 'ho_ten required';
+        }
+        if (empty($soDienThoai)) {
+            $errors[] = 'so_dien_thoai required';
+        }
+        if (empty($diaChi)) {
+            $errors[] = 'dia_chi_giao_hang required';
+        }
+        if (!is_array($items) || empty($items)) {
+            $errors[] = 'items array required';
+        }
+
+        if (!empty($errors)) {
+            $this->json(['success' => false, 'message' => 'Validation failed', 'errors' => $errors], 422);
+        }
+
+        try {
+            $userId = (int) $this->getUser();
+
+            // Calculate total from items
+            $totalAmount = 0;
+            $orderItems = [];
+
+            foreach ($items as $item) {
+                $productId = $item['product_id'] ?? 0;
+                $quantity = (int) ($item['quantity'] ?? 1);
+
+                if (!$productId || $quantity < 1) {
+                    $this->json(['success' => false, 'message' => 'Invalid item: product_id and quantity required'], 400);
+                }
+
+                $product = Product::find($productId);
+                if (!$product) {
+                    $this->json(['success' => false, 'message' => "Product {$productId} not found"], 404);
+                }
+
+                $price = $product->giakhuyenmai && $product->giakhuyenmai > 0
+                    ? (float) $product->giakhuyenmai
+                    : (float) $product->giathamkhao;
+
+                $totalAmount += $price * $quantity;
+                $orderItems[] = [
+                    'ma_san_pham' => (int) $productId,
+                    'so_luong' => $quantity,
+                    'gia' => $price,
+                ];
+            }
+
+            // Create order
+            $orderData = [
+                'ma_nguoi_dung' => $userId,
+                'ho_ten' => $hoTen,
+                'so_dien_thoai' => $soDienThoai,
+                'email' => trim((string) $this->input('email')),
+                'dia_chi_giao_hang' => $diaChi,
+                'ghi_chu' => $this->input('ghi_chu') ?? '',
+                'tong_tien' => $totalAmount,
+                'phuong_thuc_thanh_toan' => $this->input('phuong_thuc_thanh_toan') ?? 'cod',
+                'shipping_method' => $this->input('shipping_method') ?? 'standard',
+                'phi_van_chuyen' => (float) ($this->input('phi_van_chuyen') ?? 0),
+            ];
+
+            $orderId = OrderService::getInstance()->createOrder($orderData);
+
+            // Add order items
+            foreach ($orderItems as $item) {
+                OrderService::getInstance()->addOrderItem($orderId, $item);
+            }
+
+            // Clear user's cart after successful order
+            Cart::clearForUser($userId);
+
+            $this->json([
+                'success' => true,
+                'data' => [
+                    'order_id' => $orderId,
+                    'total' => $totalAmount,
+                    'status' => 'pending',
+                ],
+            ], 201);
+        } catch (Exception $e) {
+            error_log("ApiController::orderCreate error: " . $e->getMessage());
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }

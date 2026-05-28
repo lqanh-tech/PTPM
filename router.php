@@ -27,8 +27,17 @@ $blocked_patterns = [
 foreach ($blocked_patterns as $pattern) {
     if (preg_match($pattern, $request_uri)) {
         Security::logSecurityEvent('blocked_access', ['uri' => $request_uri]);
-        http_response_code(404);
-        die('404 - Not Found');
+
+        // Return JSON for API requests
+        if (strpos($request_uri, 'api/') === 0) {
+            header('Content-Type: application/json');
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => 'Not found']);
+        } else {
+            http_response_code(404);
+            echo '404 - Not Found';
+        }
+        exit;
     }
 }
 
@@ -36,8 +45,10 @@ if (strpos($request_uri, 'api/') === 0) {
     $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     if (!Security::checkRateLimit($ip, 60, 60)) {
         Security::logSecurityEvent('rate_limit_exceeded', ['ip' => $ip, 'uri' => $request_uri]);
+        header('Content-Type: application/json');
         http_response_code(429);
-        die('429 - Too Many Requests');
+        echo json_encode(['success' => false, 'message' => 'Rate limit exceeded']);
+        exit;
     }
 }
 
@@ -66,6 +77,10 @@ $routes = [
 
 // API routing with controller
 if (strpos($request_uri, 'api/v1/') === 0) {
+    // Load API middleware
+    require_once __DIR__ . '/lequocanh/app/Middleware/ApiMiddleware.php';
+    App\Middleware\ApiMiddleware::handleCors();
+
     $apiRoute = substr($request_uri, 7); // Remove 'api/v1/'
     $parts = explode('/', $apiRoute);
     $resource = $parts[0] ?? '';
@@ -74,12 +89,24 @@ if (strpos($request_uri, 'api/v1/') === 0) {
     // Set JSON content type
     header('Content-Type: application/json; charset=UTF-8');
 
+    // Log API request
+    App\Middleware\ApiMiddleware::logRequest($resource, $id);
+
     // Map routes to controller methods
     $apiController = new App\Controllers\Api\ApiController();
 
     switch ($resource) {
         case 'products':
-            if ($id) {
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+            if ($method === 'POST') {
+                $apiController->productCreate();
+            } elseif ($method === 'PUT' && $id) {
+                $_GET['id'] = $id;
+                $apiController->productUpdate();
+            } elseif ($method === 'DELETE' && $id) {
+                $_GET['id'] = $id;
+                $apiController->productDelete();
+            } elseif ($id) {
                 $_GET['id'] = $id;
                 $apiController->product();
             } else {
@@ -92,7 +119,10 @@ if (strpos($request_uri, 'api/v1/') === 0) {
             break;
 
         case 'orders':
-            if ($id) {
+            $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+            if ($method === 'POST') {
+                $apiController->orderCreate();
+            } elseif ($id) {
                 $_GET['id'] = $id;
                 $apiController->order();
             } else {
