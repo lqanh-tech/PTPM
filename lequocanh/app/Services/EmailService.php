@@ -26,7 +26,7 @@ class EmailService
             
             return $this->send($toEmail, $subject, $html);
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("EmailService::sendOrderConfirmation error: " . $e->getMessage());
             return false;
         }
@@ -52,7 +52,7 @@ class EmailService
             
             return $this->send($toEmail, $subject, $html);
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("EmailService::sendOrderStatusUpdate error: " . $e->getMessage());
             return false;
         }
@@ -248,7 +248,7 @@ class EmailService
             $mail->send();
             return true;
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("PHPMailer error: " . $e->getMessage());
             return false;
         }

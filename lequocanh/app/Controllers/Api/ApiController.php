@@ -39,10 +39,8 @@ class ApiController extends BaseController
     protected function input(?string $key = null, mixed $default = null): mixed
     {
         if ($key === null) {
-            $get = $_GET ?? [];
-            $post = $_POST ?? [];
             $json = $this->jsonBody ?? [];
-            return array_merge($get, $post, $json);
+            return array_merge($_GET, $_POST, $json);
         }
 
         // Check GET first, then POST, then JSON body
