@@ -19,9 +19,8 @@ if (!isset($_SESSION['USER'])) {
     exit();
 }
 
-$userId = $_SESSION['USER'];
-$wishlist = new Wishlist();
-$items = $wishlist->getByUser($userId);
+$userId = (int) $_SESSION['USER'];
+$items = Wishlist::getByUser($userId);
 ?>
 <!DOCTYPE html>
 <html lang="vi">

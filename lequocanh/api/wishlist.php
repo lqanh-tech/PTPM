@@ -22,8 +22,7 @@ if (!isset($_SESSION['USER'])) {
     exit();
 }
 
-$userId = $_SESSION['USER'];
-$wishlist = new Wishlist();
+$userId = (int) $_SESSION['USER'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 switch ($action) {
@@ -36,38 +35,38 @@ switch ($action) {
                 exit();
             }
         }
-        
+
         $productId = intval($_POST['product_id'] ?? $_GET['product_id'] ?? 0);
         if ($productId <= 0) {
             echo json_encode(['success' => false, 'message' => 'Product ID không hợp lệ']);
             exit();
         }
-        
-        $result = $wishlist->toggle($userId, $productId);
+
+        $result = Wishlist::toggle($userId, $productId);
         echo json_encode($result);
         break;
-        
+
     case 'list':
-        $items = $wishlist->getByUser($userId);
+        $items = Wishlist::getByUser($userId);
         echo json_encode(['success' => true, 'items' => $items]);
         break;
-        
+
     case 'count':
-        $count = $wishlist->count($userId);
+        $count = Wishlist::countForUser($userId);
         echo json_encode(['success' => true, 'count' => $count]);
         break;
-        
+
     case 'check':
         $productId = intval($_GET['product_id'] ?? 0);
         if ($productId <= 0) {
             echo json_encode(['success' => false, 'message' => 'Product ID không hợp lệ']);
             exit();
         }
-        
-        $isWishlisted = $wishlist->isWishlisted($userId, $productId);
+
+        $isWishlisted = Wishlist::isWishlisted($userId, $productId);
         echo json_encode(['success' => true, 'is_wishlisted' => $isWishlisted]);
         break;
-        
+
     default:
         echo json_encode(['success' => false, 'message' => 'Action không hợp lệ']);
         break;

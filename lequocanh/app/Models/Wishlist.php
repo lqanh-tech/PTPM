@@ -1,7 +1,4 @@
 <?php
-/**
- * Wishlist Model - Quản lý sản phẩm yêu thích
- */
 
 declare(strict_types=1);
 
@@ -9,110 +6,140 @@ namespace App\Models;
 
 use Database;
 use PDO;
-use Exception;
 
-class Wishlist
+/**
+ * Wishlist Model - Quản lý sản phẩm yêu thích
+ * Maps to 'wishlist' table.
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $product_id
+ * @property string $created_at
+ */
+class Wishlist extends BaseModel
 {
-    private PDO $db;
-    
-    public function __construct()
-    {
-        $this->db = Database::getInstance()->getConnection();
-    }
-    
+    protected static $table = 'wishlist';
+    protected static $primaryKey = 'id';
+    protected static $timestamps = true;
+
+    protected static $fillable = [
+        'user_id',
+        'product_id',
+    ];
+
     /**
-     * Thêm sản phẩm vào yêu thích
+     * Add product to wishlist (ignore if exists).
      */
-    public function add(string $userId, int $productId): bool
+    public static function addProduct(int $userId, int $productId): bool
     {
         try {
-            $sql = "INSERT IGNORE INTO wishlist (user_id, product_id) VALUES (?, ?)";
-            $stmt = $this->db->prepare($sql);
+            $existing = self::findItem($userId, $productId);
+            if ($existing) {
+                return true;
+            }
+
+            self::create([
+                'user_id' => $userId,
+                'product_id' => $productId,
+            ]);
+            return true;
+        } catch (\Exception $e) {
+            error_log("Wishlist::addProduct error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Remove product from wishlist.
+     */
+    public static function removeProduct(int $userId, int $productId): bool
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("DELETE FROM " . static::$table . " WHERE user_id = ? AND product_id = ?");
             return $stmt->execute([$userId, $productId]);
-        } catch (Exception $e) {
-            error_log("Wishlist::add error: " . $e->getMessage());
+        } catch (\Exception $e) {
+            error_log("Wishlist::removeProduct error: " . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
-     * Xóa sản phẩm khỏi yêu thích
+     * Check if product is in user's wishlist.
      */
-    public function remove(string $userId, int $productId): bool
+    public static function isWishlisted(int $userId, int $productId): bool
     {
-        try {
-            $sql = "DELETE FROM wishlist WHERE user_id = ? AND product_id = ?";
-            $stmt = $this->db->prepare($sql);
-            return $stmt->execute([$userId, $productId]);
-        } catch (Exception $e) {
-            error_log("Wishlist::remove error: " . $e->getMessage());
-            return false;
-        }
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT COUNT(*) FROM " . static::$table . " WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$userId, $productId]);
+        return (int) $stmt->fetchColumn() > 0;
     }
-    
+
     /**
-     * Kiểm tra sản phẩm có trong yêu thích không
+     * Find specific wishlist item.
      */
-    public function isWishlisted(string $userId, int $productId): bool
+    public static function findItem(int $userId, int $productId): ?self
     {
-        try {
-            $sql = "SELECT COUNT(*) FROM wishlist WHERE user_id = ? AND product_id = ?";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$userId, $productId]);
-            return (int)$stmt->fetchColumn() > 0;
-        } catch (Exception $e) {
-            error_log("Wishlist::isWishlisted error: " . $e->getMessage());
-            return false;
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM " . static::$table . " WHERE user_id = ? AND product_id = ? LIMIT 1");
+        $stmt->execute([$userId, $productId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            return null;
         }
+
+        $model = new static($row);
+        $model->exists = true;
+        return $model;
     }
-    
+
     /**
-     * Lấy danh sách yêu thích của user
+     * Get wishlist items with product details for a user.
      */
-    public function getByUser(string $userId): array
+    public static function getByUser(int $userId): array
     {
-        try {
-            $sql = "SELECT w.product_id, w.created_at, h.tenhanghoa, h.giathamkhao, h.giakhuyenmai, h.hinhanh
-                    FROM wishlist w
-                    JOIN hanghoa h ON w.product_id = h.idhanghoa
-                    WHERE w.user_id = ?
-                    ORDER BY w.created_at DESC";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$userId]);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (Exception $e) {
-            error_log("Wishlist::getByUser error: " . $e->getMessage());
-            return [];
-        }
+        $db = Database::getInstance()->getConnection();
+        $sql = "SELECT w.id, w.product_id, w.created_at, h.tenhanghoa, h.giathamkhao, h.giakhuyenmai, h.hinhanh
+                FROM " . static::$table . " w
+                JOIN hanghoa h ON w.product_id = h.idhanghoa
+                WHERE w.user_id = ?
+                ORDER BY w.created_at DESC";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
+
     /**
-     * Đếm số lượng yêu thích
+     * Count wishlist items for a user.
      */
-    public function count(string $userId): int
+    public static function countForUser(int $userId): int
     {
-        try {
-            $sql = "SELECT COUNT(*) FROM wishlist WHERE user_id = ?";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute([$userId]);
-            return (int)$stmt->fetchColumn();
-        } catch (Exception $e) {
-            error_log("Wishlist::count error: " . $e->getMessage());
-            return 0;
-        }
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT COUNT(*) FROM " . static::$table . " WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return (int) $stmt->fetchColumn();
     }
-    
+
     /**
-     * Toggle yêu thích (thêm nếu chưa có, xóa nếu đã có)
+     * Toggle product in wishlist (add if missing, remove if exists).
      */
-    public function toggle(string $userId, int $productId): array
+    public static function toggle(int $userId, int $productId): array
     {
-        if ($this->isWishlisted($userId, $productId)) {
-            $this->remove($userId, $productId);
-            return ['success' => true, 'action' => 'removed', 'message' => 'Đã xóa khỏi yêu thích'];
-        } else {
-            $this->add($userId, $productId);
-            return ['success' => true, 'action' => 'added', 'message' => 'Đã thêm vào yêu thích'];
+        if (self::isWishlisted($userId, $productId)) {
+            self::removeProduct($userId, $productId);
+            return ['success' => true, 'action' => 'removed', 'wishlisted' => false];
         }
+
+        self::addProduct($userId, $productId);
+        return ['success' => true, 'action' => 'added', 'wishlisted' => true];
+    }
+
+    /**
+     * Get the product for this wishlist item.
+     */
+    public function product(): ?Product
+    {
+        return Product::find((int) $this->product_id);
     }
 }
