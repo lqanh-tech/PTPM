@@ -221,7 +221,7 @@ class MoMoPayment
 
         try {
             $pdo = new mPDO();
-            $sql = "SELECT * FROM momo_transactions WHERE order_id = ?";
+            $sql = "SELECT id, order_id, amount, status, transaction_id, partner_code, created_at FROM momo_transactions WHERE order_id = ?";
             return $pdo->executeS($sql, [$orderId]);
         } catch (Exception $e) {
             error_log('Error getting transaction: ' . $e->getMessage());

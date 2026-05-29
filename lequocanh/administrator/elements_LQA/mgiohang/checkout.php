@@ -179,7 +179,7 @@ $paymentConfig = [
 
 if ($checkTableStmt->rowCount() > 0) {
 
-    $configSql = "SELECT * FROM cau_hinh_thanh_toan LIMIT 1";
+    $configSql = "SELECT id, ten_ngan_hang, so_tai_khoan, ten_tai_khoan, ngay_tao, ngay_cap_nhat FROM cau_hinh_thanh_toan LIMIT 1";
     $configStmt = $conn->prepare($configSql);
     $configStmt->execute();
 

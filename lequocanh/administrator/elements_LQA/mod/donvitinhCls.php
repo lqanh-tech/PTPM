@@ -21,7 +21,7 @@ class DonViTinh
 
     public function donvitinhGetAll()
     {
-        $sql = 'SELECT * FROM donvitinh';
+        $sql = 'SELECT idDonViTinh, tenDonViTinh, mota FROM donvitinh';
         $getAll = $this->db->prepare($sql);
         $getAll->setFetchMode(PDO::FETCH_OBJ);
 
@@ -89,7 +89,7 @@ class DonViTinh
 
     public function donvitinhGetbyId($idDonViTinh)
     {
-        $sql = 'SELECT * FROM donvitinh WHERE idDonViTinh = ?';
+        $sql = 'SELECT idDonViTinh, tenDonViTinh, mota FROM donvitinh WHERE idDonViTinh = ?';
         $data = array($idDonViTinh);
 
         $getOne = $this->db->prepare($sql);

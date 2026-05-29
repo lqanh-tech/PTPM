@@ -15,7 +15,7 @@ class WardModel
 
     public function getByDistrictId($districtId, $activeOnly = true)
     {
-        $sql = "SELECT * FROM wards WHERE district_id = ?";
+        $sql = "SELECT ward_code, district_id, ward_name, ward_type, is_active FROM wards WHERE district_id = ?";
         if ($activeOnly) {
             $sql .= " AND is_active = 1";
         }

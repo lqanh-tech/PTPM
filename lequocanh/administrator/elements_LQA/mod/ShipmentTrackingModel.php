@@ -40,7 +40,7 @@ class ShipmentTrackingModel
 
     public function getByOrderId($orderId)
     {
-        $sql = "SELECT * FROM shipment_tracking 
+        $sql = "SELECT id, order_id, tracking_number, carrier, status, location, event_time, created_at FROM shipment_tracking 
                 WHERE order_id = ? 
                 ORDER BY created_at DESC";
         $stmt = $this->conn->prepare($sql);
@@ -50,7 +50,7 @@ class ShipmentTrackingModel
 
     public function getLatestByOrderId($orderId)
     {
-        $sql = "SELECT * FROM shipment_tracking 
+        $sql = "SELECT id, order_id, tracking_number, carrier, status, location, event_time, created_at FROM shipment_tracking 
                 WHERE order_id = ? 
                 ORDER BY created_at DESC 
                 LIMIT 1";

@@ -49,7 +49,7 @@ class ShippingFeeModel
         $orderValue = $params['order_value'] ?? 0;
         $shippingMethodId = $params['shipping_method_id'] ?? null;
 
-        $sql = "SELECT * FROM shipping_fees 
+        $sql = "SELECT id, method_id, from_province_id, to_province_id, base_fee, per_km_fee, min_fee, max_fee, estimated_days, is_active FROM shipping_fees 
                 WHERE is_active = 1
                 AND (province_id IS NULL OR province_id = ?)
                 AND (district_id IS NULL OR district_id = ?)
@@ -196,7 +196,7 @@ class ShippingFeeModel
 
     public function getByLocation($provinceId, $districtId = null)
     {
-        $sql = "SELECT * FROM shipping_fees 
+        $sql = "SELECT id, method_id, from_province_id, to_province_id, base_fee, per_km_fee, min_fee, max_fee, estimated_days, is_active FROM shipping_fees 
                 WHERE is_active = 1
                 AND (province_id IS NULL OR province_id = ?)";
         

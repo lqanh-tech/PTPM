@@ -14,8 +14,8 @@ parameters:
         - lequocanh/cache/QueryCache.php
     ignoreErrors:
         # Legacy classes loaded via require (not autoload)
-        - '#on an unknown class (Database|SessionManager|GioHang|CacheManager|ConfigManager|hanghoa|ProductReview|CorsMiddleware|ValidationMiddleware)#'
-        - '#Instantiated class (CorsMiddleware|ValidationMiddleware|GioHang|hanghoa|ProductReview|Firebase\\JWT\\Key) not found.#'
+        - '#on an unknown class (Database|SessionManager|GioHang|CacheManager|ConfigManager)#'
+        - '#Instantiated class (CorsMiddleware|ValidationMiddleware|GioHang|Firebase\\JWT\\Key) not found.#'
         - '#Call to static method decode\(\) on an unknown class Firebase\\JWT\\JWT.#'
         - '#Comparison operation ">" between int<1, max> and 0 is always true.#'
         - '#Unsafe usage of new static\(\)#'

@@ -13,7 +13,7 @@ try {
     $conn = $db->getConnection();
     $username = $_SESSION['USER'];
     
-    $userSql = "SELECT * FROM user WHERE username = ?";
+    $userSql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username = ?";
     $userStmt = $conn->prepare($userSql);
     $userStmt->execute([$username]);
     $user = $userStmt->fetch(PDO::FETCH_ASSOC);
@@ -62,7 +62,7 @@ try {
     $totalOrders = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     $totalPages = ceil($totalOrders / $limit);
     
-    $ordersSql = "SELECT * FROM don_hang 
+    $ordersSql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang 
                   WHERE ma_nguoi_dung = ? 
                   ORDER BY ngay_tao DESC 
                   LIMIT ? OFFSET ?";

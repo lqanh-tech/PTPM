@@ -20,7 +20,7 @@ class loaihang
 
     public function LoaihangGetAll()
     {
-        $sql = 'SELECT * FROM loaihang';
+        $sql = 'SELECT idloaihang, tenloaihang, mota, hinhanh, noibat, created_at FROM loaihang';
         $getAll = $this->db->prepare($sql);
         $getAll->setFetchMode(PDO::FETCH_OBJ);
         $getAll->execute();
@@ -78,7 +78,7 @@ class loaihang
 
     public function LoaihangGetbyId($idloaihang)
     {
-        $sql = "SELECT * FROM loaihang WHERE idloaihang=?";
+        $sql = "SELECT idloaihang, tenloaihang, mota, hinhanh, noibat, created_at FROM loaihang WHERE idloaihang=?";
         $data = array($idloaihang);
         $getOne = $this->db->prepare($sql);
         $getOne->setFetchMode(PDO::FETCH_OBJ);

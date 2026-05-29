@@ -215,7 +215,7 @@ class Dongia
     {
         try {
 
-            $sql = "SELECT * FROM dongia WHERE idHangHoa = ? ORDER BY ngayApDung DESC LIMIT 1";
+            $sql = "SELECT id, idhanghoa, gia, ngayapdung, ghichu FROM dongia WHERE idHangHoa = ? ORDER BY ngayApDung DESC LIMIT 1";
             $data = array($idHangHoa);
 
             $getLatest = $this->db->prepare($sql);
@@ -243,7 +243,7 @@ class Dongia
     public function DongiaGetActiveByProduct($idHangHoa)
     {
         try {
-            $sql = "SELECT * FROM dongia WHERE idHangHoa = ? AND apDung = 1 LIMIT 1";
+            $sql = "SELECT id, idhanghoa, gia, ngayapdung, ghichu FROM dongia WHERE idHangHoa = ? AND apDung = 1 LIMIT 1";
             $data = array($idHangHoa);
 
             $getActive = $this->db->prepare($sql);

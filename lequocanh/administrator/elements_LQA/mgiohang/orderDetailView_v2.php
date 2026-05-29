@@ -25,11 +25,11 @@ $db = Database::getInstance();
 $conn = $db->getConnection();
 
 if (isset($_SESSION['ADMIN'])) {
-    $sql = "SELECT * FROM don_hang WHERE id = ?";
+    $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang WHERE id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$orderId]);
 } else {
-    $sql = "SELECT * FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
+    $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang WHERE id = ? AND ma_nguoi_dung = ?";
     $stmt = $conn->prepare($sql);
     $stmt->execute([$orderId, $username]);
 }

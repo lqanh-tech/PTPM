@@ -2,10 +2,11 @@
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/AutoFeaturedCls.php';
-require_once __DIR__ . '/../administrator/elements_LQA/mod/FeaturedProductsCls.php';
+require_once __DIR__ . '/../app/autoload.php';
+use AppModelsProduct;
 
 $autoFeatured = new AutoFeatured();
-$featuredMgr = new FeaturedProducts();
+
 
 echo "[" . date('Y-m-d H:i:s') . "] Bắt đầu cập nhật sản phẩm nổi bật...\n";
 

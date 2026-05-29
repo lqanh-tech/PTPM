@@ -81,7 +81,7 @@ class Wishlist extends BaseModel
     public static function findItem(int $userId, int $productId): ?self
     {
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("SELECT * FROM " . static::$table . " WHERE user_id = ? AND product_id = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id, user_id, product_id, created_at FROM " . static::$table . " WHERE user_id = ? AND product_id = ? LIMIT 1");
         $stmt->execute([$userId, $productId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 

@@ -90,7 +90,7 @@ class Coupon {
             return ['valid' => false, 'message' => 'Vui lòng nhập mã giảm giá', 'coupon' => null, 'discount' => 0];
         }
         
-        $stmt = $this->conn->prepare("SELECT * FROM coupons WHERE code = ?");
+        $stmt = $this->conn->prepare("SELECT id, code, discount_type, discount_value, min_order, max_uses, used_count, start_date, end_date, is_active, created_at FROM coupons WHERE code = ?");
         $stmt->execute([$code]);
         $coupon = $stmt->fetch(PDO::FETCH_OBJ);
         
@@ -202,7 +202,7 @@ class Coupon {
     }
     
     public function getAllCoupons($includeInactive = false) {
-        $sql = "SELECT * FROM coupons";
+        $sql = "SELECT id, code, discount_type, discount_value, min_order, max_uses, used_count, start_date, end_date, is_active, created_at FROM coupons";
         if (!$includeInactive) {
             $sql .= " WHERE is_active = 1";
         }
@@ -213,13 +213,13 @@ class Coupon {
     }
     
     public function getCouponById($id) {
-        $stmt = $this->conn->prepare("SELECT * FROM coupons WHERE id = ?");
+        $stmt = $this->conn->prepare("SELECT id, code, discount_type, discount_value, min_order, max_uses, used_count, start_date, end_date, is_active, created_at FROM coupons WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_OBJ);
     }
     
     public function getCouponByCode($code) {
-        $stmt = $this->conn->prepare("SELECT * FROM coupons WHERE code = ?");
+        $stmt = $this->conn->prepare("SELECT id, code, discount_type, discount_value, min_order, max_uses, used_count, start_date, end_date, is_active, created_at FROM coupons WHERE code = ?");
         $stmt->execute([strtoupper($code)]);
         return $stmt->fetch(PDO::FETCH_OBJ);
     }

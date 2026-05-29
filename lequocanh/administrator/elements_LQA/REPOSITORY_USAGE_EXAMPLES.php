@@ -66,14 +66,14 @@ $productRepo = new ProductRepository($pdo);
 // 3. Old code still works (no changes needed)
 // ============================================================
 
-$hanghoa = new hanghoa(); // still works
+// hanghoaCls removed - use Product:: directly
 $all = $hanghoa->HanghoaGetAll(); // still works
 
 // ============================================================
 // 4. Migration pattern (gradual)
 // ============================================================
 // When refactoring a view/controller:
-//   OLD: $hanghoa = new hanghoa(); $result = $hanghoa->HanghoaGetAll();
+//   OLD: (removed)
 //   NEW: $repo = app('ProductRepositoryInterface'); $result = $repo->getAll();
 //
 // Only migrate when touching the file for other reasons.

@@ -73,7 +73,7 @@ try {
     
     switch ($action) {
         case "get_addresses":
-            $stmt = $db->prepare("SELECT * FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, id DESC");
+            $stmt = $db->prepare("SELECT id, user_id, ho_ten, so_dien_thoai, dia_chi, phuong_xa, quan_huyen, tinh_thanh, is_default, created_at FROM user_addresses WHERE user_id = ? ORDER BY is_default DESC, id DESC");
             $stmt->execute([$userId]);
             $addresses = $stmt->fetchAll(PDO::FETCH_ASSOC);
             

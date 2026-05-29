@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Order;
 use App\Models\Cart;
 use App\Services\CategoryService;
+use App\Services\JwtService;
 use App\Services\OrderService;
 use App\Services\UserRateLimiter;
 use App\Helpers\ApiDocumentation;
@@ -82,6 +83,43 @@ class ApiController extends BaseController
     }
 
     /**
+     * Set RFC 5988 Link header for pagination.
+     *
+     * @param string $basePath Base URL path (e.g., '/api/v1/products')
+     * @param int $currentPage Current page number
+     * @param int $lastPage Last page number
+     * @param int $perPage Items per page
+     */
+    protected function setPaginationHeaders(string $basePath, int $currentPage, int $lastPage, int $perPage): void
+    {
+        $links = [];
+
+        // First page
+        if ($currentPage > 1) {
+            $links[] = "<{$basePath}?page=1&per_page={$perPage}>; rel=\"first\"";
+        }
+
+        // Previous page
+        if ($currentPage > 1) {
+            $links[] = "<{$basePath}?page=" . ($currentPage - 1) . "&per_page={$perPage}>; rel=\"prev\"";
+        }
+
+        // Next page
+        if ($currentPage < $lastPage) {
+            $links[] = "<{$basePath}?page=" . ($currentPage + 1) . "&per_page={$perPage}>; rel=\"next\"";
+        }
+
+        // Last page
+        if ($currentPage < $lastPage) {
+            $links[] = "<{$basePath}?page={$lastPage}&per_page={$perPage}>; rel=\"last\"";
+        }
+
+        if (!empty($links)) {
+            header('Link: ' . implode(', ', $links));
+        }
+    }
+
+    /**
      * GET /api/products
      * List products with pagination and filters.
      */
@@ -122,6 +160,14 @@ class ApiController extends BaseController
                     'created_at' => $product->created_at,
                 ];
             }, $result['data']);
+
+            // Set pagination Link header (RFC 5988)
+            $this->setPaginationHeaders(
+                '/api/v1/products',
+                (int) $result['current_page'],
+                (int) $result['last_page'],
+                (int) $result['per_page']
+            );
 
             $this->json([
                 'success' => true,
@@ -645,6 +691,17 @@ class ApiController extends BaseController
 
             $_SESSION['USER'] = $user['username'];
 
+            // Generate JWT tokens
+            $jwt = new JwtService();
+            $tokenPayload = [
+                'sub' => (int) $user['iduser'],
+                'username' => $user['username'],
+                'name' => $user['hoten'],
+            ];
+
+            $accessToken = $jwt->encode($tokenPayload, 3600); // 1 hour
+            $refreshToken = $jwt->encodeRefresh($tokenPayload, 604800); // 7 days
+
             $this->json([
                 'success' => true,
                 'data' => [
@@ -652,6 +709,10 @@ class ApiController extends BaseController
                     'username' => $user['username'],
                     'name' => $user['hoten'],
                     'email' => $user['email'],
+                    'access_token' => $accessToken,
+                    'refresh_token' => $refreshToken,
+                    'token_type' => 'Bearer',
+                    'expires_in' => 3600,
                 ],
             ]);
         } catch (\Exception $e) {
@@ -759,31 +820,99 @@ class ApiController extends BaseController
      */
     public function me(): void
     {
-        if (!$this->isAuthenticated()) {
+        $user = $this->getAuthUser();
+        if (!$user) {
             $this->json(['success' => false, 'message' => 'Not authenticated'], 401);
         }
 
+        $this->json([
+            'success' => true,
+            'data' => $user,
+        ]);
+    }
+
+    /**
+     * GET /api/v1/auth/refresh
+     * Refresh JWT access token.
+     */
+    public function refreshToken(): void
+    {
+        $token = JwtService::extractFromHeader();
+        if (!$token) {
+            $this->json(['success' => false, 'message' => 'Refresh token required'], 400);
+        }
+
         try {
-            $user = \App\Services\UserService::getInstance()->getUserByUsername((string) $this->getUser());
-            if (!$user) {
-                $this->json(['success' => false, 'message' => 'User not found'], 404);
+            $jwt = new JwtService();
+            $payload = $jwt->decode($token);
+
+            if (($payload['type'] ?? '') !== 'refresh') {
+                $this->json(['success' => false, 'message' => 'Invalid token type'], 400);
             }
+
+            $newToken = $jwt->encode([
+                'sub' => $payload['sub'],
+                'username' => $payload['username'],
+                'name' => $payload['name'] ?? '',
+            ], 3600);
 
             $this->json([
                 'success' => true,
                 'data' => [
+                    'access_token' => $newToken,
+                    'token_type' => 'Bearer',
+                    'expires_in' => 3600,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            $this->json(['success' => false, 'message' => 'Invalid or expired refresh token'], 401);
+        }
+    }
+
+    /**
+     * Get authenticated user from session or JWT token.
+     */
+    private function getAuthUser(): ?array
+    {
+        // Try session first
+        if ($this->isAuthenticated()) {
+            $user = \App\Services\UserService::getInstance()->getUserByUsername((string) $this->getUser());
+            if ($user) {
+                return [
                     'id' => $user->iduser,
                     'username' => $user->username,
                     'name' => $user->hoten,
                     'email' => $user->email,
                     'phone' => $user->dienthoai,
                     'address' => $user->diachi,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            error_log("ApiController::me error: " . $e->getMessage());
-            $this->json(['success' => false, 'message' => 'Internal server error'], 500);
+                ];
+            }
         }
+
+        // Try JWT token
+        $token = JwtService::extractFromHeader();
+        if ($token) {
+            try {
+                $jwt = new JwtService();
+                $payload = $jwt->decode($token);
+
+                $user = \App\Services\UserService::getInstance()->getUserById((int) $payload['sub']);
+                if ($user) {
+                    return [
+                        'id' => $user->iduser,
+                        'username' => $user->username,
+                        'name' => $user->hoten,
+                        'email' => $user->email,
+                        'phone' => $user->dienthoai,
+                        'address' => $user->diachi,
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Token invalid, fall through
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -1,7 +1,8 @@
 <?php
 
 require_once __DIR__ . '/elements_LQA/mod/database.php';
-require_once __DIR__ . '/elements_LQA/mod/FeaturedProductsCls.php';
+require_once __DIR__ . '/../app/autoload.php';
+use AppModelsProduct;
 require_once __DIR__ . '/elements_LQA/mod/sessionManager.php';
 
 SessionManager::start();
@@ -12,7 +13,7 @@ if (!isset($_SESSION['USER']) && !isset($_SESSION['ADMIN'])) {
 }
 
 $db = Database::getInstance()->getConnection();
-$featuredMgr = new FeaturedProducts();
+
 
 $message = '';
 $messageType = 'success';

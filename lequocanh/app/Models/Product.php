@@ -111,7 +111,7 @@ class Product extends BaseModel
     public static function getAllWithPricing(): array
     {
         $db = self::db();
-        $sql = 'SELECT h.*,
+        $sql = 'SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                 t.tenTH AS ten_thuonghieu,
                 d.tenDonViTinh AS ten_donvitinh,
                 n.tenNV AS ten_nhanvien,
@@ -147,7 +147,7 @@ class Product extends BaseModel
      */
     public static function getAllWithRelations(): array
     {
-        $sql = 'SELECT h.*,
+        $sql = 'SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                 t.tenTH AS ten_thuonghieu,
                 d.tenDonViTinh AS ten_donvitinh,
                 n.tenNV AS ten_nhanvien,
@@ -253,7 +253,7 @@ class Product extends BaseModel
             $db = self::db();
             $searchTerm = '%' . $keyword . '%';
 
-            $sql = "SELECT DISTINCT h.*,
+            $sql = "SELECT DISTINCT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                     CASE
                         WHEN LOWER(h.tenhanghoa) LIKE LOWER(:exact_keyword) THEN 1
                         WHEN LOWER(h.tenhanghoa) LIKE LOWER(:search_term) THEN 2
@@ -354,7 +354,7 @@ class Product extends BaseModel
                 $reviewCountSelect = '0 as review_count';
             }
 
-            $sql = "SELECT DISTINCT h.*,\n                    $ratingSelect,\n                    $reviewCountSelect\n                    FROM hanghoa h";
+            $sql = "SELECT DISTINCT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,\n                    $ratingSelect,\n                    $reviewCountSelect\n                    FROM hanghoa h";
 
             $joins = [];
             $statusCondition = self::buildStatusCondition('h');
@@ -529,7 +529,7 @@ class Product extends BaseModel
             }
 
             if (!empty($current->idloaihang)) {
-                $sql = "SELECT h.* FROM hanghoa h
+                $sql = "SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai FROM hanghoa h
                         WHERE h.idhanghoa != ?
                         AND h.idloaihang = ?
                         AND (h.trang_thai IS NULL OR h.trang_thai != 2)
@@ -539,7 +539,7 @@ class Product extends BaseModel
                         LIMIT " . intval($limit);
                 $params = [$idhanghoa, $current->idloaihang];
             } else {
-                $sql = "SELECT h.* FROM hanghoa h
+                $sql = "SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai FROM hanghoa h
                         WHERE h.idhanghoa != ?
                         AND h.trang_thai != 2
                         ORDER BY
@@ -964,7 +964,7 @@ class Product extends BaseModel
 
     public static function getFeaturedProducts(int $limit = 8): array
     {
-        $sql = "SELECT h.*,
+        $sql = "SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                 t.tenTH AS ten_thuonghieu,
                 d.tenDonViTinh AS ten_donvitinh,
                 CASE
@@ -995,7 +995,7 @@ class Product extends BaseModel
 
     public static function getNewProducts(int $limit = 8): array
     {
-        $sql = "SELECT h.*,
+        $sql = "SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                 t.tenTH AS ten_thuonghieu,
                 d.tenDonViTinh AS ten_donvitinh,
                 CASE
@@ -1026,7 +1026,7 @@ class Product extends BaseModel
 
     public static function getSaleProducts(int $limit = 8): array
     {
-        $sql = "SELECT h.*,
+        $sql = "SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                 t.tenTH AS ten_thuonghieu,
                 d.tenDonViTinh AS ten_donvitinh,
                 h.sale_price as gia_hien_tai,
@@ -1050,7 +1050,7 @@ class Product extends BaseModel
 
     public static function getMostViewedProducts(int $limit = 8): array
     {
-        $sql = "SELECT h.*,
+        $sql = "SELECT h.idhanghoa, h.mahanghoa, h.tenhanghoa, h.mota, h.giathamkhao, h.giakhuyenmai, h.hinhanh, h.ghichu, h.idloaihang, h.idNhanVien, h.idThuongHieu, h.idDonViTinh, h.is_featured, h.is_new, h.is_sale, h.sale_price, h.sale_percent, h.view_count, h.created_at, h.trang_thai,
                 t.tenTH AS ten_thuonghieu,
                 d.tenDonViTinh AS ten_donvitinh,
                 CASE
@@ -1073,7 +1073,79 @@ class Product extends BaseModel
     }
 
     // ═══════════════════════════════════════════
-    //  INSTANCE METHODS (for ProductController compatibility)
+
+    // ═══════════════════════════════════════════
+    
+    // ═══════════════════════════════════════════
+    
+    // ═══════════════════════════════════════════
+    
+    // ═══════════════════════════════════════════
+    //  FEATURED/NEW/SALE MANAGEMENT (replaces FeaturedProducts class)
+    // ═══════════════════════════════════════════
+
+    public static function setFeatured(int $idhanghoa, int $is_featured = 1): bool
+    {
+        try {
+            $db = self::db();
+            $stmt = $db->prepare("UPDATE hanghoa SET is_featured = ? WHERE idhanghoa = ?");
+            return $stmt->execute([$is_featured, $idhanghoa]);
+        } catch (\PDOException $e) {
+            error_log("Product::setFeatured error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function setNew(int $idhanghoa, int $is_new = 1): bool
+    {
+        try {
+            $db = self::db();
+            $stmt = $db->prepare("UPDATE hanghoa SET is_new = ? WHERE idhanghoa = ?");
+            return $stmt->execute([$is_new, $idhanghoa]);
+        } catch (\PDOException $e) {
+            error_log("Product::setNew error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function setSale(int $idhanghoa, float $sale_price, ?string $sale_end_date = null): bool
+    {
+        try {
+            $db = self::db();
+            $stmt = $db->prepare("UPDATE hanghoa SET is_sale = 1, sale_price = ?, sale_start_date = NOW(), sale_end_date = ? WHERE idhanghoa = ?");
+            return $stmt->execute([$sale_price, $sale_end_date, $idhanghoa]);
+        } catch (\PDOException $e) {
+            error_log("Product::setSale error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function removeSale(int $idhanghoa): bool
+    {
+        try {
+            $db = self::db();
+            $stmt = $db->prepare("UPDATE hanghoa SET is_sale = 0, sale_price = NULL, sale_start_date = NULL, sale_end_date = NULL WHERE idhanghoa = ?");
+            return $stmt->execute([$idhanghoa]);
+        } catch (\PDOException $e) {
+            error_log("Product::removeSale error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function incrementViewCount(int $idhanghoa): bool
+    {
+        try {
+            $db = self::db();
+            $stmt = $db->prepare("UPDATE hanghoa SET view_count = view_count + 1 WHERE idhanghoa = ?");
+            return $stmt->execute([$idhanghoa]);
+        } catch (\PDOException $e) {
+            error_log("Product::incrementViewCount error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════
+//  INSTANCE METHODS (for ProductController compatibility)
     // ═══════════════════════════════════════════
 
     public function getImageUrl(): string

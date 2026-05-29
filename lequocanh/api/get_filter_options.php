@@ -4,17 +4,18 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
-require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/../app/autoload.php';
+use AppModelsProduct;
 
 $security = ApiSecurityMiddleware::getInstance();
 $security->handle('get_filter_options');
 
 try {
-    $hanghoa = new hanghoa();
+    
     
     $reqView = isset($_GET['reqView']) ? (int)$_GET['reqView'] : null;
     
-    $options = $hanghoa->getFilterOptions($reqView);
+    $options = Product::getFilterOptions($reqView);
     
     echo json_encode([
         'success' => true,

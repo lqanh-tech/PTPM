@@ -12,7 +12,7 @@ class MTonKho
 
     public function getTonKhoByIdHangHoa($idhanghoa)
     {
-        $sql = "SELECT * FROM tonkho WHERE idhanghoa = ?";
+        $sql = "SELECT id, idhanghoa, soLuong, soLuongToiThieu, viTri FROM tonkho WHERE idhanghoa = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->setFetchMode(PDO::FETCH_OBJ);
         $stmt->execute([$idhanghoa]);
@@ -226,7 +226,7 @@ class MTonKho
     public function getTonKhoById($idTonKho)
     {
         try {
-            $sql = "SELECT * FROM tonkho WHERE idTonKho = ?";
+            $sql = "SELECT id, idhanghoa, soLuong, soLuongToiThieu, viTri FROM tonkho WHERE idTonKho = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->setFetchMode(PDO::FETCH_OBJ);
             $stmt->execute([$idTonKho]);

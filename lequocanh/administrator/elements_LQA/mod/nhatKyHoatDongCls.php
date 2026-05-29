@@ -242,7 +242,7 @@ class NhatKyHoatDong
                 return false;
             }
 
-            $sql = "SELECT * FROM nhat_ky_hoat_dong WHERE id = ?";
+            $sql = "SELECT id, user_id, action, details, ip_address, created_at FROM nhat_ky_hoat_dong WHERE id = ?";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$id]);

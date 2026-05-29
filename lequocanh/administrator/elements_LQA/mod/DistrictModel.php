@@ -30,7 +30,7 @@ class DistrictModel
 
     public function getByProvinceId($provinceId, $activeOnly = true)
     {
-        $sql = "SELECT * FROM districts WHERE province_id = ?";
+        $sql = "SELECT district_id, province_id, district_name, district_type, is_active FROM districts WHERE province_id = ?";
         if ($activeOnly) {
             $sql .= " AND is_active = 1";
         }

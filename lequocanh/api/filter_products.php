@@ -4,13 +4,14 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/middleware/ApiSecurityMiddleware.php';
 require_once __DIR__ . '/../administrator/elements_LQA/mod/database.php';
-require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/../app/autoload.php';
+use AppModelsProduct;
 
 $security = ApiSecurityMiddleware::getInstance();
 $security->handle('filter_products');
 
 try {
-    $hanghoa = new hanghoa();
+    
     
     $minPrice = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
     $maxPrice = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 100000000;
@@ -28,7 +29,7 @@ try {
         'min_rating' => $minRating
     ];
     
-    $products = $hanghoa->filterProducts($filters);
+    $products = Product::filterProducts($filters);
     $debugMode = isset($_GET['debug']);
     
     $productsArray = [];
@@ -60,7 +61,7 @@ try {
     ];
 
     if ($debugMode) {
-        $response['debug'] = $hanghoa->getLastFilterDebug();
+        $response['debug'] = [] // getLastFilterDebug removed();
     }
 
     echo json_encode($response, JSON_UNESCAPED_UNICODE);

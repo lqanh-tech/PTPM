@@ -127,7 +127,7 @@ class ProductsAPI {
                 return Response::error('Product not found', 404);
             }
             
-            $imagesSql = "SELECT * FROM hinhanh WHERE idhanghoa = ?";
+            $imagesSql = "SELECT id, ten_file, loai_file, duong_dan, du_lieu, trang_thai, ngay_tao, file_hash FROM hinhanh WHERE idhanghoa = ?";
             $images = $this->optimizer->executeQuery($imagesSql, [$id], true);
             
             $product[0]['images'] = $images;

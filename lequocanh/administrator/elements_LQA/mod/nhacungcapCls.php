@@ -12,7 +12,7 @@ class nhacungcap
 
     public function NhacungcapGetAll()
     {
-        $sql = 'SELECT * FROM nhacungcap ORDER BY idNCC DESC';
+        $sql = 'SELECT idNhaCungCap, tenNhaCungCap, diachi, sodienthoai, email FROM nhacungcap ORDER BY idNCC DESC';
         $getAll = $this->db->prepare($sql);
         $getAll->setFetchMode(PDO::FETCH_OBJ);
         $getAll->execute();
@@ -58,7 +58,7 @@ class nhacungcap
 
     public function NhacungcapGetbyId($idNCC)
     {
-        $sql = "SELECT * FROM nhacungcap WHERE idNCC = ?";
+        $sql = "SELECT idNhaCungCap, tenNhaCungCap, diachi, sodienthoai, email FROM nhacungcap WHERE idNCC = ?";
         $data = array($idNCC);
         $getOne = $this->db->prepare($sql);
         $getOne->setFetchMode(PDO::FETCH_OBJ);
@@ -68,7 +68,7 @@ class nhacungcap
 
     public function NhacungcapSearch($keyword)
     {
-        $sql = "SELECT * FROM nhacungcap 
+        $sql = "SELECT idNhaCungCap, tenNhaCungCap, diachi, sodienthoai, email FROM nhacungcap 
                 WHERE tenNCC LIKE ? OR nguoiLienHe LIKE ? OR soDienThoai LIKE ? OR email LIKE ? 
                 ORDER BY idNCC DESC";
         $data = array("%$keyword%", "%$keyword%", "%$keyword%", "%$keyword%");

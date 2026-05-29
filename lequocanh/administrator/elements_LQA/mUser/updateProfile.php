@@ -42,7 +42,7 @@ try {
 }
 
 try {
-    $sql = "SELECT * FROM user WHERE username = ?";
+    $sql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username = ?";
     $stmt = $db->prepare($sql);
     $stmt->execute([$username]);
     $currentUser = $stmt->fetch(PDO::FETCH_OBJ);
@@ -115,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
-                $stmt = $db->prepare("SELECT * FROM user WHERE iduser = ?");
+                $stmt = $db->prepare("SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE iduser = ?");
                 $stmt->execute([$currentUser->iduser]);
                 $currentUser = $stmt->fetch(PDO::FETCH_OBJ);
 

@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../mod/thuoctinhhhCls.php';
 require_once __DIR__ . '/../mod/thuoctinhCls.php';
-require_once __DIR__ . '/../mod/hanghoaCls.php';
+// hanghoaCls removed - not used
 require_once __DIR__ . '/../mod/csrfProtection.php';
 
 $debug = [];

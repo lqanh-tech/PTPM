@@ -21,7 +21,9 @@
     "scripts": {
         "analyse": "phpstan analyse lequocanh/app lequocanh/includes lequocanh/api --level=4 --memory-limit=256M",
         "cs-check": "phpcs lequocanh/app --standard=PSR12 --ignore=*/vendor/*",
-        "cs-fix": "phpcbf lequocanh/app --standard=PSR12 --ignore=*/vendor/*"
+        "cs-fix": "phpcbf lequocanh/app --standard=PSR12 --ignore=*/vendor/*",
+        "test": "phpunit --configuration phpunit.xml",
+        "test-coverage": "phpunit --configuration phpunit.xml --coverage-clover=coverage.xml"
     },
     "config": {
         "audit": {

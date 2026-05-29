@@ -294,7 +294,7 @@ if ($requestAction) {
             Logger::info("Login attempt", ['username' => $username]);
 
             $db = Database::getInstance()->getConnection();
-            $sql = "SELECT * FROM user WHERE username = ?";
+            $sql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username = ?";
             $stmt = $db->prepare($sql);
             $stmt->execute([$username]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);

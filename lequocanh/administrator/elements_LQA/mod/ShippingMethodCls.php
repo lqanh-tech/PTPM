@@ -129,7 +129,7 @@ class ShippingMethod
     public function getActiveMethods()
     {
         try {
-            $sql = "SELECT * FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order ASC";
+            $sql = "SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order ASC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -142,7 +142,7 @@ class ShippingMethod
     public function getMethodByCode($code)
     {
         try {
-            $sql = "SELECT * FROM shipping_methods WHERE code = ? AND is_active = 1";
+            $sql = "SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods WHERE code = ? AND is_active = 1";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$code]);
             $method = $stmt->fetch(PDO::FETCH_ASSOC);

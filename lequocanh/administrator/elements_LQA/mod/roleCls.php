@@ -100,7 +100,7 @@ class Role
     public function getAllRoles()
     {
         try {
-            $sql = "SELECT * FROM vai_tro ORDER BY ten_vai_tro";
+            $sql = "SELECT id, ten_vai_tro, mo_ta, trang_thai FROM vai_tro ORDER BY ten_vai_tro";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -113,7 +113,7 @@ class Role
     public function getRoleById($id)
     {
         try {
-            $sql = "SELECT * FROM vai_tro WHERE id = ? LIMIT 1";
+            $sql = "SELECT id, ten_vai_tro, mo_ta, trang_thai FROM vai_tro WHERE id = ? LIMIT 1";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_OBJ);
@@ -126,7 +126,7 @@ class Role
     public function getRoleByName($roleName)
     {
         try {
-            $sql = "SELECT * FROM vai_tro WHERE ten_vai_tro = ? LIMIT 1";
+            $sql = "SELECT id, ten_vai_tro, mo_ta, trang_thai FROM vai_tro WHERE ten_vai_tro = ? LIMIT 1";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$roleName]);
             return $stmt->fetch(PDO::FETCH_OBJ);

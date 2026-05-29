@@ -12,6 +12,18 @@ abstract class BaseModel {
     protected $exists = false;
     
     private static $optimizer;
+    private static $columnCache = [];
+    
+    protected static function getColumnList(): string {
+        $table = static::getTable();
+        if (!isset(self::$columnCache[$table])) {
+            $db = DatabaseOptimizer::getInstance()->getConnection();
+            $stmt = $db->prepare('SHOW COLUMNS FROM ' . $table);
+            $stmt->execute();
+            self::$columnCache[$table] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        }
+        return implode(', ', self::$columnCache[$table]);
+    }
     
     public function __construct($attributes = []) {
         if (self::$optimizer === null) {
@@ -23,7 +35,7 @@ abstract class BaseModel {
     }
     
     public static function all() {
-        $sql = "SELECT * FROM " . static::getTable();
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable();
         $results = self::$optimizer->executeQuery($sql, [], true);
         
         return array_map(function($row) {
@@ -32,7 +44,7 @@ abstract class BaseModel {
     }
     
     public static function find($id) {
-        $sql = "SELECT * FROM " . static::getTable() . " WHERE " . static::getPrimaryKey() . " = ? LIMIT 1";
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable() . " WHERE " . static::getPrimaryKey() . " = ? LIMIT 1";
         $results = self::$optimizer->executeQuery($sql, [$id], true);
         
         if (empty($results)) {
@@ -292,7 +304,7 @@ class QueryBuilder {
     
     private function buildQuery() {
         $table = $this->model::getTable();
-        $sql = "SELECT * FROM $table";
+        $sql = "SELECT " . $this->model::getColumnList() . " FROM $table";
         
         if (!empty($this->wheres)) {
             $sql .= " WHERE " . $this->buildWhereClause();

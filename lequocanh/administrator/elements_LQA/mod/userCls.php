@@ -31,7 +31,7 @@ if (!class_exists('user')) {
 
             error_log("UserCheckLogin - Username: '$username', Password length: " . strlen($password));
 
-            $sql = 'SELECT * FROM user WHERE username = ?';
+            $sql = 'SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username = ?';
             $data = array($username);
 
             $select = $this->db->prepare($sql);
@@ -93,7 +93,7 @@ if (!class_exists('user')) {
             } else {
                 error_log("UserCheckLogin - Không tìm thấy user với username: '$username'");
 
-                $sql_like = "SELECT * FROM user WHERE username LIKE ?";
+                $sql_like = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username LIKE ?";
                 $stmt_like = $this->db->prepare($sql_like);
                 $stmt_like->execute(array('%' . $username . '%'));
                 $similar_users = $stmt_like->fetchAll(PDO::FETCH_OBJ);
@@ -229,7 +229,7 @@ if (!class_exists('user')) {
         public function UserChangePassword($iduser, $passwordold, $passwordnew)
         {
 
-            $sql = 'SELECT * FROM user WHERE iduser = ?';
+            $sql = 'SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE iduser = ?';
             $data = array($iduser);
 
             $select = $this->db->prepare($sql);
@@ -268,7 +268,7 @@ if (!class_exists('user')) {
         }
         public function UserGetAllExceptAdmin()
         {
-            $sql = "SELECT * FROM user WHERE username != 'admin'";
+            $sql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username != 'admin'";
 
             $getAll = $this->db->prepare($sql);
             $getAll->setFetchMode(PDO::FETCH_OBJ);
@@ -279,7 +279,7 @@ if (!class_exists('user')) {
 
         public function UserGetbyUsername($username)
         {
-            $sql = 'SELECT * FROM user WHERE username = ?';
+            $sql = 'SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username = ?';
             $data = array($username);
 
             $getOne = $this->db->prepare($sql);

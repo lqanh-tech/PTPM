@@ -13,7 +13,7 @@ if (isset($_GET['id'])) {
     $editMode = true;
     $idhanghoa = intval($_GET['id']);
     
-    $stmt = $db->prepare("SELECT * FROM hanghoa WHERE idhanghoa = ?");
+    $stmt = $db->prepare("SELECT idhanghoa, mahanghoa, tenhanghoa, mota, giathamkhao, giakhuyenmai, hinhanh, ghichu, idloaihang, idNhanVien, idThuongHieu, idDonViTinh, is_featured, is_new, is_sale, sale_price, sale_percent, sale_end_date, view_count, created_at, trang_thai, trangthai, noibat FROM hanghoa WHERE idhanghoa = ?");
     $stmt->execute([$idhanghoa]);
     $product = $stmt->fetch(PDO::FETCH_OBJ);
     

@@ -15,7 +15,7 @@ class ShippingMethodModel
 
     public function getAll($activeOnly = true)
     {
-        $sql = "SELECT * FROM shipping_methods";
+        $sql = "SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods";
         if ($activeOnly) {
             $sql .= " WHERE is_active = 1";
         }
@@ -28,7 +28,7 @@ class ShippingMethodModel
 
     public function getById($id)
     {
-        $sql = "SELECT * FROM shipping_methods WHERE id = ?";
+        $sql = "SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_OBJ);
@@ -36,7 +36,7 @@ class ShippingMethodModel
 
     public function getByCode($code)
     {
-        $sql = "SELECT * FROM shipping_methods WHERE code = ?";
+        $sql = "SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods WHERE code = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$code]);
         return $stmt->fetch(PDO::FETCH_OBJ);

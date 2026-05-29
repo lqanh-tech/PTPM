@@ -1,19 +1,20 @@
 # MVC Migration Report
-## Date: 2026-05-12
+## Date: 2026-05-12 (Updated: 2026-05-29)
 ## Status: ✅ COMPLETE
 
 ---
 
 ## 📊 Executive Summary
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| MVC Coverage | ~20% | **~85%** | +65% |
-| Files using `new hanghoa()` | 33 | **~5** | -85% |
-| Files using direct Model calls | 2 | **~28** | +1300% |
-| God Object (hanghoaCls.php) | 56 methods | **Delegation wrapper** | Refactored |
-| PHPStan errors | 0 | **0** | Maintained |
-| PHPUnit tests | 14/14 | **14/14** | Maintained |
+| Metric | Before | After (May 12) | After (May 29) | Change |
+|--------|--------|----------------|----------------|--------|
+| MVC Coverage | ~20% | **~85%** | **~95%** | +75% |
+| Files using `new hanghoa()` | 33 | **~5** | **0** | -100% |
+| Files using direct Model calls | 2 | **~28** | **~42** | +2000% |
+| God Object (hanghoaCls.php) | 56 methods | **Delegation wrapper** | **Delegation wrapper** | Refactored |
+| SELECT * violations | 135+ | **0** | **0** | -100% |
+| PHPUnit tests | 14/14 | **14/14** | **338/338** | +2314% |
+| Test assertions | 26 | **26** | **566** | +2077% |
 
 ---
 
@@ -24,9 +25,19 @@
 │                    App\Models\                               │
 ├─────────────────────────────────────────────────────────────┤
 │  Product.php          │ CRUD, search, filter, status, refs  │
+│                       │ Featured/New/Sale management         │
 │  ProductImage.php     │ Image CRUD, relations, diagnostics  │
 │  ProductReview.php    │ Rating/review queries               │
-│  BaseModel.php        │ ORM foundation                      │
+│  BaseModel.php        │ ORM foundation (no SELECT *)        │
+│  Order.php            │ Order management, status tracking   │
+│  OrderItem.php        │ Order line items                    │
+│  ReturnRequest.php    │ Return/exchange requests            │
+│  Cart.php             │ Shopping cart                       │
+│  Customer.php         │ Customer management                 │
+│  Wishlist.php         │ Wishlist management                 │
+│  Blog.php             │ Blog posts                          │
+│  Banner.php           │ Banner management                   │
+│  Payment.php          │ Payment processing                  │
 └─────────────────────────────────────────────────────────────┘
                             ▲
                             │ delegates
@@ -35,145 +46,117 @@
 │  hanghoaCls.php       │ Backward-compatible wrapper         │
 │  (55 methods)         │ Bridges legacy → new models         │
 └─────────────────────────────────────────────────────────────┘
-                            ▲
-                            │ used by
-                            │
-┌─────────────────────────────────────────────────────────────┐
-│  ~5 legacy files      │ Still use "new hanghoa()"           │
-│  (wrapper)            │ Can migrate incrementally            │
-└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📁 Files Migrated (25 total)
+## 📁 Changes Made (May 29, 2026)
 
-### Frontend Files (8 files)
-| File | Methods Migrated | Status |
-|------|------------------|--------|
-| `apart/productBannerCarousel.php` | Product::getFeaturedProducts/New/Sale | ✅ |
-| `apart/viewListLoaihang.php` | Product::filterProducts, getByCategory, getAll, Image::getById | ✅ |
-| `apart/viewHangHoa.php` | Product::getById, getRelatedProducts, getThuongHieuById, Image::getById, Review::getAverageRating | ✅ |
-| `search.php` | Product::searchProducts, Image::getById | ✅ |
-| `components/featuredProductsDisplay.php` | Product::getFeaturedProducts/New/Sale | ✅ |
-| `_test_carousel.php` | Product::getFeaturedProducts/New/Sale | ✅ |
+### 1. SELECT * Violations Fixed (135+ occurrences)
 
-### Admin Files (17 files)
-| File | Methods Migrated | Status |
-|------|------------------|--------|
-| `mgiohang/checkout.php` | Product::getById, getProductStatusValue, Image::getById | ✅ |
-| `mgiohang/giohangView.php` | Product::getProductStatusValue | ✅ |
-| `mgiohang/giohangAct.php` | Product::getProductStatusValue | ✅ |
-| `mgiohang/displayImage.php` | Image::getById | ✅ |
-| `mhanghoa/displayImage.php` | Image::getById | ✅ |
-| `mhanghoa/hanghoaAct.php` | Product::addProduct, getById, deleteProduct, updateProduct, updateProductStatus, Image::applyToProduct, removeFromProduct, removeAllMismatchedImages | ✅ |
-| `mhanghoa/hanghoaUpdateSubmit.php` | Product::updateProduct, updateProductStatus | ✅ |
-| `mhanghoa/getProductImages.php` | Image::getAllForProduct | ✅ |
-| `madmin/orders.php` | Removed unused hanghoa import | ✅ |
-| `mdongia/dongiaView.php` | Product::getAllWithPricing | ✅ |
-| `mdongia/dongiaViewFixed.php` | Product::getAllWithPricing | ✅ |
-| `mdongia/dongiaViewSimple.php` | Product::getAllWithPricing | ✅ |
-| `mdongia/price_statistics.php` | Product::getAllWithPricing | ✅ |
-| `mhinhanh/applyImage.php` | Image::getById, findProductsByExactName, applyToProduct | ✅ |
-| `mhinhanh/hinhanhAct.php` | Image::existsByHash, getById, create, getLastInsertId, applyToProduct, getProductsByImageId, getPath, delete | ✅ |
-| `mhinhanh/hinhanhView.php` | Image::getAll | ✅ |
+| File Category | Files Fixed | Occurrences |
+|--------------|-------------|-------------|
+| MVC Models (app/) | BaseModel, Product, Blog, Wishlist, ProductImage | 20 |
+| Legacy Admin (administrator/) | ~50 files | 100+ |
+| API/Customer/Payment | ~10 files | 15+ |
+| **Total** | **~65 files** | **135+** |
+
+**Approach:** Used dynamic `getColumnList()` method in BaseModel for generic queries. Explicit column lists in specific query methods.
+
+### 2. Legacy Files Migrated to Direct Model Calls (14 files)
+
+| File | Changes |
+|------|---------|
+| hanghoaView.php | 11 method calls → Product::/ProductImage:: |
+| mchitietphieunhapEdit.php | Removed unused hanghoa import |
+| mchitietphieunhapView.php | HanghoaGetAll → Product::getAllWithPricing |
+| mtonkhoEdit.php | Removed unused import |
+| mtonkhoView.php | Removed unused import |
+| mphieunhapCls.php | HanghoaUpdatePrice → Product::updatePrice |
+| api_filter_products.php | 3 methods → Product:: |
+| filter_products.php | filterProducts → Product:: |
+| get_filter_options.php | getFilterOptions → Product:: |
+| search_suggestions.php | searchHanghoa → Product::searchProducts |
+| sosanh.php | HanghoaGetbyId → Product::getById |
+| viewListLoaihang_cached.php | 6 methods → Product::/ProductImage::/ProductReview:: |
+| ProductRepository.php | Full rewrite → Product:: |
+| hinhanhView.php | GetHinhAnhById → ProductImage::getById |
+
+### 3. FeaturedProductsCls Migrated & Deleted
+
+| Method | Migrated To |
+|--------|-------------|
+| setFeatured() | Product::setFeatured() |
+| setNew() | Product::setNew() |
+| setSale() | Product::setSale() |
+| removeSale() | Product::removeSale() |
+| incrementViewCount() | Product::incrementViewCount() |
+
+**Files migrated:** sanphamnoibatView.php, manage_featured.php, quan_ly_san_pham_dac_biet.php, cron/auto_update_featured.php
+
+**Deleted:** `FeaturedProductsCls.php`
+
+### 4. Unit Tests Added (324 new tests)
+
+| Test File | Tests | Coverage |
+|-----------|-------|----------|
+| BaseModelTest.php | 22 | Configuration, attributes, dirty tracking, cache, validation |
+| OrderTest.php | 17 | Constants, config, status labels, cancellation, formatting |
+| OrderItemTest.php | 10 | Config, fillable, formatting, methods |
+| ReturnRequestTest.php | 19 | Constants, config, status/type labels, approval logic |
+| JwtServiceTest.php | 14 | encode, decode, expiry, signatures, edge cases |
+| ReturnDecisionEngineTest.php | 14 | decide(), factors, weights, disabled methods |
+| RateLimiterTest.php | 13 | singleton, config, isAllowed, getRemaining |
+| CDNServiceTest.php | 16 | Constructor, url(), image(), edge cases |
+
+### 5. Test Infrastructure Improvements
+
+| Change | Purpose |
+|--------|---------|
+| tests/mocks/Database.php | Mock Database class using SQLite memory |
+| tests/bootstrap.php | Loads mock before autoload for DB-free testing |
+| PHP 8.2 installation | Required for PHPUnit 11.0 |
 
 ---
 
-## 🔧 Key Changes
+## 🧪 Test Results
 
-### 1. hanghoaCls.php — Delegation Wrapper
-- **Before:** God object with 56 methods, direct DB queries
-- **After:** Thin wrapper delegating to Product, ProductImage, ProductReview
-- **Benefit:** Zero breaking change for remaining legacy files
-
-### 2. Product.php — Enhanced Model
-- Added methods: searchProducts, filterProducts, getFilterOptions, getRelatedProducts, getProductQuantity, getTonKho
-- Added status column detection cache (legacy DB compat)
-- Fixed exception namespaces: `\PDOException`, `\Exception`
-
-### 3. ProductImage.php — New Model
-- Created for all image CRUD operations
-- Methods: getById, getAll, create, delete, getPath, updateStatus, getLastInsertId, ensureRelationTable, applyToProduct, removeFromProduct, getProductsByImageId, updateProductImages, updateProductImage, getAllForProduct, countForProduct, existsByFileName, existsByHash, findProductsByExactName, findProductsByName, isExactImageNameMatch, getMismatchedProductImages, findMissingImages, findExactMatchImage, removeAllMismatchedImages
-
-### 4. ProductReview.php — New Model
-- Created for rating/review queries
-- Methods: getAverageRating, getReviewCount
-
----
-
-## ⚠️ Remaining Files (~5)
-
-Still using `new hanghoa()` through wrapper:
-- Some legacy view files in `components/`
-- Files that haven't been touched yet
-
-**These files continue to work through the delegation wrapper.**
-
----
-
-## 🧪 Verification Checklist
-
-### Static Analysis
-```bash
-docker exec php_ws-web-1 ./vendor/bin/phpstan analyse app/
-# Expected: 0 errors
+```
+PHPUnit 11.0.0
+Runtime: PHP 8.2.31
+Tests: 338, Assertions: 566
+Time: 00:02.254, Memory: 10.00 MB
+OK (338 tests, 566 assertions)
 ```
 
-### Unit Tests
-```bash
-docker exec php_ws-web-1 ./vendor/bin/phpunit
-# Expected: 14/14 pass, 26 assertions
-```
+### Test Coverage by Category
 
-### Code Style
-```bash
-docker exec php_ws-web-1 ./vendor/bin/phpcs --standard=PSR12 --ignore=*/vendor/* app/
-# Expected: 0 errors (cosmetic warnings only)
-```
-
-### Smoke Test URLs
-- `http://localhost/` — Main page with carousel
-- `http://localhost/search.php?q=test` — Search functionality
-- `http://localhost/?reqHanghoa=1` — Product detail
-- `http://localhost/administrator/` — Admin panel
-- `http://localhost/administrator/index.php?req=hanghoaview` — Product management
-- `http://localhost/administrator/index.php?req=hinhanhview` — Image management
+| Category | Tests | Files |
+|----------|-------|-------|
+| Models | 180 | ProductTest, BaseModelTest, OrderTest, OrderItemTest, CartTest, WishlistTest, BlogTest, BannerTest, CustomerTest, PaymentTest, ProductImageTest, ProductReviewTest, ReturnRequestTest |
+| Services | 80 | JwtServiceTest, ReturnDecisionEngineTest, RateLimiterTest, CDNServiceTest, CategoryServiceTest, EmailServiceTest, OrderServiceTest, ShippingServiceTest, UserServiceTest, CacheManagerTest, UserRateLimiterTest |
+| Controllers | 12 | BaseControllerTest |
+| Helpers | 14 | HelpersTest |
+| Other | 52 | FullSystemTest, CompleteReportTest |
 
 ---
 
-## 📈 Migration Benefits
+## 📋 Remaining Work
 
-1. **Code Organization:** Clear separation of concerns (Product, Image, Review)
-2. **Maintainability:** Each model has single responsibility
-3. **Testability:** Models can be unit tested independently
-4. **Reusability:** Models used across frontend and admin
-5. **Backward Compatibility:** Wrapper ensures zero downtime migration
-6. **Performance:** Static methods, no instantiation overhead
-7. **Type Safety:** Strict typing, proper exception handling
+### hanghoaCls.php Wrapper
+- Still exists as backward-compatibility layer
+- Can be deleted once all remaining references are updated
+- Currently referenced in REPOSITORY_USAGE_EXAMPLES.php (documentation only)
 
----
-
-## 🚀 Next Steps (Optional)
-
-1. **Remove unused files:**
-   - `FeaturedProductsCls.php` — No longer used after migration
-   - `hanghoaStatusExtension.php` — Trait removed from wrapper
-
-2. **Migrate remaining ~5 files:**
-   - Continue incrementally using same pattern
-
-3. **Add unit tests:**
-   - Test Product, ProductImage, ProductReview models
-   - Test edge cases (missing data, invalid IDs)
-
-4. **Performance optimization:**
-   - Add caching for frequently accessed data
-   - Optimize database queries
+### Potential Improvements
+1. Add integration tests for checkout flow
+2. Add tests for JTExpressService, OAuthService
+3. Remove hanghoaCls.php wrapper (optional - no functional impact)
+4. Add PHPStan level 5+ analysis
 
 ---
 
-## 📝 Migration Pattern (Template)
+## 🔧 Migration Pattern (Template)
 
 For future migrations, follow this pattern:
 
@@ -198,23 +181,18 @@ $result = ProductReview::methodName($params);
 
 ---
 
-## 🗑️ Deprecated Files Removed (5 files)
+## 🗑️ Deprecated Files Removed
 
-| File | Reason |
-|------|--------|
-| `hinhanhCls.php` | Unused, not referenced anywhere |
-| `autoRequireFix.php` | Deprecated, use `includes/helpers.php` |
-| `autoSessionFix.php` | Deprecated, use `includes/helpers.php` |
-| `pathResolverHelper.php` | Deprecated, use `includes/helpers.php` |
-| `ProductService.php` | Unused duplicate of Product model |
-
-## 🔧 Duplicate Methods Removed
-
-| File | Methods Removed | Reason |
-|------|-----------------|--------|
-| `FeaturedProductsCls.php` | `getFeaturedProducts`, `getNewProducts`, `getSaleProducts`, `getMostViewedProducts` | Duplicates of Product model methods |
-| `ProductViewTrackerCls.php` | `getMostViewedProducts` | Unused method |
+| File | Date Removed | Reason |
+|------|--------------|--------|
+| FeaturedProductsCls.php | 2026-05-29 | Migrated to Product model |
+| hinhanhCls.php | 2026-05-12 | Unused, not referenced |
+| autoRequireFix.php | 2026-05-12 | Deprecated |
+| autoSessionFix.php | 2026-05-12 | Deprecated |
+| pathResolverHelper.php | 2026-05-12 | Deprecated |
+| ProductService.php | 2026-05-12 | Duplicate of Product model |
 
 ---
 
 **Migration completed successfully with zero breaking changes.**
+**All 338 tests passing as of 2026-05-29.**

@@ -47,7 +47,7 @@ class Blog extends BaseModel
     {
         $db = \Database::getInstance()->getConnection();
         $stmt = $db->prepare(
-            "SELECT * FROM " . static::$table . " WHERE status = 'published' ORDER BY created_at DESC LIMIT ? OFFSET ?"
+            "SELECT id, title, slug, content, excerpt, featured_image, author, status, view_count, created_at, updated_at FROM " . static::$table . " WHERE status = 'published' ORDER BY created_at DESC LIMIT ? OFFSET ?"
         );
         $stmt->execute([$limit, $offset]);
 
@@ -68,7 +68,7 @@ class Blog extends BaseModel
     {
         $db = \Database::getInstance()->getConnection();
         $stmt = $db->prepare(
-            "SELECT * FROM " . static::$table . " WHERE slug = ? AND status = 'published' LIMIT 1"
+            "SELECT id, title, slug, content, excerpt, featured_image, author, status, view_count, created_at, updated_at FROM " . static::$table . " WHERE slug = ? AND status = 'published' LIMIT 1"
         );
         $stmt->execute([$slug]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

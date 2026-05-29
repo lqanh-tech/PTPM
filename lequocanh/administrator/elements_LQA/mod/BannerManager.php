@@ -14,7 +14,7 @@ class BannerManager
     public function getActiveBanners()
     {
         try {
-            $sql = "SELECT * FROM banners WHERE is_active = 1 ORDER BY position ASC, created_at DESC";
+            $sql = "SELECT id, tieude, hinhanh, lienket, trangthai, position, ngay_tao FROM banners WHERE is_active = 1 ORDER BY position ASC, created_at DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -27,7 +27,7 @@ class BannerManager
     public function getAllBanners()
     {
         try {
-            $sql = "SELECT * FROM banners ORDER BY position ASC, created_at DESC";
+            $sql = "SELECT id, tieude, hinhanh, lienket, trangthai, position, ngay_tao FROM banners ORDER BY position ASC, created_at DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -40,7 +40,7 @@ class BannerManager
     public function getBannerById($id)
     {
         try {
-            $sql = "SELECT * FROM banners WHERE id = ?";
+            $sql = "SELECT id, tieude, hinhanh, lienket, trangthai, position, ngay_tao FROM banners WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC);

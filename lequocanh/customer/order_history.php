@@ -51,7 +51,7 @@ $statsStmt = $conn->prepare($statsSql);
 $statsStmt->execute([$userId]);
 $stats = $statsStmt->fetch(PDO::FETCH_ASSOC);
 
-$userSql = "SELECT * FROM user WHERE username = ?";
+$userSql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username = ?";
 $userStmt = $conn->prepare($userSql);
 $userStmt->execute([$userId]);
 $userInfo = $userStmt->fetch(PDO::FETCH_ASSOC);

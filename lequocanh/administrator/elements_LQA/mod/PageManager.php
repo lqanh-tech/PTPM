@@ -187,13 +187,13 @@ class PageManager {
     }
     
     public function getPageById($id) {
-        $stmt = $this->db->prepare("SELECT * FROM pages WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT id, title, slug, content, type, status, position, created_at, updated_at FROM pages WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     
     public function getPageBySlug($slug) {
-        $stmt = $this->db->prepare("SELECT * FROM pages WHERE slug = ? AND status = 'published'");
+        $stmt = $this->db->prepare("SELECT id, title, slug, content, type, status, position, created_at, updated_at FROM pages WHERE slug = ? AND status = 'published'");
         $stmt->execute([$slug]);
         $page = $stmt->fetch(PDO::FETCH_ASSOC);
         
@@ -205,7 +205,7 @@ class PageManager {
     }
     
     public function getPagesByType($type, $publishedOnly = false) {
-        $sql = "SELECT * FROM pages WHERE type = ?";
+        $sql = "SELECT id, title, slug, content, type, status, position, created_at, updated_at FROM pages WHERE type = ?";
         if ($publishedOnly) {
             $sql .= " AND status = 'published'";
         }
@@ -221,7 +221,7 @@ class PageManager {
     }
     
     public function getAllStaticPages($publishedOnly = false) {
-        $sql = "SELECT * FROM pages WHERE type IN ('about', 'policy', 'guide')";
+        $sql = "SELECT id, title, slug, content, type, status, position, created_at, updated_at FROM pages WHERE type IN ('about', 'policy', 'guide')";
         if ($publishedOnly) {
             $sql .= " AND status = 'published'";
         }
@@ -233,7 +233,7 @@ class PageManager {
     }
     
     public function getAllPages() {
-        $stmt = $this->db->query("SELECT * FROM pages ORDER BY type, position ASC, created_at DESC");
+        $stmt = $this->db->query("SELECT id, title, slug, content, type, status, position, created_at, updated_at FROM pages ORDER BY type, position ASC, created_at DESC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     

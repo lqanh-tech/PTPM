@@ -261,7 +261,7 @@ class Shipping
     private function getLocalTracking($trackingNumberOrOrderCode)
     {
         try {
-            $sql = "SELECT * FROM order_shipping_tracking 
+            $sql = "SELECT id, order_id, tracking_number, carrier, status, location, event_time, created_at FROM order_shipping_tracking 
                     WHERE tracking_number = ? OR order_code = ? OR carrier_order_code = ?
                     LIMIT 1";
             $stmt = $this->db->prepare($sql);

@@ -22,7 +22,7 @@ class ThuongHieu
 
     public function thuonghieuGetAll()
     {
-        $sql = 'SELECT * FROM thuonghieu';
+        $sql = 'SELECT idThuongHieu, tenTH, mota FROM thuonghieu';
         $getAll = $this->db->prepare($sql);
         $getAll->setFetchMode(PDO::FETCH_OBJ);
 
@@ -83,7 +83,7 @@ class ThuongHieu
 
     public function thuonghieuGetbyId($idThuongHieu)
     {
-        $sql = 'SELECT * FROM thuonghieu WHERE idThuongHieu = ?';
+        $sql = 'SELECT idThuongHieu, tenTH, mota FROM thuonghieu WHERE idThuongHieu = ?';
         $data = array($idThuongHieu);
 
         $getOne = $this->db->prepare($sql);

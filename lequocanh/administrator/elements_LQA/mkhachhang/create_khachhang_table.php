@@ -112,11 +112,11 @@ try {
 
 try {
     if (empty($nhanvienUserIds)) {
-        $sql = "SELECT * FROM user WHERE username != 'admin'";
+        $sql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username != 'admin'";
         $stmt = $conn->query($sql);
     } else {
         $placeholders = implode(',', array_fill(0, count($nhanvienUserIds), '?'));
-        $sql = "SELECT * FROM user WHERE username != 'admin' AND iduser NOT IN ($placeholders)";
+        $sql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE username != 'admin' AND iduser NOT IN ($placeholders)";
         $stmt = $conn->prepare($sql);
         $stmt->execute($nhanvienUserIds);
     }

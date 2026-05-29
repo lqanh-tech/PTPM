@@ -1,147 +1,118 @@
 <?php
 
 require_once __DIR__ . '/ProductRepositoryInterface.php';
-require_once __DIR__ . '/hanghoaCls.php';
+require_once __DIR__ . '/../../../app/autoload.php';
+
+use App\Models\Product;
+use App\Models\ProductImage;
 
 /**
  * ProductRepository
  *
  * Implementation of ProductRepositoryInterface that delegates
- * to the existing hanghoa class. Provides a clean, focused API
- * over the legacy data access layer.
+ * directly to App\Models\Product.
  */
 class ProductRepository implements ProductRepositoryInterface
 {
-    /**
-     * @var hanghoa
-     */
-    private $hanghoa;
-
-    /**
-     * @param PDO|null $db Optional database connection. If null,
-     *        the hanghoa class will create its own via Database::getInstance().
-     */
-    public function __construct(?PDO $db = null)
-    {
-        $this->hanghoa = new hanghoa($db);
-    }
-
     /**
      * {@inheritDoc}
      */
     public function getAll(): array
     {
-        return $this->hanghoa->HanghoaGetAll();
+        return Product::getAllWithPricing();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getById(int $id): ?object
+    public function getById(int ): ?object
     {
-        $result = $this->hanghoa->HanghoaGetbyId($id);
-        return $result ?: null;
+        return Product::getById();
     }
 
     /**
      * {@inheritDoc}
-     *
-     * Maps the flat data array to the positional parameters
-     * expected by hanghoa::HanghoaAdd().
      */
-    public function add(array $data)
+    public function add(array )
     {
-        return $this->hanghoa->HanghoaAdd(
-            $data['tenhanghoa']  ?? '',
-            $data['mota']        ?? '',
-            $data['giathamkhao'] ?? 0,
-            $data['hinhanh']     ?? 0,
-            $data['idloaihang']  ?? 0,
-            $data['idThuongHieu'] ?? null,
-            $data['idDonViTinh'] ?? null,
-            $data['idNhanVien']  ?? null,
-            $data['ghichu']      ?? ''
+        return Product::addProduct(
+            ['tenhanghoa']  ?? '',
+            ['mota']        ?? '',
+            ['giathamkhao'] ?? 0,
+            ['hinhanh']     ?? 0,
+            ['idloaihang']  ?? 0,
+            ['idThuongHieu'] ?? null,
+            ['idDonViTinh'] ?? null,
+            ['idNhanVien']  ?? null,
+            ['ghichu']      ?? ''
         );
     }
 
     /**
      * {@inheritDoc}
-     *
-     * Maps the flat data array to the positional parameters
-     * expected by hanghoa::HanghoaUpdate().
      */
-    public function update(int $id, array $data): bool
+    public function update(int , array ): bool
     {
-        $result = $this->hanghoa->HanghoaUpdate(
-            $data['tenhanghoa']  ?? '',
-            $data['hinhanh']     ?? 0,
-            $data['mota']        ?? '',
-            $data['giathamkhao'] ?? 0,
-            $data['idloaihang']  ?? 0,
-            $data['idThuongHieu'] ?? null,
-            $data['idDonViTinh'] ?? null,
-            $data['idNhanVien']  ?? null,
-            $id,
-            $data['ghichu']      ?? ''
-        );
-        return (bool) $result;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * Note: hanghoa::HanghoaDelete() returns an array with a 'success' key
-     * rather than a plain boolean. This method normalizes that to a bool.
-     */
-    public function delete(int $id): bool
-    {
-        $result = $this->hanghoa->HanghoaDelete($id);
-
-        if (is_array($result)) {
-            return !empty($result['success']);
-        }
-
-        return (bool) $result;
+        return Product::updateProduct(
+            ['tenhanghoa']  ?? '',
+            ['hinhanh']     ?? 0,
+            ['mota']        ?? '',
+            ['giathamkhao'] ?? 0,
+            ['idloaihang']  ?? 0,
+            ['idThuongHieu'] ?? null,
+            ['idDonViTinh'] ?? null,
+            ['idNhanVien']  ?? null,
+            ,
+            ['ghichu']      ?? ''
+        ) > 0;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function search(string $query): array
+    public function delete(int ): bool
     {
-        return $this->hanghoa->searchHanghoa($query);
+         = Product::deleteProduct();
+        return !empty(['success']);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getByCategory(int $categoryId): array
+    public function search(string ): array
     {
-        return $this->hanghoa->HanghoaGetbyIdloaihang($categoryId);
+        return Product::searchProducts();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getByStatus(int $status): array
+    public function getByCategory(int ): array
     {
-        return $this->hanghoa->getProductsByStatus($status);
+        return Product::getByCategoryWithPricing();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function updatePrice(int $id, float $price): bool
+    public function getByStatus(int ): array
     {
-        $result = $this->hanghoa->HanghoaUpdatePrice($id, $price);
-        return (bool) $result;
+        return Product::getProductsByStatus();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getStock(int $id): int
+    public function updatePrice(int , float ): bool
     {
-        return $this->hanghoa->getTonKho($id);
+        return Product::updatePrice(, ) > 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getStock(int ): int
+    {
+        return Product::getProductQuantity();
     }
 }

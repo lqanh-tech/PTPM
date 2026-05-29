@@ -6,18 +6,21 @@ require_once __DIR__ . '/../../../includes/csrf_helper.php';
 <hr>
 <?php
 require_once './elements_LQA/mod/loaihangCls.php';
-require_once './elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/../../../app/autoload.php';
+use AppModelsProduct;
+use AppModelsProductImage;
+use AppModelsProductReview;
 
 $lhobj = new loaihang();
-$hanghoaObj = new hanghoa();
+
 
 $list_lh = $lhobj->LoaihangGetAll();
-$list_thuonghieu = $hanghoaObj->GetAllThuongHieu();
-$list_donvitinh = $hanghoaObj->GetAllDonViTinh();
-$list_nhanvien = $hanghoaObj->GetAllNhanVien();
-$list_hinhanh = $hanghoaObj->GetAllHinhAnh();
+$list_thuonghieu = Product::getAllThuongHieu();
+$list_donvitinh = Product::getAllDonViTinh();
+$list_nhanvien = Product::getAllNhanVien();
+$list_hinhanh = ProductImage::getAll();
 
-$hanghoaObj->CreateHanghoaHinhanhTable();
+ProductImage::ensureRelationTable();
 
 if (isset($_GET['result'])) {
     if ($_GET['result'] == 'ok') {
@@ -116,8 +119,8 @@ if (isset($_SESSION['matched_images']) && !empty($_SESSION['matched_images'])) {
     unset($_SESSION['matched_images']);
 }
 
-$mismatched_images = $hanghoaObj->GetMismatchedProductImages();
-$missing_images = $hanghoaObj->FindMissingImages();
+$mismatched_images = ProductImage::getMismatchedProductImages();
+$missing_images = ProductImage::findMissingImages();
 ?>
 
 <head>
@@ -255,7 +258,7 @@ $missing_images = $hanghoaObj->FindMissingImages();
 
 <hr />
 <?php
-$list_hanghoa = $hanghoaObj->HanghoaGetAll();
+$list_hanghoa = Product::getAllWithPricing();
 $l = count($list_hanghoa);
 ?>
 <div class="content_hanghoa">
@@ -264,7 +267,7 @@ $l = count($list_hanghoa);
 
         <?php
 
-        $allImages = $hanghoaObj->GetAllHinhAnh();
+        $allImages = ProductImage::getAll();
         $totalImages = count($allImages);
 
         $productsWithImages = 0;
@@ -375,9 +378,9 @@ $l = count($list_hanghoa);
                         <td><?php echo htmlspecialchars($u->ten_nhanvien ?? 'Chưa chọn'); ?></td>
                         <td align="center">
                             <?php
-                            $displayStatus = $hanghoaObj->getProductStatus($u->idhanghoa);
-                            $statusClass = $hanghoaObj->getStatusCssClass($displayStatus);
-                            $statusColor = $hanghoaObj->getStatusColor($displayStatus);
+                            $displayStatus = Product::getProductStatus($u->idhanghoa);
+                            $statusClass = Product::getStatusCssClass($displayStatus);
+                            $statusColor = Product::getStatusColor($displayStatus);
                             ?>
                             <span class="status-badge <?php echo $statusClass; ?>" style="background-color: <?php echo $statusColor; ?>; color: white; padding: 5px 10px; border-radius: 5px; display: inline-block; font-weight: bold;">
                                 <?php echo $displayStatus; ?>

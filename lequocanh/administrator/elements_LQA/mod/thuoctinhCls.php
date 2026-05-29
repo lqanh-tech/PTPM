@@ -12,7 +12,7 @@ class ThuocTinh
 
     public function thuoctinhGetAll()
     {
-        $sql = 'SELECT * FROM thuoctinh';
+        $sql = 'SELECT idThuocTinh, tenThuocTinh, mota FROM thuoctinh';
         $getAll = $this->db->prepare($sql);
         $getAll->setFetchMode(PDO::FETCH_OBJ);
 
@@ -126,7 +126,7 @@ class ThuocTinh
 
     public function thuoctinhGetById($idThuocTinh)
     {
-        $sql = 'SELECT * FROM thuoctinh WHERE idThuocTinh = ?';
+        $sql = 'SELECT idThuocTinh, tenThuocTinh, mota FROM thuoctinh WHERE idThuocTinh = ?';
         $data = array($idThuocTinh);
 
         $getOne = $this->db->prepare($sql);

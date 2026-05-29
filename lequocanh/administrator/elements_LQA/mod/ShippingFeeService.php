@@ -59,21 +59,21 @@ class ShippingFeeService
     private function findFeeConfig($provinceId, $districtId)
     {
 
-        $sql = "SELECT * FROM shipping_fees WHERE province_id = ? AND district_id = ? AND is_active = 1 LIMIT 1";
+        $sql = "SELECT id, method_id, from_province_id, to_province_id, base_fee, per_km_fee, min_fee, max_fee, estimated_days, is_active FROM shipping_fees WHERE province_id = ? AND district_id = ? AND is_active = 1 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$provinceId, $districtId]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             return $row;
         }
 
-        $sql = "SELECT * FROM shipping_fees WHERE province_id = ? AND district_id IS NULL AND is_active = 1 LIMIT 1";
+        $sql = "SELECT id, method_id, from_province_id, to_province_id, base_fee, per_km_fee, min_fee, max_fee, estimated_days, is_active FROM shipping_fees WHERE province_id = ? AND district_id IS NULL AND is_active = 1 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$provinceId]);
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             return $row;
         }
 
-        $sql = "SELECT * FROM shipping_fees WHERE province_id IS NULL AND district_id IS NULL AND is_active = 1 LIMIT 1";
+        $sql = "SELECT id, method_id, from_province_id, to_province_id, base_fee, per_km_fee, min_fee, max_fee, estimated_days, is_active FROM shipping_fees WHERE province_id IS NULL AND district_id IS NULL AND is_active = 1 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -85,7 +85,7 @@ class ShippingFeeService
 
     public function getActiveMethods()
     {
-        $sql = "SELECT * FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order ASC";
+        $sql = "SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods WHERE is_active = 1 ORDER BY sort_order ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

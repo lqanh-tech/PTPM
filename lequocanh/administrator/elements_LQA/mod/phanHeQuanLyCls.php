@@ -190,7 +190,7 @@ class PhanHeQuanLy
 
     public function getAllPhanHe()
     {
-        $sql = "SELECT * FROM PhanHeQuanLy WHERE trangThai = 1 ORDER BY tenPhanHe";
+        $sql = "SELECT idPhanHe, tenPhanHe, moTa, trangThai FROM PhanHeQuanLy WHERE trangThai = 1 ORDER BY tenPhanHe";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -198,7 +198,7 @@ class PhanHeQuanLy
 
     public function getPhanHeById($idPhanHe)
     {
-        $sql = "SELECT * FROM PhanHeQuanLy WHERE idPhanHe = ?";
+        $sql = "SELECT idPhanHe, tenPhanHe, moTa, trangThai FROM PhanHeQuanLy WHERE idPhanHe = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$idPhanHe]);
         return $stmt->fetch(PDO::FETCH_OBJ);

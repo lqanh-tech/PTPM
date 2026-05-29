@@ -2,10 +2,10 @@
 <hr>
 <?php
 require_once './elements_LQA/mod/mtonkhoCls.php';
-require_once './elements_LQA/mod/hanghoaCls.php';
+
 
 $tonkhoObj = new MTonKho();
-$hanghoaObj = new hanghoa();
+
 
 if (isset($_GET['idtk'])) {
     $idTonKho = $_GET['idtk'];

@@ -14,7 +14,7 @@ class PromotionManager
     public function getActivePromotions()
     {
         try {
-            $sql = "SELECT * FROM promotions 
+            $sql = "SELECT id, name, description, discount_type, discount_value, start_date, end_date, is_active, created_at FROM promotions 
                     WHERE is_active = 1 
                     AND start_date <= CURDATE() 
                     AND end_date >= CURDATE() 
@@ -31,7 +31,7 @@ class PromotionManager
     public function getAllPromotions()
     {
         try {
-            $sql = "SELECT * FROM promotions ORDER BY created_at DESC";
+            $sql = "SELECT id, name, description, discount_type, discount_value, start_date, end_date, is_active, created_at FROM promotions ORDER BY created_at DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -44,7 +44,7 @@ class PromotionManager
     public function getPromotionById($id)
     {
         try {
-            $sql = "SELECT * FROM promotions WHERE id = ?";
+            $sql = "SELECT id, name, description, discount_type, discount_value, start_date, end_date, is_active, created_at FROM promotions WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC);

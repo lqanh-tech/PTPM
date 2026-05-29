@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../mod/auth_check.php';
 require_once __DIR__ . '/../../../includes/csrf_helper.php';
-require_once __DIR__ . '/../mod/hanghoaCls.php';
+// hanghoaCls removed - not used
 require_once __DIR__ . '/../mod/loaihangCls.php';
 require_once __DIR__ . '/../mod/thuonghieuCls.php';
 require_once __DIR__ . '/../mod/donvitinhCls.php';

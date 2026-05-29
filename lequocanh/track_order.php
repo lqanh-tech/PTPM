@@ -36,7 +36,7 @@ if ($orderCode) {
             
             try {
                 $stmt = $db->prepare("
-                    SELECT * FROM shipment_tracking 
+                    SELECT id, order_id, tracking_number, carrier, status, location, event_time, created_at FROM shipment_tracking 
                     WHERE order_id = ?
                     ORDER BY created_at DESC
                 ");

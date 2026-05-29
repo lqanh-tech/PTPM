@@ -3,12 +3,13 @@
 <?php
 require_once './elements_LQA/mod/mphieunhapCls.php';
 require_once './elements_LQA/mod/mchitietphieunhapCls.php';
-require_once './elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/../../../app/autoload.php';
+use AppModelsProduct;
 require_once './elements_LQA/mod/mtonkhoCls.php';
 
 $phieuNhapObj = new MPhieuNhap();
 $chiTietObj = new MChiTietPhieuNhap();
-$hanghoaObj = new hanghoa();
+
 $tonkhoObj = new MTonKho();
 
 if (isset($_GET['idpn'])) {
@@ -23,7 +24,7 @@ if (isset($_GET['idpn'])) {
 
     $list_chitiet = $chiTietObj->getChiTietByPhieuNhapId($idPhieuNhap);
 
-    $list_hanghoa = $hanghoaObj->HanghoaGetAll();
+    $list_hanghoa = Product::getAllWithPricing();
 } else {
     header("Location: index.php?req=mphieunhap");
     exit;

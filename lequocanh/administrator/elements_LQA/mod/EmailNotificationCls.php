@@ -691,7 +691,7 @@ class EmailNotification
     private function getOrderDetails($orderId)
     {
         try {
-            $sql = "SELECT * FROM don_hang WHERE id = ?";
+            $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$orderId]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -771,7 +771,7 @@ class EmailNotification
     public function getOrderNotificationHistory($orderId)
     {
         try {
-            $sql = "SELECT * FROM notification_logs WHERE order_id = ? ORDER BY created_at DESC";
+            $sql = "SELECT id, order_id, type, status, message, created_at FROM notification_logs WHERE order_id = ? ORDER BY created_at DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$orderId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);

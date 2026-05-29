@@ -158,7 +158,7 @@ class CustomerNotificationManager
             if ($limit <= 0) $limit = 20;
             if ($limit > 100) $limit = 100;
 
-            $sql = "SELECT * FROM customer_notifications
+            $sql = "SELECT id, user_id, title, message, type, reference_id, is_read, created_at FROM customer_notifications
                     $whereClause
                     ORDER BY created_at DESC
                     LIMIT $limit";
@@ -336,7 +336,7 @@ class CustomerNotificationManager
     private function getOrderInfo($orderId)
     {
         try {
-            $sql = "SELECT * FROM don_hang WHERE id = ?";
+            $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang WHERE id = ?";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([$orderId]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -349,7 +349,7 @@ class CustomerNotificationManager
     public function canCancelOrder($orderId, $userId)
     {
         try {
-            $sql = "SELECT * FROM don_hang 
+            $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang 
                     WHERE id = ? AND ma_nguoi_dung = ? 
                     AND trang_thai = 'pending' 
                     AND (cancel_deadline IS NULL OR cancel_deadline > NOW())";

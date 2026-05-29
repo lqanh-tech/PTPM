@@ -31,6 +31,9 @@ abstract class BaseModel
     /** @var int Cache TTL in seconds */
     protected static int $cacheTTL = 300;
 
+    /** @var array<string, array> Column cache per table */
+    private static array $columnCache = [];
+
     /**
      * Get database connection, initializing if needed.
      */
@@ -123,9 +126,34 @@ abstract class BaseModel
         $this->original = $this->attributes;
     }
 
+    /**
+     * Get column list for SELECT queries.
+     * Uses table name prefix for joins compatibility.
+     */
+    protected static function getColumnList(string $prefix = ''): string
+    {
+        $table = static::getTable();
+        $cacheKey = $table . ($prefix ? ':' . $prefix : '');
+
+        if (!isset(self::$columnCache[$cacheKey])) {
+            $db = self::getConnection();
+            $stmt = $db->prepare('SHOW COLUMNS FROM ' . $table);
+            $stmt->execute();
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if ($prefix) {
+                $columns = array_map(fn($col) => "{$prefix}.{$col}", $columns);
+            }
+
+            self::$columnCache[$cacheKey] = $columns;
+        }
+
+        return implode(', ', self::$columnCache[$cacheKey]);
+    }
+
     public static function all(): array
     {
-        $sql = "SELECT * FROM " . static::getTable();
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable();
         $stmt = self::getConnection()->prepare($sql);
         $stmt->execute();
 
@@ -152,7 +180,7 @@ abstract class BaseModel
             return static::$cache[$cacheKey];
         }
 
-        $sql = "SELECT * FROM " . static::getTable() . " WHERE " . static::getPrimaryKey() . " = ? LIMIT 1";
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable() . " WHERE " . static::getPrimaryKey() . " = ? LIMIT 1";
         $stmt = self::getConnection()->prepare($sql);
         $stmt->execute([$id]);
 
@@ -188,7 +216,7 @@ abstract class BaseModel
         $column = static::validateColumn($column);
         $operator = static::validateOperator($operator);
 
-        $sql = "SELECT * FROM " . static::getTable() . " WHERE {$column} {$operator} ?";
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable() . " WHERE {$column} {$operator} ?";
         $stmt = self::getConnection()->prepare($sql);
         $stmt->execute([$value]);
 
@@ -221,7 +249,7 @@ abstract class BaseModel
             $params[] = $value;
         }
 
-        $sql = "SELECT * FROM " . static::getTable() . " WHERE " . implode(' AND ', $whereParts);
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable() . " WHERE " . implode(' AND ', $whereParts);
         $stmt = self::getConnection()->prepare($sql);
         $stmt->execute($params);
 
@@ -507,7 +535,7 @@ abstract class BaseModel
         $total = (int) $countStmt->fetchColumn();
 
         // Get paginated results
-        $sql = "SELECT * FROM " . static::getTable() . $where . " LIMIT {$perPage} OFFSET {$offset}";
+        $sql = "SELECT " . static::getColumnList() . " FROM " . static::getTable() . $where . " LIMIT {$perPage} OFFSET {$offset}";
         $stmt = self::getConnection()->prepare($sql);
         $stmt->execute($params);
 

@@ -30,7 +30,7 @@ class OrderRepository implements OrderRepositoryInterface
             $whereSQL = $where ? 'WHERE ' . implode(' AND ', $where) : '';
             $limit = !empty($filters['limit']) ? intval($filters['limit']) : 100;
 
-            $sql = "SELECT * FROM don_hang $whereSQL ORDER BY ngay_tao DESC LIMIT $limit";
+            $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang $whereSQL ORDER BY ngay_tao DESC LIMIT $limit";
             $stmt = $this->db->prepare($sql);
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -43,7 +43,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function getById(int $id): ?array
     {
         try {
-            $stmt = $this->db->prepare("SELECT * FROM don_hang WHERE id = ?");
+            $stmt = $this->db->prepare("SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang WHERE id = ?");
             $stmt->execute([$id]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             return $result ?: null;
@@ -147,7 +147,7 @@ class OrderRepository implements OrderRepositoryInterface
     public function search(string $keyword): array
     {
         try {
-            $sql = "SELECT * FROM don_hang
+            $sql = "SELECT id, ma_don_hang, ma_don_hang_text, ma_nguoi_dung, ho_ten, so_dien_thoai, email, dia_chi_giao_hang, ghi_chu, tong_tien, trang_thai, phuong_thuc_thanh_toan, shipping_method, phi_van_chuyen, thue, coupon_discount, trang_thai_thanh_toan, ngay_tao, ngay_cap_nhat FROM don_hang
                     WHERE ten_nguoi_nhan LIKE :kw OR ma_nguoi_dung LIKE :kw2 OR sdt_nguoi_nhan LIKE :kw3
                     ORDER BY ngay_tao DESC LIMIT 50";
             $stmt = $this->db->prepare($sql);

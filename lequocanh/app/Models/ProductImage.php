@@ -82,7 +82,7 @@ class ProductImage
     {
         try {
             $db = self::db();
-            $sql = 'SELECT h.*, LENGTH(h.du_lieu) as file_size,
+            $sql = 'SELECT h.id, h.ten_file, h.loai_file, h.duong_dan, h.du_lieu, h.trang_thai, h.ngay_tao, h.file_hash, LENGTH(h.du_lieu) as file_size,
                     (SELECT COUNT(*) FROM hanghoa WHERE hinhanh = h.id) as usage_count
                     FROM hinhanh h
                     ORDER BY h.ngay_tao DESC';
@@ -322,7 +322,7 @@ class ProductImage
     {
         try {
             $db = self::db();
-            $sql = "SELECT h.* FROM hinhanh h
+            $sql = "SELECT h.id, h.ten_file, h.loai_file, h.duong_dan, h.du_lieu, h.trang_thai, h.ngay_tao, h.file_hash FROM hinhanh h
                     INNER JOIN hanghoa_hinhanh hh ON h.id = hh.idhinhanh
                     WHERE hh.idhanghoa = :idhanghoa";
             $stmt = $db->prepare($sql);

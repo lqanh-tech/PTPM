@@ -24,7 +24,7 @@ $message = '';
 $messageType = '';
 
 // Lấy thông tin user
-$stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+$stmt = $conn->prepare("SELECT id, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM users WHERE username = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $message = 'Cập nhật thông tin thành công!';
                 $messageType = 'success';
                 // Refresh user data
-                $stmt = $conn->prepare("SELECT * FROM users WHERE username = ?");
+                $stmt = $conn->prepare("SELECT id, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM users WHERE username = ?");
                 $stmt->execute([$userId]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
             } else {

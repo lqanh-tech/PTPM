@@ -8,7 +8,9 @@ require_once __DIR__ . '/administrator/elements_LQA/config/logger_config.php';
 SessionManager::start();
 
 require_once __DIR__ . '/administrator/elements_LQA/mod/database.php';
-require_once __DIR__ . '/administrator/elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/app/autoload.php';
+use AppModelsProduct;
+use AppModelsProductImage;
 require_once __DIR__ . '/administrator/elements_LQA/mod/thuoctinhhhCls.php';
 require_once __DIR__ . '/administrator/elements_LQA/mod/thuonghieuCls.php';
 
@@ -21,13 +23,13 @@ if (isset($_GET['products'])) {
 
 $products = [];
 if (!empty($productIds)) {
-    $hanghoa = new hanghoa();
+    
     $thuonghieu = new ThuongHieu();
 
     $db = Database::getInstance()->getConnection();
 
     foreach ($productIds as $id) {
-        $product = $hanghoa->HanghoaGetbyId($id);
+        $product = Product::getById($id);
         if ($product) {
             // Load attributes with attribute names from thuoctinh table
             $attrStmt = $db->prepare("
@@ -279,7 +281,7 @@ if (!empty($productIds)) {
                                     <?php foreach ($products as $product): ?>
                                         <td>
                                             <?php
-                                            $hinhanh = $hanghoa->GetHinhAnhById($product->hinhanh);
+                                            $hinhanh = ProductImage::getById($product->hinhanh);
                                             if ($hinhanh && (!empty($hinhanh->duong_dan) || !empty($hinhanh->du_lieu))):
                                             ?>
                                                 <img src="/lequocanh/administrator/elements_LQA/mhanghoa/displayImage.php?id=<?php echo $product->hinhanh; ?>"

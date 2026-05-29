@@ -7,7 +7,8 @@ ini_set('display_errors', 1);
 ob_start();
 
 require_once './administrator/elements_LQA/mod/database.php';
-require_once './administrator/elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/app/autoload.php';
+use AppModelsProduct;
 
 if (!isset($_GET['query']) || empty($_GET['query'])) {
 
@@ -40,8 +41,8 @@ try {
 if (empty($results)) {
     error_log("No results from products table, trying hanghoa");
     try {
-        $hanghoa = new hanghoa();
-        $hanghoaResults = $hanghoa->searchHanghoa($searchQuery);
+        
+        $hanghoaResults = Product::searchProducts($searchQuery);
 
         if ($hanghoaResults) {
             error_log("Found " . count($hanghoaResults) . " results in hanghoa");

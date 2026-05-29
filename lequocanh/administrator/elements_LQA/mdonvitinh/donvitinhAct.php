@@ -79,7 +79,7 @@ if (isset($_GET['reqact'])) {
 
                 try {
                     $db = Database::getInstance()->getConnection();
-                    $stmt = $db->prepare("SELECT * FROM donvitinh WHERE idDonViTinh = ? LIMIT 1");
+                    $stmt = $db->prepare("SELECT idDonViTinh, tenDonViTinh, mota FROM donvitinh WHERE idDonViTinh = ? LIMIT 1");
                     $stmt->execute([$idDonViTinh]);
                     $beforeUpdate = $stmt->fetch(PDO::FETCH_ASSOC);
                     $debugInfo['before_update'] = $beforeUpdate;
@@ -95,7 +95,7 @@ if (isset($_GET['reqact'])) {
                 $debugInfo['update_result'] = $kq;
 
                 try {
-                    $stmt = $db->prepare("SELECT * FROM donvitinh WHERE idDonViTinh = ? LIMIT 1");
+                    $stmt = $db->prepare("SELECT idDonViTinh, tenDonViTinh, mota FROM donvitinh WHERE idDonViTinh = ? LIMIT 1");
                     $stmt->execute([$idDonViTinh]);
                     $afterUpdate = $stmt->fetch(PDO::FETCH_ASSOC);
                     $debugInfo['after_update'] = $afterUpdate;

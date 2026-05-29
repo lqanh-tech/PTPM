@@ -40,7 +40,7 @@ if (isset($_GET['action'])) {
                 $provinceId = intval($_GET['province_id'] ?? 1);
                 
                 // Get shipping method
-                $stmt = $db->prepare("SELECT * FROM shipping_methods WHERE code = ? AND is_active = 1");
+                $stmt = $db->prepare("SELECT id, code, name, logo_url, api_endpoint, api_token, shop_id, is_active, priority, supports_tracking, supports_cod, config_json, created_at, updated_at FROM shipping_methods WHERE code = ? AND is_active = 1");
                 $stmt->execute([$methodCode]);
                 $method = $stmt->fetch(PDO::FETCH_ASSOC);
                 

@@ -158,6 +158,9 @@ if (strpos($request_uri, 'api/v1/') === 0) {
                 case 'me':
                     $apiController->me();
                     break;
+                case 'refresh':
+                    $apiController->refreshToken();
+                    break;
                 default:
                     http_response_code(404);
                     echo json_encode(['success' => false, 'message' => 'Auth endpoint not found']);

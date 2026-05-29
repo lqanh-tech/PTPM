@@ -1,7 +1,7 @@
 <div class="admin-title">Quản lý thuộc tính hàng hóa</div>
 <hr>
 <?php
-require_once './elements_LQA/mod/hanghoaCls.php';
+// hanghoaCls removed - not used
 require_once './elements_LQA/mod/thuoctinhCls.php';
 require_once './elements_LQA/mod/thuoctinhhhCls.php';
 require_once './elements_LQA/mod/csrfProtection.php';

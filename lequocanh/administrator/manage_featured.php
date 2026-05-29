@@ -1,7 +1,8 @@
 <?php
 
 require_once __DIR__ . '/elements_LQA/mod/database.php';
-require_once __DIR__ . '/elements_LQA/mod/FeaturedProductsCls.php';
+require_once __DIR__ . '/../app/autoload.php';
+use AppModelsProduct;
 require_once __DIR__ . '/elements_LQA/mod/sessionManager.php';
 
 SessionManager::start();
@@ -11,7 +12,7 @@ if (!isset($_SESSION['USER'])) {
     exit();
 }
 
-$featuredMgr = new FeaturedProducts();
+
 $db = Database::getInstance()->getConnection();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -20,34 +21,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     switch ($action) {
         case 'set_featured':
-            $featuredMgr->setFeatured($idhanghoa, 1);
+            Product::setFeatured($idhanghoa, 1);
             $message = "Đã đánh dấu sản phẩm nổi bật";
             break;
             
         case 'unset_featured':
-            $featuredMgr->setFeatured($idhanghoa, 0);
+            Product::setFeatured($idhanghoa, 0);
             $message = "Đã bỏ đánh dấu sản phẩm nổi bật";
             break;
             
         case 'set_new':
-            $featuredMgr->setNew($idhanghoa, 1);
+            Product::setNew($idhanghoa, 1);
             $message = "Đã đánh dấu sản phẩm mới";
             break;
             
         case 'unset_new':
-            $featuredMgr->setNew($idhanghoa, 0);
+            Product::setNew($idhanghoa, 0);
             $message = "Đã bỏ đánh dấu sản phẩm mới";
             break;
             
         case 'set_sale':
             $sale_price = $_POST['sale_price'] ?? 0;
             $sale_end_date = $_POST['sale_end_date'] ?? null;
-            $featuredMgr->setSale($idhanghoa, $sale_price, $sale_end_date);
+            Product::setSale($idhanghoa, $sale_price, $sale_end_date);
             $message = "Đã thiết lập khuyến mãi";
             break;
             
         case 'remove_sale':
-            $featuredMgr->removeSale($idhanghoa);
+            Product::removeSale($idhanghoa);
             $message = "Đã hủy khuyến mãi";
             break;
     }

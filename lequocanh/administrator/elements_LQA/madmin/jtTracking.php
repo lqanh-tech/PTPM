@@ -39,7 +39,7 @@ if (!empty($orders)) {
     $orderIds = array_column($orders, 'id');
     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
     
-    $sql = "SELECT * FROM tracking_events WHERE order_id IN ({$placeholders}) ORDER BY event_time DESC";
+    $sql = "SELECT id, order_id, tracking_number, status_code, status_desc, location, event_time FROM tracking_events WHERE order_id IN ({$placeholders}) ORDER BY event_time DESC";
     $stmt = $conn->prepare($sql);
     $stmt->execute($orderIds);
     $events = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -177,7 +177,7 @@ class SupportTicketAPI {
                 return $this->error('Vui lòng đăng nhập', 401);
             }
             
-            $sql = "SELECT * FROM support_tickets WHERE id = ?";
+            $sql = "SELECT id, user_id, subject, status, priority, category, created_at, updated_at FROM support_tickets WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([$ticketId]);
             $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -190,7 +190,7 @@ class SupportTicketAPI {
                 return $this->error('Không có quyền truy cập', 403);
             }
             
-            $msgSql = "SELECT * FROM support_messages 
+            $msgSql = "SELECT id, ticket_id, user_id, message, is_staff, created_at FROM support_messages 
                       WHERE ticket_id = ? 
                       ORDER BY created_at ASC";
             $stmt = $this->conn->prepare($msgSql);
@@ -231,7 +231,7 @@ class SupportTicketAPI {
                 return $this->error('Vui lòng đăng nhập', 401);
             }
             
-            $sql = "SELECT * FROM support_tickets WHERE id = ?";
+            $sql = "SELECT id, user_id, subject, status, priority, category, created_at, updated_at FROM support_tickets WHERE id = ?";
             $stmt = $this->conn->prepare($sql);
             $stmt->execute([$ticketId]);
             $ticket = $stmt->fetch(PDO::FETCH_ASSOC);

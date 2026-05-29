@@ -10,9 +10,12 @@ if (session_status() == PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../administrator/elements_LQA/mod/loaihangCls.php';
-require_once __DIR__ . '/../administrator/elements_LQA/mod/hanghoaCls.php';
+require_once __DIR__ . '/../app/autoload.php';
+use AppModelsProduct;
+use AppModelsProductImage;
+use AppModelsProductReview;
 
-$hanghoa = new hanghoa();
+
 $cache = CacheManager::getInstance();
 
 $hasFilters = isset($_GET['min_price']) || isset($_GET['max_price']) ||
@@ -30,14 +33,14 @@ if ($hasFilters) {
         'category' => isset($_GET['reqView']) ? (int)$_GET['reqView'] : null,
         'min_rating' => isset($_GET['min_rating']) ? (int)$_GET['min_rating'] : 0
     ];
-    $list_hanghoa = $hanghoa->filterProducts($filters);
+    $list_hanghoa = Product::filterProducts($filters);
 } else {
 
     $list_hanghoa = $cache->remember($cacheKey, $cacheTTL, function() use ($hanghoa) {
         if (isset($_GET['reqView'])) {
-            return $hanghoa->HanghoaGetbyIdloaihang($_GET['reqView']);
+            return Product::getByCategoryWithPricing($_GET['reqView']);
         }
-        return $hanghoa->HanghoaGetAll();
+        return Product::getAllWithPricing();
     });
 }
 
@@ -391,7 +394,7 @@ $activePromotions = [];
 
         <div class="row row-cols-1 row-cols-md-3 g-4 product-list-grid">
             <?php foreach ($list_hanghoa as $v):
-                $hinhanh = $hanghoa->GetHinhAnhById($v->hinhanh);
+                $hinhanh = ProductImage::getById($v->hinhanh);
                 $hasDiscount = isset($v->giakhuyenmai) && $v->giakhuyenmai > 0 && $v->giakhuyenmai < $v->giathamkhao;
                 $discountPercent = $hasDiscount ? round((($v->giathamkhao - $v->giakhuyenmai) / $v->giathamkhao) * 100) : 0;
             ?>
@@ -422,7 +425,7 @@ $activePromotions = [];
 
                         $ratingKey = 'rating_' . $v->idhanghoa;
                         $ratingInfo = $cache->remember($ratingKey, 600, function() use ($hanghoa, $v) {
-                            return $hanghoa->getAverageRating($v->idhanghoa);
+                            return ProductReview::getAverageRating($v->idhanghoa);
                         });
                         ?>
                         

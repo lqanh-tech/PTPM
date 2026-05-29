@@ -37,7 +37,7 @@ class PasswordResetManager
     {
         $identifier = trim($identifier);
         
-        $sql = "SELECT * FROM user WHERE email = ? OR username = ?";
+        $sql = "SELECT iduser, username, password, hoten, email, sodienthoai, diachi, role, trangthai, setlock, avatar_url, auth_provider, created_at FROM user WHERE email = ? OR username = ?";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$identifier, $identifier]);
         

@@ -3,11 +3,11 @@
 <?php
 require_once './elements_LQA/mod/mphieunhapCls.php';
 require_once './elements_LQA/mod/mchitietphieunhapCls.php';
-require_once './elements_LQA/mod/hanghoaCls.php';
+
 
 $phieuNhapObj = new MPhieuNhap();
 $chiTietObj = new MChiTietPhieuNhap();
-$hanghoaObj = new hanghoa();
+
 
 if (isset($_GET['idct'])) {
     $idCTPN = $_GET['idct'];

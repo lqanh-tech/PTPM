@@ -12,7 +12,7 @@ class ThuocTinhHH
 
     public function thuoctinhhhGetAll()
     {
-        $sql = 'SELECT * FROM thuoctinhhh';
+        $sql = 'SELECT idThuocTinh, tenThuocTinh, mota FROM thuoctinhhh';
         $getAll = $this->db->prepare($sql);
         $getAll->setFetchMode(PDO::FETCH_OBJ);
 
@@ -97,7 +97,7 @@ class ThuocTinhHH
 
     public function thuoctinhhhGetbyId($idThuocTinhHH)
     {
-        $sql = 'SELECT * FROM thuoctinhhh WHERE idThuocTinhHH = ?';
+        $sql = 'SELECT idThuocTinh, tenThuocTinh, mota FROM thuoctinhhh WHERE idThuocTinhHH = ?';
         $data = array($idThuocTinhHH);
 
         $getOne = $this->db->prepare($sql);
@@ -113,7 +113,7 @@ class ThuocTinhHH
 
     public function thuoctinhhhGetbyIdloaihang($idloaihang)
     {
-        $sql = 'SELECT * FROM thuoctinhhh WHERE idloaihang = ?';
+        $sql = 'SELECT idThuocTinh, tenThuocTinh, mota FROM thuoctinhhh WHERE idloaihang = ?';
         $data = array($idloaihang);
 
         $getOne = $this->db->prepare($sql);
@@ -129,7 +129,7 @@ class ThuocTinhHH
 
     public function thuoctinhhhGetbyIdHanghoa($idhanghoa)
     {
-        $sql = 'SELECT * FROM thuoctinhhh WHERE idhanghoa = ?';
+        $sql = 'SELECT idThuocTinh, tenThuocTinh, mota FROM thuoctinhhh WHERE idhanghoa = ?';
         $data = array($idhanghoa);
 
         $getOne = $this->db->prepare($sql);

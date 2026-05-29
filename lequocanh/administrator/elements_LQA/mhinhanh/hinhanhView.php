@@ -345,7 +345,7 @@ if (!file_exists($uploadDirAbsolute)) {
         <?php foreach ($_SESSION['duplicate_images'] as $index => $duplicate): ?>
         <?php
 
-                        $existingImage = $hanghoa->GetHinhAnhById($duplicate['existing_image_id']);
+                        $existingImage = ProductImage::getById($duplicate['existing_image_id']);
                         ?>
         <div class="duplicate-image-item" data-index="<?php echo $index; ?>">
             <h5>

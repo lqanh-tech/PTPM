@@ -152,7 +152,7 @@ try {
     
     echo "<h3>5. Danh sách mã giảm giá hiện có:</h3>";
     
-    $coupons = $conn->query("SELECT * FROM coupons ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $coupons = $conn->query("SELECT id, code, discount_type, discount_value, min_order, max_uses, used_count, start_date, end_date, is_active, created_at FROM coupons ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
     
     echo "<table border='1' cellpadding='10' style='border-collapse: collapse; width: 100%;'>";
     echo "<tr style='background: #28a745; color: white;'>

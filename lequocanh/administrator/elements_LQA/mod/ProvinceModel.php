@@ -15,7 +15,7 @@ class ProvinceModel
 
     public function getAll($activeOnly = true)
     {
-        $sql = "SELECT * FROM provinces";
+        $sql = "SELECT province_id, province_name, province_type, is_active FROM provinces";
         if ($activeOnly) {
             $sql .= " WHERE is_active = 1";
         }
@@ -28,7 +28,7 @@ class ProvinceModel
 
     public function getById($id)
     {
-        $sql = "SELECT * FROM provinces WHERE id = ?";
+        $sql = "SELECT province_id, province_name, province_type, is_active FROM provinces WHERE id = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_OBJ);
@@ -36,7 +36,7 @@ class ProvinceModel
 
     public function getByCode($code)
     {
-        $sql = "SELECT * FROM provinces WHERE code = ?";
+        $sql = "SELECT province_id, province_name, province_type, is_active FROM provinces WHERE code = ?";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$code]);
         return $stmt->fetch(PDO::FETCH_OBJ);
@@ -44,7 +44,7 @@ class ProvinceModel
 
     public function getByRegion($region)
     {
-        $sql = "SELECT * FROM provinces WHERE region = ? AND is_active = 1 ORDER BY name";
+        $sql = "SELECT province_id, province_name, province_type, is_active FROM provinces WHERE region = ? AND is_active = 1 ORDER BY name";
         $stmt = $this->conn->prepare($sql);
         $stmt->execute([$region]);
         return $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -96,7 +96,7 @@ class ProvinceModel
 
     public function search($keyword)
     {
-        $sql = "SELECT * FROM provinces 
+        $sql = "SELECT province_id, province_name, province_type, is_active FROM provinces 
                 WHERE (name LIKE ? OR name_en LIKE ? OR code LIKE ?) 
                 AND is_active = 1 
                 ORDER BY name";

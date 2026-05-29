@@ -24,7 +24,7 @@ try {
     $total = $totalResult['total'] ?? 0;
     $totalPages = ceil($total / $limit);
     
-    $sql = "SELECT * FROM momo_transactions";
+    $sql = "SELECT id, order_id, amount, status, transaction_id, partner_code, created_at FROM momo_transactions";
     $params = [];
     
     if ($statusFilter) {

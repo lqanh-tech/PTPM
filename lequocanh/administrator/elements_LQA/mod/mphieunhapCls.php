@@ -134,7 +134,7 @@ class MPhieuNhap
 
             if ($rowsAffected > 0) {
 
-                $sql = "SELECT * FROM mchitietphieunhap WHERE idPhieuNhap = ?";
+                $sql = "SELECT id, idPhieuNhap, idhanghoa, soLuong, donGia, thanhTien FROM mchitietphieunhap WHERE idPhieuNhap = ?";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$idPhieuNhap]);
                 $chiTietList = $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -143,11 +143,7 @@ class MPhieuNhap
 
                 $tonkhoObj = new MTonKho();
 
-                if (!class_exists('hanghoa')) {
-                    require_once 'hanghoaCls.php';
-                    error_log("hanghoa class loaded");
-                }
-                $hanghoaObj = new hanghoa();
+                
 
                 foreach ($chiTietList as $chiTiet) {
 
@@ -177,7 +173,7 @@ class MPhieuNhap
                             $priceToUpdate = PriceLogicConfig::calculateSellingPrice($chiTiet->giaNhap);
                         }
 
-                        $updatePriceResult = $hanghoaObj->HanghoaUpdatePrice($chiTiet->idhanghoa, $priceToUpdate);
+                        $updatePriceResult = Product::updatePrice($chiTiet->idhanghoa, $priceToUpdate);
                         error_log("Update hanghoa price result: " . ($updatePriceResult ? "success" : "failed") .
                             ", idhanghoa = " . $chiTiet->idhanghoa .
                             ", import price = " . $chiTiet->giaNhap .
@@ -298,7 +294,7 @@ class MPhieuNhap
             if ($trangThai == 1) {
                 $this->db->beginTransaction();
 
-                $sql = "SELECT * FROM mchitietphieunhap WHERE idPhieuNhap = ?";
+                $sql = "SELECT id, idPhieuNhap, idhanghoa, soLuong, donGia, thanhTien FROM mchitietphieunhap WHERE idPhieuNhap = ?";
                 $stmt = $this->db->prepare($sql);
                 $stmt->execute([$idPhieuNhap]);
                 $chiTietList = $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -307,11 +303,7 @@ class MPhieuNhap
 
                 $tonkhoObj = new MTonKho();
 
-                if (!class_exists('hanghoa')) {
-                    require_once 'hanghoaCls.php';
-                    error_log("hanghoa class loaded");
-                }
-                $hanghoaObj = new hanghoa();
+                
 
                 foreach ($chiTietList as $chiTiet) {
 
@@ -341,7 +333,7 @@ class MPhieuNhap
                             $priceToUpdate = PriceLogicConfig::calculateSellingPrice($chiTiet->giaNhap);
                         }
 
-                        $updatePriceResult = $hanghoaObj->HanghoaUpdatePrice($chiTiet->idhanghoa, $priceToUpdate);
+                        $updatePriceResult = Product::updatePrice($chiTiet->idhanghoa, $priceToUpdate);
                         error_log("Force update hanghoa price result: " . ($updatePriceResult ? "success" : "failed") .
                             ", idhanghoa = " . $chiTiet->idhanghoa .
                             ", import price = " . $chiTiet->giaNhap .
