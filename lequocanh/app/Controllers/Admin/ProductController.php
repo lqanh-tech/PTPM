@@ -334,26 +334,15 @@ class ProductController extends BaseController
         }
 
         try {
-            $deleted = 0;
-            $errors = [];
-
-            foreach ($ids as $id) {
-                $product = Product::find($id);
-                if ($product) {
-                    try {
-                        $product->delete();
-                        $deleted++;
-                    } catch (Exception $e) {
-                        $errors[$id] = $e->getMessage();
-                    }
-                }
-            }
+            $result = Product::bulkDelete($ids);
 
             $this->json([
-                'success' => true,
-                'message' => "Deleted {$deleted} products",
-                'deleted' => $deleted,
-                'errors' => $errors,
+                'success' => $result['success'],
+                'message' => $result['success']
+                    ? "Deleted {$result['deleted']} products"
+                    : 'Some products could not be deleted',
+                'deleted' => $result['deleted'],
+                'errors' => $result['errors'],
             ]);
         } catch (Exception $e) {
             error_log("ProductController::bulkDelete error: " . $e->getMessage());

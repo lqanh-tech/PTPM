@@ -717,13 +717,12 @@ class Product extends BaseModel
 
         foreach ($tables as $table => $label) {
             try {
-                $check = $db->query("SHOW TABLES LIKE '$table'");
-                if ($check && $check->rowCount() > 0) {
-                    $stmt = $db->prepare("SELECT COUNT(*) FROM $table WHERE idhanghoa = ?");
-                    $stmt->execute([$idhanghoa]);
-                    if ($stmt->fetchColumn() > 0) {
-                        $related[$label] = "Product has $label data";
-                    }
+                // Try the count directly. Works in both MySQL and SQLite.
+                // If the table does not exist, the prepare will fail and we skip.
+                $stmt = $db->prepare("SELECT COUNT(*) FROM `$table` WHERE idhanghoa = ?");
+                $stmt->execute([$idhanghoa]);
+                if ($stmt->fetchColumn() > 0) {
+                    $related[$label] = "Product has $label data";
                 }
             } catch (\PDOException $e) {
                 // table may not exist
@@ -881,42 +880,6 @@ class Product extends BaseModel
     public static function getOutOfStockProducts(): array
     {
         return self::getProductsByStatus(self::STATUS_OUT_OF_STOCK);
-    }
-
-    /**
-     * Get status CSS class.
-     * Replaces hanghoaCls::getStatusCssClass()
-     */
-    public static function getStatusCssClass(string $displayStatus): string
-    {
-        switch ($displayStatus) {
-            case "Đang bán":
-                return "status-active";
-            case "Ngừng bán":
-                return "status-discontinued";
-            case "Hết hàng":
-                return "status-outofstock";
-            default:
-                return "status-unknown";
-        }
-    }
-
-    /**
-     * Get status color.
-     * Replaces hanghoaCls::getStatusColor()
-     */
-    public static function getStatusColor(string $displayStatus): string
-    {
-        switch ($displayStatus) {
-            case "Đang bán":
-                return "#27ae60";
-            case "Ngừng bán":
-                return "#e74c3c";
-            case "Hết hàng":
-                return "#95a5a6";
-            default:
-                return "#34495e";
-        }
     }
 
     // ═══════════════════════════════════════════
@@ -1238,6 +1201,72 @@ class Product extends BaseModel
         $db = self::db();
         $stmt = $db->prepare("DELETE FROM tonkho WHERE idhanghoa = ?");
         $stmt->execute([$this->idhanghoa]);
+    }
+
+    /**
+     * Bulk-delete products by ID. Respects per-id FK check via checkRelatedData().
+     *
+     * Returns ['success' => bool, 'deleted' => int, 'errors' => array<int, string>].
+     * IDs in `errors` were not deleted (related data or DB error). Other IDs were.
+     *
+     * @param array<int|string> $ids
+     * @return array{success: bool, deleted: int, errors: array<int, string>}
+     */
+    public static function bulkDelete(array $ids): array
+    {
+        if (empty($ids)) {
+            return ['success' => true, 'deleted' => 0, 'errors' => []];
+        }
+
+        $errors = [];
+        $safeIds = [];
+
+        foreach ($ids as $rawId) {
+            $id = (int) $rawId;
+            if ($id <= 0) {
+                continue;
+            }
+            $related = self::checkRelatedData($id);
+            if (!empty($related)) {
+                $errors[$id] = 'Related data exists: ' . implode(', ', array_keys($related));
+            } else {
+                $safeIds[] = $id;
+            }
+        }
+
+        if (empty($safeIds)) {
+            return ['success' => false, 'deleted' => 0, 'errors' => $errors];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($safeIds), '?'));
+        $db = self::db();
+
+        try {
+            $db->beginTransaction();
+
+            $stmt = $db->prepare("DELETE FROM tonkho WHERE idhanghoa IN ($placeholders)");
+            $stmt->execute($safeIds);
+
+            $stmt = $db->prepare("DELETE FROM hanghoa WHERE idhanghoa IN ($placeholders)");
+            $stmt->execute($safeIds);
+            $deleted = $stmt->rowCount();
+
+            $db->commit();
+            return ['success' => true, 'deleted' => $deleted, 'errors' => $errors];
+        } catch (\PDOException $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log('Product::bulkDelete error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'deleted' => 0,
+                'errors' => array_merge(
+                    $errors,
+                    array_fill_keys($safeIds, 'DB error: ' . $e->getMessage())
+                ),
+            ];
+        }
     }
 
     public static function getValidationRules(): array

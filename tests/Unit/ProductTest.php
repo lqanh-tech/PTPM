@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use App\Models\Product;
+use App\Presenters\ProductPresenter;
 
 class ProductTest extends TestCase
 {
@@ -159,18 +160,18 @@ class ProductTest extends TestCase
 
     public function testGetStatusCssClassReturnsCorrectClasses(): void
     {
-        $this->assertEquals('status-active', Product::getStatusCssClass('Đang bán'));
-        $this->assertEquals('status-discontinued', Product::getStatusCssClass('Ngừng bán'));
-        $this->assertEquals('status-outofstock', Product::getStatusCssClass('Hết hàng'));
-        $this->assertEquals('status-unknown', Product::getStatusCssClass('Unknown'));
+        $this->assertEquals('status-active', ProductPresenter::cssClass('Đang bán'));
+        $this->assertEquals('status-discontinued', ProductPresenter::cssClass('Ngừng bán'));
+        $this->assertEquals('status-outofstock', ProductPresenter::cssClass('Hết hàng'));
+        $this->assertEquals('status-unknown', ProductPresenter::cssClass('Unknown'));
     }
 
     public function testGetStatusColorReturnsCorrectColors(): void
     {
-        $this->assertEquals('#27ae60', Product::getStatusColor('Đang bán'));
-        $this->assertEquals('#e74c3c', Product::getStatusColor('Ngừng bán'));
-        $this->assertEquals('#95a5a6', Product::getStatusColor('Hết hàng'));
-        $this->assertEquals('#34495e', Product::getStatusColor('Unknown'));
+        $this->assertEquals('#27ae60', ProductPresenter::color('Đang bán'));
+        $this->assertEquals('#e74c3c', ProductPresenter::color('Ngừng bán'));
+        $this->assertEquals('#95a5a6', ProductPresenter::color('Hết hàng'));
+        $this->assertEquals('#34495e', ProductPresenter::color('Unknown'));
     }
 
     // ─── Reference Methods ────────────────────────────────────────
