@@ -76,7 +76,7 @@ class SupportTicketAPI {
             $limit = 10;
             $offset = ($page - 1) * $limit;
             
-            $sql = "SELECT * FROM v_support_tickets_list
+            $sql = "SELECT id, ticket_number, user_id, subject, category, related_review_id, related_order_id, status, assigned_to, created_at, updated_at, user_name, user_phone, user_email, unread_count, message_count FROM v_support_tickets_list
                     WHERE user_id = ?
                     ORDER BY updated_at DESC
                     LIMIT " . intval($limit) . " OFFSET " . intval($offset);
@@ -120,7 +120,7 @@ class SupportTicketAPI {
             $where = $status !== 'all' ? "WHERE status = ?" : '';
             $params = $status !== 'all' ? [$status] : [];
             
-            $sql = "SELECT * FROM v_support_tickets_list
+            $sql = "SELECT id, ticket_number, user_id, subject, category, related_review_id, related_order_id, status, assigned_to, created_at, updated_at, user_name, user_phone, user_email, unread_count, message_count FROM v_support_tickets_list
                     {$where}
                     ORDER BY updated_at DESC
                     LIMIT " . intval($limit) . " OFFSET " . intval($offset);
