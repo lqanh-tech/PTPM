@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 // api/jtexpress/webhook.php
 require_once __DIR__ . '/../../app/autoload.php';
 

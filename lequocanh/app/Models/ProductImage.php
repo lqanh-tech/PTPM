@@ -45,7 +45,7 @@ class ProductImage
                     return null;
                 }
             } catch (\PDOException $e) {
-                error_log("ProductImage::getById table check error: " . $e->getMessage());
+                Logger::error('ProductImage::getById', ['error' => 'table check', 'detail' => $e->getMessage()]);
             }
 
             $stmt = $db->prepare('SELECT id, ten_file, loai_file, duong_dan, du_lieu, trang_thai, ngay_tao, file_hash FROM hinhanh WHERE id = ?');
@@ -69,7 +69,7 @@ class ProductImage
 
             return $hinhanh;
         } catch (\PDOException $e) {
-            error_log("ProductImage::getById error: " . $e->getMessage());
+            Logger::error('ProductImage::getById', ['error' => $e->getMessage()]);
             return null;
         }
     }
@@ -91,7 +91,7 @@ class ProductImage
             $stmt->execute();
             return $stmt->fetchAll();
         } catch (\Exception $e) {
-            error_log("ProductImage::getAll error: " . $e->getMessage());
+            Logger::error('ProductImage::getAll', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -122,7 +122,7 @@ class ProductImage
                 return $stmt->execute([$ten_file, $loai_file, $duong_dan]);
             }
         } catch (\PDOException $e) {
-            error_log("ProductImage::create error: " . $e->getMessage());
+            Logger::error('ProductImage::create', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -138,7 +138,7 @@ class ProductImage
             $stmt = $db->prepare("DELETE FROM hinhanh WHERE id = ?");
             return $stmt->execute([$id]);
         } catch (\PDOException $e) {
-            error_log("ProductImage::delete error: " . $e->getMessage());
+            Logger::error('ProductImage::delete', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -197,7 +197,7 @@ class ProductImage
             $stmt = $db->prepare($sql);
             return $stmt->execute();
         } catch (\PDOException $e) {
-            error_log("ProductImage::ensureRelationTable error: " . $e->getMessage());
+            Logger::error('ProductImage::ensureRelationTable', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -247,9 +247,9 @@ class ProductImage
             try {
                 self::db()->rollBack();
             } catch (\PDOException $rollbackException) {
-                error_log("ProductImage::applyToProduct rollback error: " . $rollbackException->getMessage());
+                Logger::error('ProductImage::applyToProduct', ['error' => 'rollback', 'detail' => $rollbackException->getMessage()]);
             }
-            error_log("ProductImage::applyToProduct error: " . $e->getMessage());
+            Logger::error('ProductImage::applyToProduct', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -265,7 +265,7 @@ class ProductImage
             $stmt = $db->prepare("UPDATE hanghoa SET hinhanh = 0 WHERE idhanghoa = ?");
             return $stmt->execute([$idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("ProductImage::removeFromProduct error: " . $e->getMessage());
+            Logger::error('ProductImage::removeFromProduct', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -293,7 +293,7 @@ class ProductImage
             $stmt = $db->prepare("UPDATE hanghoa SET hinhanh = ? WHERE hinhanh = ?");
             return $stmt->execute([$newImageId, $oldImageId]);
         } catch (\PDOException $e) {
-            error_log("ProductImage::updateProductImages error: " . $e->getMessage());
+            Logger::error('ProductImage::updateProductImages', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -309,7 +309,7 @@ class ProductImage
             $stmt = $db->prepare("UPDATE hanghoa SET hinhanh = ? WHERE idhanghoa = ?");
             return $stmt->execute([$id_hinhanh_moi, $idhanghoa]);
         } catch (\Exception $e) {
-            error_log("ProductImage::updateProductImage error: " . $e->getMessage());
+            Logger::error('ProductImage::updateProductImage', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -330,7 +330,7 @@ class ProductImage
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("ProductImage::getAllForProduct error: " . $e->getMessage());
+            Logger::error('ProductImage::getAllForProduct', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -348,7 +348,7 @@ class ProductImage
             $stmt->execute();
             return (int)$stmt->fetchColumn();
         } catch (\PDOException $e) {
-            error_log("ProductImage::countForProduct error: " . $e->getMessage());
+            Logger::error('ProductImage::countForProduct', ['error' => $e->getMessage()]);
             return 0;
         }
     }
@@ -370,7 +370,7 @@ class ProductImage
             $stmt->execute();
             return $stmt->fetchColumn() > 0;
         } catch (\PDOException $e) {
-            error_log("ProductImage::existsByFileName error: " . $e->getMessage());
+            Logger::error('ProductImage::existsByFileName', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -406,7 +406,7 @@ class ProductImage
 
             return $result ? $result->id : false;
         } catch (\PDOException $e) {
-            error_log("ProductImage::existsByHash error: " . $e->getMessage());
+            Logger::error('ProductImage::existsByHash', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -424,7 +424,7 @@ class ProductImage
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("ProductImage::findProductsByExactName error: " . $e->getMessage());
+            Logger::error('ProductImage::findProductsByExactName', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -475,7 +475,7 @@ class ProductImage
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("ProductImage::getMismatchedProductImages error: " . $e->getMessage());
+            Logger::error('ProductImage::getMismatchedProductImages', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -496,7 +496,7 @@ class ProductImage
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("ProductImage::findMissingImages error: " . $e->getMessage());
+            Logger::error('ProductImage::findMissingImages', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -523,7 +523,7 @@ class ProductImage
             $stmt->execute([$productName]);
             return $stmt->fetch(PDO::FETCH_OBJ) ?: null;
         } catch (\PDOException $e) {
-            error_log("ProductImage::findExactMatchImage error: " . $e->getMessage());
+            Logger::error('ProductImage::findExactMatchImage', ['error' => $e->getMessage()]);
             return null;
         }
     }
@@ -548,7 +548,7 @@ class ProductImage
 
             return $count;
         } catch (\PDOException $e) {
-            error_log("ProductImage::removeAllMismatchedImages error: " . $e->getMessage());
+            Logger::error('ProductImage::removeAllMismatchedImages', ['error' => $e->getMessage()]);
             return 0;
         }
     }

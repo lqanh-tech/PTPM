@@ -15,11 +15,6 @@ parameters:
     ignoreErrors:
         # Legacy classes loaded via require (not autoload)
         - '#on an unknown class (Database|SessionManager|GioHang|CacheManager|ConfigManager)#'
-        - '#Instantiated class (CorsMiddleware|ValidationMiddleware|GioHang|Firebase\\JWT\\Key) not found.#'
-        - '#Call to static method decode\(\) on an unknown class Firebase\\JWT\\JWT.#'
-        - '#Comparison operation ">" between int<1, max> and 0 is always true.#'
+        - '#Instantiated class (GioHang) not found.#'
         - '#Unsafe usage of new static\(\)#'
-        - '#Call to static method (encode|decode)\(\) on an unknown class Firebase\\JWT\\JWT.#'
-        - '#Call to an undefined static method (ImageOptimizer|AsyncLoader)::#'
-        - '#Property App\\Controllers\\BaseController::\$config has unknown class ConfigManager as its type.#'
-        - '#Call to static method (generateCSRFToken|validateCSRFToken)\(\) on an unknown class Security.#'
+        - '#Comparison operation ">" between int<1, max> and 0 is always true.#'

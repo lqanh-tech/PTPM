@@ -83,7 +83,7 @@ abstract class BaseController
     {
         http_response_code($statusCode);
         header('Content-Type: application/json');
-        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        echo json_encode($data, flags: JSON_UNESCAPED_UNICODE);
         exit;
     }
 

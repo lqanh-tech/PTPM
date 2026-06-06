@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 spl_autoload_register(function ($class) {
     // PSR-4 autoloading for App\ namespace
@@ -25,8 +26,7 @@ spl_autoload_register(function ($class) {
         'UserService' => __DIR__ . '/Services/UserService.php',
         'OrderService' => __DIR__ . '/Services/OrderService.php',
         'ShippingService' => __DIR__ . '/Services/ShippingService.php',
-        // Legacy global classes
-        'Database' => __DIR__ . '/../administrator/elements_LQA/mod/database.php',
+        // Legacy global classes (mod/* now handled by composer classmap)
         'QueryCache' => __DIR__ . '/../cache/QueryCache.php',
         'CacheManager' => __DIR__ . '/../cache/CacheManager.php',
         'ConfigManager' => __DIR__ . '/Services/ConfigManager.php',

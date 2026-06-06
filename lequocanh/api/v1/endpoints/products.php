@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 require_once '../../../administrator/elements_LQA/mod/databaseOptimizer.php';
 require_once '../../Response.php';

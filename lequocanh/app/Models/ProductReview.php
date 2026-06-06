@@ -42,7 +42,7 @@ class ProductReview
                 'count' => (int) $result->review_count
             ];
         } catch (\PDOException $e) {
-            error_log("ProductReview::getAverageRating error: " . $e->getMessage());
+            Logger::error('ProductReview::getAverageRating', ['error' => $e->getMessage()]);
             return ['average' => 0, 'count' => 0];
         }
     }
@@ -88,7 +88,7 @@ class ProductReview
             
             return $ratings;
         } catch (\PDOException $e) {
-            error_log("ProductReview::getAverageRatingBatch error: " . $e->getMessage());
+            Logger::error('ProductReview::getAverageRatingBatch', ['error' => $e->getMessage()]);
             return array_fill_keys($productIds, ['average' => 0, 'count' => 0]);
         }
     }
@@ -108,7 +108,7 @@ class ProductReview
             $stmt->execute([$idhanghoa]);
             return (int) $stmt->fetchColumn();
         } catch (\PDOException $e) {
-            error_log("ProductReview::getReviewCount error: " . $e->getMessage());
+            Logger::error('ProductReview::getReviewCount', ['error' => $e->getMessage()]);
             return 0;
         }
     }

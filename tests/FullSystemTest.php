@@ -413,78 +413,76 @@ try {
 sectionHeader('7. PRODUCT - Quản lý hàng hóa');
 
 try {
-    require_once ROOT_DIR . '/lequocanh/administrator/elements_LQA/mod/hanghoaCls.php';
-    $hanghoa = new hanghoa();
+    require_once ROOT_DIR . '/lequocanh/app/autoload.php';
+    use App\Models\Product;
     
     // Test: Get all products
     subsection('GET ALL - Lấy tất cả hàng hóa');
-    $allProducts = $hanghoa->HanghoaGetAll();
-    logTest('HanghoaGetAll', is_array($allProducts), 'Số lượng sản phẩm: ' . count($allProducts));
+    $allProducts = Product::getAll();
+    logTest('Product::getAll', is_array($allProducts), 'Số lượng sản phẩm: ' . count($allProducts));
     
     // Test: Add new product
-    subsection('CREATE - Thêm sản phẩm mới');
+    section('CREATE - Thêm sản phẩm mới');
     $testProductName = 'SP_TEST_' . time();
     $categoryId = !empty($createdData['loaihang_ids']) ? reset($createdData['loaihang_ids']) : 1;
     $brandId = !empty($createdData['thuonghieu_ids']) ? reset($createdData['thuonghieu_ids']) : null;
     $unitId = !empty($createdData['donvitinh_ids']) ? reset($createdData['donvitinh_ids']) : null;
     $employeeId = !empty($createdData['nhanvien_ids']) ? reset($createdData['nhanvien_ids']) : null;
     
-    $addProductResult = $hanghoa->HanghoaAdd(
-        $testProductName,          // tenhanghoa
-        'Mô tả sản phẩm test',    // mota
-        1500000,                   // giathamkhao
-        0,                         // id_hinhanh
-        $categoryId,               // idloaihang
-        $brandId,                  // idThuongHieu
-        $unitId,                   // idDonViTinh
-        $employeeId,               // idNhanVien
-        'Ghi chú test'             // ghichu
-    );
+    $addProductResult = Product::addProduct([
+        'tenhanghoa' => $testProductName,
+        'mota' => 'Mô tả sản phẩm test',
+        'giathamkhao' => 1500000,
+        'hinhanh' => 0,
+        'idloaihang' => $categoryId,
+        'idThuongHieu' => $brandId,
+        'idDonViTinh' => $unitId,
+        'idNhanVien' => $employeeId,
+        'ghichu' => 'Ghi chú test',
+    ]);
     
-    logTest('HanghoaAdd', $addProductResult !== false && $addProductResult > 0, 
+    logTest('Product::addProduct', $addProductResult > 0,
         'Thêm sản phẩm: ' . $testProductName . ' (ID: ' . $addProductResult . ')');
     
-    if ($addProductResult && $addProductResult > 0) {
+    if ($addProductResult > 0) {
         $createdData['hanghoa_ids'][] = $addProductResult;
         
         // Test: Get product by ID
         subsection('READ - Lấy sản phẩm theo ID');
-        $productById = $hanghoa->HanghoaGetbyId($addProductResult);
-        logTest('HanghoaGetbyId', $productById !== false, 
+        $productById = Product::getById($addProductResult);
+        logTest('Product::getById', $productById !== null,
             'Lấy được: ' . ($productById->tenhanghoa ?? 'N/A'));
         
         // Test: Get product by category
         subsection('READ BY CATEGORY - Lấy sản phẩm theo loại hàng');
-        $productsByCategory = $hanghoa->HanghoaGetbyIdloaihang($categoryId);
-        logTest('HanghoaGetbyIdloaihang', is_array($productsByCategory), 
+        $productsByCategory = Product::getByCategory($categoryId);
+        logTest('Product::getByCategory', is_array($productsByCategory),
             'Số lượng: ' . count($productsByCategory));
         
         // Test: Search product
         subsection('SEARCH - Tìm kiếm sản phẩm');
-        $searchResults = $hanghoa->searchHanghoa($testProductName);
-        logTest('searchHanghoa', is_array($searchResults) && count($searchResults) > 0,
+        $searchResults = Product::searchProducts($testProductName);
+        logTest('Product::searchProducts', is_array($searchResults) && count($searchResults) > 0,
             'Kết quả tìm kiếm: ' . count($searchResults));
         
         // Test: Update product
         subsection('UPDATE - Cập nhật sản phẩm');
         $updatedName = $testProductName . '_UPDATED';
-        $updateResult = $hanghoa->HanghoaUpdate(
-            $updatedName,            // tenhanghoa
-            0,                       // id_hinhanh
-            'Mô tả đã cập nhật',     // mota
-            2000000,                 // giathamkhao
-            $categoryId,             // idloaihang
-            $brandId,                // idThuongHieu
-            $unitId,                 // idDonViTinh
-            $employeeId,             // idNhanVien
-            $addProductResult,       // idhanghoa
-            'Ghi chú cập nhật'       // ghichu
-        );
-        logTest('HanghoaUpdate', $updateResult > 0, 'Cập nhật thành công');
+        $updateResult = Product::updateProduct($addProductResult, [
+            'tenhanghoa' => $updatedName,
+            'mota' => 'Mô tả đã cập nhật',
+            'giathamkhao' => 2000000,
+            'idloaihang' => $categoryId,
+            'idThuongHieu' => $brandId,
+            'idDonViTinh' => $unitId,
+            'idNhanVien' => $employeeId,
+            'ghichu' => 'Ghi chú cập nhật',
+        ]);
+        logTest('Product::updateProduct', $updateResult, 'Cập nhật thành công');
         
         // Verify update
-        $updatedProduct = $hanghoa->HanghoaGetbyId($addProductResult);
-        logTest('Verify Product Update', 
+        $updatedProduct = Product::getById($addProductResult);
+        logTest('Verify Product Update',
             $updatedProduct && $updatedProduct->tenhanghoa === $updatedName,
             'Tên sau cập nhật: ' . ($updatedProduct->tenhanghoa ?? 'N/A'));
     }
@@ -661,28 +659,28 @@ try {
 sectionHeader('10. SEARCH - Chức năng tìm kiếm');
 
 try {
-    require_once ROOT_DIR . '/lequocanh/administrator/elements_LQA/mod/hanghoaCls.php';
-    $hanghoa = new hanghoa();
+    require_once ROOT_DIR . '/lequocanh/app/autoload.php';
+    use App\Models\Product;
     
     // Test: Search with keyword
     subsection('Tìm kiếm với từ khóa');
-    $searchResults = $hanghoa->searchHanghoa('iPhone');
-    logTest('searchHanghoa("iPhone")', is_array($searchResults),
+    $searchResults = Product::searchProducts('iPhone');
+    logTest('Product::searchProducts("iPhone")', is_array($searchResults),
         'Kết quả: ' . count($searchResults));
     
     // Test: Search with Vietnamese keyword
-    $searchResults2 = $hanghoa->searchHanghoa('điện thoại');
-    logTest('searchHanghoa("điện thoại")', is_array($searchResults2),
+    $searchResults2 = Product::searchProducts('điện thoại');
+    logTest('Product::searchProducts("điện thoại")', is_array($searchResults2),
         'Kết quả: ' . count($searchResults2));
     
     // Test: Search with empty keyword
-    $searchResults3 = $hanghoa->searchHanghoa('');
-    logTest('searchHanghoa("")', is_array($searchResults3),
+    $searchResults3 = Product::searchProducts('');
+    logTest('Product::searchProducts("")', is_array($searchResults3),
         'Kết quả rỗng: ' . count($searchResults3));
     
     // Test: Search with special characters
-    $searchResults4 = $hanghoa->searchHanghoa("test' OR 1=1 --");
-    logTest('searchHanghoa (SQL injection test)', is_array($searchResults4),
+    $searchResults4 = Product::searchProducts("test' OR 1=1 --");
+    logTest('Product::searchProducts (SQL injection test)', is_array($searchResults4),
         'Không bị SQL injection');
     
     // Test: Search suggestions
@@ -812,47 +810,42 @@ try {
 sectionHeader('13. PRODUCT RELATIONSHIPS - Quan hệ sản phẩm');
 
 try {
-    require_once ROOT_DIR . '/lequocanh/administrator/elements_LQA/mod/hanghoaCls.php';
-    $hanghoa = new hanghoa();
+    require_once ROOT_DIR . '/lequocanh/app/autoload.php';
+    use App\Models\Product;
     
     if (!empty($createdData['hanghoa_ids'])) {
         $productId = reset($createdData['hanghoa_ids']);
         
         // Test: Check related data
         subsection('Kiểm tra dữ liệu liên quan');
-        $relatedData = $hanghoa->checkRelatedData($productId);
-        logTest('checkRelatedData', is_array($relatedData),
+        $relatedData = Product::checkRelatedData($productId);
+        logTest('Product::checkRelatedData', is_array($relatedData),
             'Bảng liên quan: ' . implode(', ', array_keys($relatedData)));
-        
-        // Test: Get all relations
-        $relations = $hanghoa->CheckRelations($productId);
-        logTest('CheckRelations', is_array($relations),
-            'Quan hệ: ' . implode(', ', $relations));
         
         // Test: Get brands
         subsection('Lấy danh sách thương hiệu');
-        $brands = $hanghoa->GetAllThuongHieu();
-        logTest('GetAllThuongHieu', is_array($brands), 'Số lượng: ' . count($brands));
+        $brands = Product::getAllThuongHieu();
+        logTest('Product::getAllThuongHieu', is_array($brands), 'Số lượng: ' . count($brands));
         
         // Test: Get units
         subsection('Lấy danh sách đơn vị tính');
-        $units = $hanghoa->GetAllDonViTinh();
-        logTest('GetAllDonViTinh', is_array($units), 'Số lượng: ' . count($units));
+        $units = Product::getAllDonViTinh();
+        logTest('Product::getAllDonViTinh', is_array($units), 'Số lượng: ' . count($units));
         
         // Test: Get employees
         subsection('Lấy danh sách nhân viên');
-        $employees = $hanghoa->GetAllNhanVien();
-        logTest('GetAllNhanVien', is_array($employees), 'Số lượng: ' . count($employees));
+        $employees = Product::getAllNhanVien();
+        logTest('Product::getAllNhanVien', is_array($employees), 'Số lượng: ' . count($employees));
         
         // Test: Filter products
         subsection('Lọc sản phẩm');
-        $filteredProducts = $hanghoa->filterProducts([
+        $filteredProducts = Product::filterProducts([
             'category' => $createdData['loaihang_ids'][0] ?? null,
             'min_price' => 0,
             'max_price' => 10000000,
             'sort_by' => 'price_asc'
         ]);
-        logTest('filterProducts', is_array($filteredProducts), 'Kết quả: ' . count($filteredProducts));
+        logTest('Product::filterProducts', is_array($filteredProducts), 'Kết quả: ' . count($filteredProducts));
     }
 } catch (Exception $e) {
     logTest('Product Relationships', false, 'Exception: ' . $e->getMessage());
@@ -864,15 +857,15 @@ try {
 sectionHeader('14. PRODUCT DELETE - Xóa sản phẩm (kiểm tra FK)');
 
 try {
-    require_once ROOT_DIR . '/lequocanh/administrator/elements_LQA/mod/hanghoaCls.php';
-    $hanghoa = new hanghoa();
+    require_once ROOT_DIR . '/lequocanh/app/autoload.php';
+    use App\Models\Product;
     
     // Try to delete product that has import history - should fail
     if (!empty($createdData['hanghoa_ids'])) {
         $productId = reset($createdData['hanghoa_ids']);
         
-        $deleteResult = $hanghoa->HanghoaDelete($productId);
-        logTest('HanghoaDelete (with FK)', 
+        $deleteResult = Product::deleteProduct($productId);
+        logTest('Product::deleteProduct (with FK)',
             is_array($deleteResult) && !$deleteResult['success'],
             'Không xóa được sản phẩm có dữ liệu liên quan: ' . ($deleteResult['message'] ?? ''));
     }
@@ -882,16 +875,22 @@ try {
     $deleteTestProduct = 'SP_DELETE_TEST_' . time();
     $categoryId = !empty($createdData['loaihang_ids']) ? reset($createdData['loaihang_ids']) : 1;
     
-    $newProductId = $hanghoa->HanghoaAdd(
-        $deleteTestProduct, 'Mô tả test xóa', 500000, 0, $categoryId, null, null, null, 'Test xóa'
-    );
+    $newProductId = Product::addProduct([
+        'tenhanghoa' => $deleteTestProduct,
+        'mota' => 'Mô tả test xóa',
+        'giathamkhao' => 500000,
+        'hinhanh' => 0,
+        'idloaihang' => $categoryId,
+        'idThuongHieu' => null,
+        'idDonViTinh' => null,
+        'idNhanVien' => null,
+        'ghichu' => 'Test xóa',
+    ]);
     
-    if ($newProductId && $newProductId > 0) {
-        $deleteResult2 = $hanghoa->HanghoaDelete($newProductId);
-        // Product has tonkho (auto-created), so deletion should fail or succeed
-        // depending on whether tonkho is considered "related data"
+    if ($newProductId > 0) {
+        $deleteResult2 = Product::deleteProduct($newProductId);
         $isExpected = is_array($deleteResult2);
-        logTest('HanghoaDelete (with auto-created tonkho)', 
+        logTest('Product::deleteProduct (with auto-created tonkho)',
             $isExpected,
             ($deleteResult2['success'] ? 'Xóa thành công' : 'Không xóa được (có tonkho): ' . ($deleteResult2['message'] ?? '')));
     }

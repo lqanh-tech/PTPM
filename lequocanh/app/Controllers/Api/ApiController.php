@@ -182,7 +182,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::products error: " . $e->getMessage());
+            Logger::error('ApiController::products', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -222,7 +222,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::product error: " . $e->getMessage());
+            Logger::error('ApiController::product', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -271,7 +271,7 @@ class ApiController extends BaseController
                 ],
             ], 201);
         } catch (Exception $e) {
-            error_log("ApiController::productCreate error: " . $e->getMessage());
+            Logger::error('ApiController::productCreate', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -324,7 +324,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::productUpdate error: " . $e->getMessage());
+            Logger::error('ApiController::productUpdate', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -353,7 +353,7 @@ class ApiController extends BaseController
 
             $this->json(['success' => true, 'message' => 'Product deleted']);
         } catch (Exception $e) {
-            error_log("ApiController::productDelete error: " . $e->getMessage());
+            Logger::error('ApiController::productDelete', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -373,7 +373,7 @@ class ApiController extends BaseController
                 'data' => $categories,
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::categories error: " . $e->getMessage());
+            Logger::error('ApiController::categories', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -407,7 +407,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::orders error: " . $e->getMessage());
+            Logger::error('ApiController::orders', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -447,7 +447,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::order error: " . $e->getMessage());
+            Logger::error('ApiController::order', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -554,7 +554,7 @@ class ApiController extends BaseController
                 ],
             ], 201);
         } catch (Exception $e) {
-            error_log("ApiController::orderCreate error: " . $e->getMessage());
+            Logger::error('ApiController::orderCreate', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -604,7 +604,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::search error: " . $e->getMessage());
+            Logger::error('ApiController::search', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -630,7 +630,7 @@ class ApiController extends BaseController
                 'data' => $stats,
             ]);
         } catch (Exception $e) {
-            error_log("ApiController::stats error: " . $e->getMessage());
+            Logger::error('ApiController::stats', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -716,7 +716,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (\Exception $e) {
-            error_log("ApiController::login error: " . $e->getMessage());
+            Logger::error('ApiController::login', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -791,7 +791,7 @@ class ApiController extends BaseController
                 ],
             ], 201);
         } catch (\Exception $e) {
-            error_log("ApiController::register error: " . $e->getMessage());
+            Logger::error('ApiController::register', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -949,7 +949,7 @@ class ApiController extends BaseController
                 'total_items' => count($cartItems),
             ]);
         } catch (\Exception $e) {
-            error_log("ApiController::cart error: " . $e->getMessage());
+            Logger::error('ApiController::cart', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -996,7 +996,7 @@ class ApiController extends BaseController
                 ],
             ], 201);
         } catch (\Exception $e) {
-            error_log("ApiController::cartAdd error: " . $e->getMessage());
+            Logger::error('ApiController::cartAdd', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -1039,7 +1039,7 @@ class ApiController extends BaseController
                 ],
             ]);
         } catch (\Exception $e) {
-            error_log("ApiController::cartUpdate error: " . $e->getMessage());
+            Logger::error('ApiController::cartUpdate', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -1072,7 +1072,7 @@ class ApiController extends BaseController
 
             $this->json(['success' => true, 'message' => 'Item removed']);
         } catch (\Exception $e) {
-            error_log("ApiController::cartRemove error: " . $e->getMessage());
+            Logger::error('ApiController::cartRemove', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }
@@ -1092,7 +1092,7 @@ class ApiController extends BaseController
 
             $this->json(['success' => true, 'message' => 'Cart cleared']);
         } catch (\Exception $e) {
-            error_log("ApiController::cartClear error: " . $e->getMessage());
+            Logger::error('ApiController::cartClear', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => 'Internal server error'], 500);
         }
     }

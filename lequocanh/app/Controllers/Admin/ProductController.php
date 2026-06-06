@@ -66,7 +66,7 @@ class ProductController extends BaseController
 
             $this->render('admin.products.index', $data);
         } catch (Exception $e) {
-            error_log("ProductController::index error: " . $e->getMessage());
+            Logger::error('ProductController::index', ['error' => $e->getMessage()]);
             $this->render('admin.products.index', [
                 'products' => [],
                 'pagination' => [],
@@ -131,7 +131,7 @@ class ProductController extends BaseController
             $this->flash('success', 'Product added successfully');
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         } catch (Exception $e) {
-            error_log("ProductController::store error: " . $e->getMessage());
+            Logger::error('ProductController::store', ['error' => $e->getMessage()]);
             $this->flash('error', 'Error adding product: ' . $e->getMessage());
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
@@ -219,7 +219,7 @@ class ProductController extends BaseController
             }
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         } catch (Exception $e) {
-            error_log("ProductController::update error: " . $e->getMessage());
+            Logger::error('ProductController::update', ['error' => $e->getMessage()]);
             $this->flash('error', 'Error updating product: ' . $e->getMessage());
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }
@@ -252,7 +252,7 @@ class ProductController extends BaseController
                 $this->json(['success' => false, 'message' => 'Failed to delete product']);
             }
         } catch (Exception $e) {
-            error_log("ProductController::delete error: " . $e->getMessage());
+            Logger::error('ProductController::delete', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -286,7 +286,7 @@ class ProductController extends BaseController
 
             $this->json(['products' => $results]);
         } catch (Exception $e) {
-            error_log("ProductController::search error: " . $e->getMessage());
+            Logger::error('ProductController::search', ['error' => $e->getMessage()]);
             $this->json(['error' => 'Search failed'], 500);
         }
     }
@@ -345,7 +345,7 @@ class ProductController extends BaseController
                 'errors' => $result['errors'],
             ]);
         } catch (Exception $e) {
-            error_log("ProductController::bulkDelete error: " . $e->getMessage());
+            Logger::error('ProductController::bulkDelete', ['error' => $e->getMessage()]);
             $this->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -386,7 +386,7 @@ class ProductController extends BaseController
             fclose($output);
             exit;
         } catch (Exception $e) {
-            error_log("ProductController::export error: " . $e->getMessage());
+            Logger::error('ProductController::export', ['error' => $e->getMessage()]);
             $this->flash('error', 'Export failed: ' . $e->getMessage());
             $this->redirect('/lequocanh/administrator/index.php?req=hanghoaview');
         }

@@ -60,7 +60,7 @@ class ReturnRequest extends BaseModel
             $stmt = $db->prepare($sql);
             return $stmt->execute([$orderId, $userId, $reason, $type, $images, self::STATUS_PENDING]);
         } catch (\Exception $e) {
-            error_log("ReturnRequest::createRequest error: " . $e->getMessage());
+            Logger::error('ReturnRequest::createRequest', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -81,7 +81,7 @@ class ReturnRequest extends BaseModel
             $stmt->execute([$userId]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("ReturnRequest::getByUser error: " . $e->getMessage());
+            Logger::error('ReturnRequest::getByUser', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -102,7 +102,7 @@ class ReturnRequest extends BaseModel
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("ReturnRequest::getAllRequests error: " . $e->getMessage());
+            Logger::error('ReturnRequest::getAllRequests', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -122,7 +122,7 @@ class ReturnRequest extends BaseModel
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
         } catch (\Exception $e) {
-            error_log("ReturnRequest::getRequestById error: " . $e->getMessage());
+            Logger::error('ReturnRequest::getRequestById', ['error' => $e->getMessage()]);
             return null;
         }
     }
@@ -142,7 +142,7 @@ class ReturnRequest extends BaseModel
             $stmt = $db->prepare($sql);
             return $stmt->execute([$status, $adminNote, $id]);
         } catch (\Exception $e) {
-            error_log("ReturnRequest::updateStatus error: " . $e->getMessage());
+            Logger::error('ReturnRequest::updateStatus', ['error' => $e->getMessage()]);
             return false;
         }
     }

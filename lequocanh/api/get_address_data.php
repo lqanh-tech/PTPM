@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 /**
  * API to get address data (districts, wards) for cascade dropdown
  */

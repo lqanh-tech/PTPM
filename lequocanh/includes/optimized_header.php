@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 define('PAGE_START_TIME', microtime(true));
 

@@ -44,7 +44,7 @@ class Wishlist extends BaseModel
             ]);
             return true;
         } catch (\Exception $e) {
-            error_log("Wishlist::addProduct error: " . $e->getMessage());
+            Logger::error('Wishlist::addProduct', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -59,7 +59,7 @@ class Wishlist extends BaseModel
             $stmt = $db->prepare("DELETE FROM " . static::$table . " WHERE user_id = ? AND product_id = ?");
             return $stmt->execute([$userId, $productId]);
         } catch (\Exception $e) {
-            error_log("Wishlist::removeProduct error: " . $e->getMessage());
+            Logger::error('Wishlist::removeProduct', ['error' => $e->getMessage()]);
             return false;
         }
     }

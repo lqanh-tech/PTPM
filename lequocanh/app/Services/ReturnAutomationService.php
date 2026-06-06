@@ -139,7 +139,7 @@ class ReturnAutomationService
         $statusText = $autoApproved ? 'đã được chấp nhận' : 'đang được xem xét';
         
         // Log notification
-        error_log("Return notification: Order #{$request['order_id']} {$statusText}. Method: {$methodText}");
+        Logger::info('Return notification', ['order_id' => $request['order_id'], 'status' => $statusText, 'method' => $methodText]);
     }
     
     /**
@@ -160,7 +160,7 @@ class ReturnAutomationService
             
             return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
         } catch (\Exception $e) {
-            error_log("ReturnAutomationService::getReturnById error: " . $e->getMessage());
+            Logger::error('ReturnAutomationService::getReturnById', ['error' => $e->getMessage()]);
             return null;
         }
     }
@@ -184,7 +184,7 @@ class ReturnAutomationService
             
             return $stmt->fetchAll(\PDO::FETCH_ASSOC);
         } catch (\Exception $e) {
-            error_log("ReturnAutomationService::getReturnsByUser error: " . $e->getMessage());
+            Logger::error('ReturnAutomationService::getReturnsByUser', ['error' => $e->getMessage()]);
             return [];
         }
     }

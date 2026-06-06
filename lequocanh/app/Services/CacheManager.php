@@ -20,7 +20,7 @@ class CacheManager
             }
         } catch (\Exception $e) {
             $this->available = false;
-            error_log("CacheManager: Redis not available - " . $e->getMessage());
+            Logger::warning('CacheManager: Redis not available', ['error' => $e->getMessage()]);
         }
     }
     

@@ -597,6 +597,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     $relatedProducts = Product::getRelatedProducts((int)$idhanghoa, 4);
 
+    // Batch load ratings for related products (avoids N+1 queries)
+    $rpRatings = [];
+    if (!empty($relatedProducts)) {
+        $rpIds = array_map(function($rp) { return (int)$rp->idhanghoa; }, $relatedProducts);
+        $rpRatings = ProductReview::getAverageRatingBatch($rpIds);
+    }
+
     if (!empty($relatedProducts)):
     ?>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
@@ -647,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                             <!-- Rating -->
                             <?php
-                            $rpRating = ProductReview::getAverageRating((int)$rp->idhanghoa);
+                            $rpRating = $rpRatings[(int)$rp->idhanghoa] ?? ['average' => 0, 'count' => 0];
                             ?>
                             <div class="mb-2 d-flex align-items-center" style="font-size: 12px;">
                                 <?php if ($rpRating['count'] > 0): ?>

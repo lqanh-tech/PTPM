@@ -130,7 +130,7 @@ class JTWebhookController
             ");
             $stmt->execute([$payload]);
         } catch (\Exception $e) {
-            error_log("Failed to log webhook: " . $e->getMessage());
+            Logger::error('Failed to log webhook', ['error' => $e->getMessage()]);
         }
     }
 }

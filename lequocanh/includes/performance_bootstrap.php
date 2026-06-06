@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 define('PERF_START_TIME', microtime(true));
 define('PERF_START_MEMORY', memory_get_usage());

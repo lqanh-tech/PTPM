@@ -79,7 +79,7 @@ class Product extends BaseModel
                 self::$statusColumnInfo = ['column' => 'trang_thai', 'type' => 'int'];
             }
         } catch (\PDOException $e) {
-            error_log('Product::getStatusColumnInfo error: ' . $e->getMessage());
+            Logger::error('Product::getStatusColumnInfo', ['error' => $e->getMessage()]);
         }
 
         return self::$statusColumnInfo;
@@ -289,7 +289,7 @@ class Product extends BaseModel
 
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("Product::searchProducts error: " . $e->getMessage());
+            Logger::error('Product::searchProducts', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -449,7 +449,7 @@ class Product extends BaseModel
 
             return $stmt->fetchAll();
         } catch (\PDOException $e) {
-            error_log("Product::filterProducts error: " . $e->getMessage());
+            Logger::error('Product::filterProducts', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -505,7 +505,7 @@ class Product extends BaseModel
 
             return $options;
         } catch (\PDOException $e) {
-            error_log("Product::getFilterOptions error: " . $e->getMessage());
+            Logger::error('Product::getFilterOptions', ['error' => $e->getMessage()]);
             return ['colors' => [], 'sizes' => [], 'price_range' => ['min' => 0, 'max' => 100000000]];
         }
     }
@@ -553,7 +553,7 @@ class Product extends BaseModel
             $stmt->execute($params);
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("Product::getRelatedProducts error: " . $e->getMessage());
+            Logger::error('Product::getRelatedProducts', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -612,7 +612,7 @@ class Product extends BaseModel
 
             return false;
         } catch (\Exception $e) {
-            error_log("Product::addProduct error: " . $e->getMessage());
+            Logger::error('Product::addProduct', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -695,7 +695,7 @@ class Product extends BaseModel
                     'message' => 'Không thể xóa hàng hóa vì còn dữ liệu liên quan trong hệ thống'
                 ];
             }
-            error_log("Product::deleteProduct error: " . $e->getMessage());
+            Logger::error('Product::deleteProduct', ['error' => $e->getMessage()]);
             return ['success' => false, 'message' => 'Lỗi khi xóa: ' . $e->getMessage()];
         }
     }
@@ -752,21 +752,14 @@ class Product extends BaseModel
                 return "Không xác định";
             }
 
-            switch ((int)$product->trang_thai) {
-                case self::STATUS_DISCONTINUED:
-                    return "Ngừng bán";
-                case self::STATUS_OUT_OF_STOCK:
-                    return "Hết hàng";
-                case self::STATUS_ACTIVE:
-                default:
-                    $quantity = self::getProductQuantity($idhanghoa);
-                    if ($quantity == 0) {
-                        return "Hết hàng";
-                    }
-                    return "Đang bán";
-            }
+            return match ((int)$product->trang_thai) {
+                self::STATUS_DISCONTINUED => "Ngừng bán",
+                self::STATUS_OUT_OF_STOCK => "Hết hàng",
+                self::STATUS_ACTIVE => self::getProductQuantity($idhanghoa) === 0 ? "Hết hàng" : "Đang bán",
+                default => "Không xác định",
+            };
         } catch (\PDOException $e) {
-            error_log("Product::getProductStatus error: " . $e->getMessage());
+            Logger::error('Product::getProductStatus', ['error' => $e->getMessage()]);
             return "Không xác định";
         }
     }
@@ -784,7 +777,7 @@ class Product extends BaseModel
             $result = $stmt->fetch(PDO::FETCH_OBJ);
             return $result ? (int)$result->trang_thai : self::STATUS_ACTIVE;
         } catch (\PDOException $e) {
-            error_log("Product::getProductStatusValue error: " . $e->getMessage());
+            Logger::error('Product::getProductStatusValue', ['error' => $e->getMessage()]);
             return self::STATUS_ACTIVE;
         }
     }
@@ -807,7 +800,7 @@ class Product extends BaseModel
             $result = $stmt->fetch(PDO::FETCH_OBJ);
             return $result ? (int)$result->soLuong : 0;
         } catch (\PDOException $e) {
-            error_log("Product::getProductQuantity error: " . $e->getMessage());
+            Logger::error('Product::getProductQuantity', ['error' => $e->getMessage()]);
             return 0;
         }
     }
@@ -825,7 +818,7 @@ class Product extends BaseModel
             $stmt->execute([$idhanghoa]);
             return $stmt->fetch() ?: null;
         } catch (\PDOException $e) {
-            error_log("Product::getTonKho error: " . $e->getMessage());
+            Logger::error('Product::getTonKho', ['error' => $e->getMessage()]);
             return null;
         }
     }
@@ -838,7 +831,7 @@ class Product extends BaseModel
     {
         try {
             if (!in_array($status, [self::STATUS_ACTIVE, self::STATUS_DISCONTINUED, self::STATUS_OUT_OF_STOCK])) {
-                error_log("Product::updateProductStatus invalid status: " . $status);
+                Logger::error('Product::updateProductStatus', ['error' => 'invalid status', 'status' => $status]);
                 return false;
             }
 
@@ -846,7 +839,7 @@ class Product extends BaseModel
             $stmt = $db->prepare("UPDATE hanghoa SET trang_thai = ? WHERE idhanghoa = ?");
             return $stmt->execute([$status, $idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("Product::updateProductStatus error: " . $e->getMessage());
+            Logger::error('Product::updateProductStatus', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -867,7 +860,7 @@ class Product extends BaseModel
             $stmt->execute([$status]);
             return $stmt->fetchAll(PDO::FETCH_OBJ);
         } catch (\PDOException $e) {
-            error_log("Product::getProductsByStatus error: " . $e->getMessage());
+            Logger::error('Product::getProductsByStatus', ['error' => $e->getMessage()]);
             return [];
         }
     }
@@ -1054,7 +1047,7 @@ class Product extends BaseModel
             $stmt = $db->prepare("UPDATE hanghoa SET is_featured = ? WHERE idhanghoa = ?");
             return $stmt->execute([$is_featured, $idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("Product::setFeatured error: " . $e->getMessage());
+            Logger::error('Product::setFeatured', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -1066,7 +1059,7 @@ class Product extends BaseModel
             $stmt = $db->prepare("UPDATE hanghoa SET is_new = ? WHERE idhanghoa = ?");
             return $stmt->execute([$is_new, $idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("Product::setNew error: " . $e->getMessage());
+            Logger::error('Product::setNew', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -1078,7 +1071,7 @@ class Product extends BaseModel
             $stmt = $db->prepare("UPDATE hanghoa SET is_sale = 1, sale_price = ?, sale_start_date = NOW(), sale_end_date = ? WHERE idhanghoa = ?");
             return $stmt->execute([$sale_price, $sale_end_date, $idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("Product::setSale error: " . $e->getMessage());
+            Logger::error('Product::setSale', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -1090,7 +1083,7 @@ class Product extends BaseModel
             $stmt = $db->prepare("UPDATE hanghoa SET is_sale = 0, sale_price = NULL, sale_start_date = NULL, sale_end_date = NULL WHERE idhanghoa = ?");
             return $stmt->execute([$idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("Product::removeSale error: " . $e->getMessage());
+            Logger::error('Product::removeSale', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -1102,7 +1095,7 @@ class Product extends BaseModel
             $stmt = $db->prepare("UPDATE hanghoa SET view_count = view_count + 1 WHERE idhanghoa = ?");
             return $stmt->execute([$idhanghoa]);
         } catch (\PDOException $e) {
-            error_log("Product::incrementViewCount error: " . $e->getMessage());
+            Logger::error('Product::incrementViewCount', ['error' => $e->getMessage()]);
             return false;
         }
     }
@@ -1257,7 +1250,7 @@ class Product extends BaseModel
             if ($db->inTransaction()) {
                 $db->rollBack();
             }
-            error_log('Product::bulkDelete error: ' . $e->getMessage());
+            Logger::error('Product::bulkDelete', ['error' => $e->getMessage()]);
             return [
                 'success' => false,
                 'deleted' => 0,

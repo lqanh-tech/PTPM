@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 class Router {
     private $routes = [];
@@ -72,9 +73,7 @@ class Router {
         try {
 
             foreach ($route['middleware'] as $middlewareName) {
-                if (isset($this->middleware[$middlewareName])) {
-                    $this->middleware[$middlewareName]->handle();
-                }
+                $this->middleware[$middlewareName]?->handle();
             }
             
             $params = $this->extractParams($route['path'], $path);
