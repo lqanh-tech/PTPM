@@ -103,3 +103,4 @@ skills-lock.json
 
 # === Worktrees ===
 .worktrees/
+backups/*.sql
