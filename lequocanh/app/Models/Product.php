@@ -883,42 +883,6 @@ class Product extends BaseModel
         return self::getProductsByStatus(self::STATUS_OUT_OF_STOCK);
     }
 
-    /**
-     * Get status CSS class.
-     * Replaces hanghoaCls::getStatusCssClass()
-     */
-    public static function getStatusCssClass(string $displayStatus): string
-    {
-        switch ($displayStatus) {
-            case "Đang bán":
-                return "status-active";
-            case "Ngừng bán":
-                return "status-discontinued";
-            case "Hết hàng":
-                return "status-outofstock";
-            default:
-                return "status-unknown";
-        }
-    }
-
-    /**
-     * Get status color.
-     * Replaces hanghoaCls::getStatusColor()
-     */
-    public static function getStatusColor(string $displayStatus): string
-    {
-        switch ($displayStatus) {
-            case "Đang bán":
-                return "#27ae60";
-            case "Ngừng bán":
-                return "#e74c3c";
-            case "Hết hàng":
-                return "#95a5a6";
-            default:
-                return "#34495e";
-        }
-    }
-
     // ═══════════════════════════════════════════
     //  REFERENCES (brands, units, employees)
     // ═══════════════════════════════════════════
